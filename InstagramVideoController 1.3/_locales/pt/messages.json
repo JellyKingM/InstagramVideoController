@@ -1,0 +1,10 @@
+{
+    "extensionName": {
+        "message": "Controlador de Extensão de Vídeo do Instagram Reels",
+        "description": "Name of the extension."
+    },
+    "extensionDescription": {
+        "message": "Um programa de extensão que auxilia no controle de vídeos do Instagram Reels.",
+        "description": "Description of the extension."
+    }
+}

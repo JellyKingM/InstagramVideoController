@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Расширенный контроллер видео Instagram"
+  },
+  "extensionDescription": {
+    "message": "Легко управляйте элементами видео Instagram Reels и еще больше улучшайте пользовательский опыт."
+  },
+  "settings": {
+    "message": "Настройки параметров"
+  },
+  "developerLink": {
+    "message": "Страница разработчика"
+  },
+  "donate": {
+    "message": "Пожертвовать разработчику"
+  },
+  "muteText": {
+    "message": "Отключить звук"
+  },
+  "unmuteText": {
+    "message": "Включить звук"
+  }
+}

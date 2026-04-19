@@ -1,0 +1,14 @@
+{
+  "name": "instagramvideocontrollerforedge",
+  "version": "1.0.0",
+  "description": "인스타그램 릴스 페이지에서 비디오 컨트롤러를 활성화하는 확장프로그램입니다.",
+  "main": "src/content.js",
+  "scripts": {
+    "build": "echo \"Building the extension...\"",
+    "start": "echo \"Starting the extension...\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

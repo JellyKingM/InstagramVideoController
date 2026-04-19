@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Controlador Estendido de Vídeos do Instagram - Obsoleto"
+  },
+  "extensionDescription": {
+    "message": "Controle facilmente os elementos de vídeo do Instagram Reels e melhore ainda mais a experiência do usuário."
+  },
+  "settings": {
+    "message": "Configurações de Opções"
+  },
+  "developerLink": {
+    "message": "Página do Desenvolvedor"
+  },
+  "donate": {
+    "message": "Doar para o Desenvolvedor"
+  },
+  "muteText": {
+    "message": "Silenciar"
+  },
+  "unmuteText": {
+    "message": "Ativar Som"
+  }
+}

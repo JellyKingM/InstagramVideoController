@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Pengontrol Diperpanjang Video Instagram"
+  },
+  "extensionDescription": {
+    "message": "Kontrol dengan mudah elemen video Instagram Reels dan tingkatkan pengalaman pengguna lebih jauh."
+  },
+  "settings": {
+    "message": "Pengaturan Opsi"
+  },
+  "developerLink": {
+    "message": "Halaman Pengembang"
+  },
+  "donate": {
+    "message": "Donasi ke Pengembang"
+  },
+  "muteText": {
+    "message": "Bisukan"
+  },
+  "unmuteText": {
+    "message": "Suarakan"
+  }
+}

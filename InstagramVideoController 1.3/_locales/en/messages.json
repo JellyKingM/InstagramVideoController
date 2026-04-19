@@ -1,0 +1,10 @@
+{
+    "extensionName": {
+        "message": "Instagram Reels Video Extension Controller",
+        "description": "Name of the extension."
+    },
+    "extensionDescription": {
+        "message": "Assists in controlling Instagram Reels videos.",
+        "description": "Description of the extension."
+    }
+}

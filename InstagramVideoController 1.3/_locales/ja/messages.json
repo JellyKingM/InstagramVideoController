@@ -1,0 +1,10 @@
+{
+    "extensionName": {
+        "message": "インスタグラムリールビデオ拡張コントローラー",
+        "description": "Name of the extension."
+    },
+    "extensionDescription": {
+        "message": "インスタグラムのリールビデオを制御するのを補助する拡張プログラムです。",
+        "description": "Description of the extension."
+    }
+}

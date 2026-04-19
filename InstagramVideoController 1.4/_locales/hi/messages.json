@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "इंस्टाग्राम वीडियो विस्तारित नियंत्रक"
+  },
+  "extensionDescription": {
+    "message": "इंस्टाग्राम रील्स वीडियो तत्वों को आसानी से नियंत्रित करें और उपयोगकर्ता अनुभव को और बेहतर बनाएं।"
+  },
+  "settings": {
+    "message": "विकल्प सेटिंग्स"
+  },
+  "developerLink": {
+    "message": "डेवलपर पेज"
+  },
+  "donate": {
+    "message": "डेवलपर को दान करें"
+  },
+  "muteText": {
+    "message": "म्यूट करें"
+  },
+  "unmuteText": {
+    "message": "अनम्यूट करें"
+  }
+}

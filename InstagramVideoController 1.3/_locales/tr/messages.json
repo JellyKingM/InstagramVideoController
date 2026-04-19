@@ -1,0 +1,10 @@
+{
+    "extensionName": {
+        "message": "Instagram Reels Video Genişletme Denetleyici",
+        "description": "Name of the extension."
+    },
+    "extensionDescription": {
+        "message": "Instagram Reels videolarını kontrol etmeye yardımcı olan bir genişletme programı.",
+        "description": "Description of the extension."
+    }
+}

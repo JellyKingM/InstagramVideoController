@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "وحدة تحكم موسعة لفيديوهات انستغرام"
+  },
+  "extensionDescription": {
+    "message": "تحكم بسهولة في عناصر فيديو ريلز انستغرام وحسن تجربة المستخدم بشكل أكبر."
+  },
+  "settings": {
+    "message": "إعدادات الخيارات"
+  },
+  "developerLink": {
+    "message": "صفحة المطور"
+  },
+  "donate": {
+    "message": "تبرع للمطور"
+  },
+  "muteText": {
+    "message": "كتم الصوت"
+  },
+  "unmuteText": {
+    "message": "إلغاء كتم الصوت"
+  }
+}
