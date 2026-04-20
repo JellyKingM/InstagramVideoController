@@ -170,6 +170,7 @@
         }, 0);
         video.playbackRate = options.playbackRateV;
         applyVideoContainerStyle(video);
+        hideReelPageVideoNextSibling(video);
 
         if (video.dataset.instagramVideoControllerProcessed === 'true') return;
 
@@ -743,6 +744,8 @@
             return;
         }
 
+        const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
+
         if (!options.sideBoxVisibleV) {
             cleanupSideBox();
             updateSideBoxRestoreButton(activeVideo);
@@ -772,7 +775,7 @@
         const movedInfo = moveVideoOverlayInfoToSideBox(activeVideo);
         if (movedInfo) {
             hideVideoClickOverlay(overlay);
-            if (!hideReelPageVideoNextSibling(activeVideo)) {
+            if (!hiddenReelSibling) {
                 hideVideoNextOverlay(activeVideo);
             }
         }
