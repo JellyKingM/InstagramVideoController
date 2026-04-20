@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Pinalawak na Kontroller ng Instagram Video - Deprecated"
+  },
+  "extensionDescription": {
+    "message": "Madaling kontrolin ang mga elemento ng video ng Instagram Reels at lalong pahusayin ang karanasan ng gumagamit."
+  },
+  "settings": {
+    "message": "Mga Setting ng Opsyon"
+  },
+  "developerLink": {
+    "message": "Pahina ng Developer"
+  },
+  "donate": {
+    "message": "Mag-donate sa Developer"
+  },
+  "muteText": {
+    "message": "I-mute"
+  },
+  "unmuteText": {
+    "message": "I-unmute"
+  }
+}
