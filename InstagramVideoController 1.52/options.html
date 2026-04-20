@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Instagram Video Controller Options</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            width: 320px;
+            margin: 0;
+            padding: 16px;
+            font-family: Arial, sans-serif;
+            color: #111;
+            background: #fff;
+        }
+
+        h1 {
+            margin: 0 0 14px;
+            font-size: 16px;
+            line-height: 1.3;
+        }
+
+        label {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        input {
+            margin-top: 2px;
+        }
+
+        .hint {
+            margin: 10px 0 0 22px;
+            color: #555;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .status {
+            min-height: 18px;
+            margin-top: 12px;
+            color: #216e39;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Instagram Video Controller</h1>
+    <label>
+        <input type="checkbox" id="debugRemoteVisible">
+        <span>개발용 디버그 리모콘</span>
+    </label>
+    <p class="hint">켜져 있으면 자동 실행이 멈추고, 화면 우측에서 단계별 버튼을 직접 눌러 확인합니다.</p>
+    <div class="status" id="status" aria-live="polite"></div>
+
+    <script src="options.js"></script>
+</body>
+</html>
