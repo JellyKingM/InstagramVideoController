@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Розширений контролер відео Instagram - Застаріле"
+  },
+  "extensionDescription": {
+    "message": "Легко керуйте елементами відео Instagram Reels та ще більше покращуйте користувацький досвід."
+  },
+  "settings": {
+    "message": "Налаштування параметрів"
+  },
+  "developerLink": {
+    "message": "Сторінка розробника"
+  },
+  "donate": {
+    "message": "Пожертвувати розробнику"
+  },
+  "muteText": {
+    "message": "Вимкнути звук"
+  },
+  "unmuteText": {
+    "message": "Увімкнути звук"
+  }
+}
