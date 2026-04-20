@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Instagram视频扩展控制器 - 已弃用"
+  },
+  "extensionDescription": {
+    "message": "轻松控制Instagram Reels视频元素，进一步提升用户体验。"
+  },
+  "settings": {
+    "message": "选项设置"
+  },
+  "developerLink": {
+    "message": "开发者页面"
+  },
+  "donate": {
+    "message": "捐赠给开发者"
+  },
+  "muteText": {
+    "message": "静音"
+  },
+  "unmuteText": {
+    "message": "取消静音"
+  }
+}
