@@ -1,0 +1,47 @@
+{
+   "manifest_version": 3,
+   "name": "__MSG_extensionName__",
+   "description": "__MSG_extensionDescription__",
+   "version": "1.57",
+   "default_locale": "en",
+   "icons": {
+      "128": "Icon.png",
+      "16": "Icon.png",
+      "48": "Icon.png"
+   },
+   "permissions": [
+      "contextMenus",
+      "storage"
+   ],
+   "host_permissions": [
+      "https://www.instagram.com/*"
+   ],
+   "background": {
+      "service_worker": "background.js"
+   },
+   "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+         "128": "Icon.png",
+         "16": "Icon.png",
+         "48": "Icon.png"
+      },
+      "default_title": "__MSG_extensionName__"
+   },
+   "options_ui": {
+      "page": "options.html",
+      "open_in_tab": false
+   },
+   "content_scripts": [{
+      "js": ["content.js"],
+      "matches": [
+         "https://www.instagram.com/*"
+      ]
+   }],
+   "web_accessible_resources": [{
+      "resources": ["muted.png", "unmuted.png"],
+      "matches": ["https://www.instagram.com/*"]
+   }],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzZJr3WIeP/afJ8FNgUXItH12biA0QgPNtLFJXT+nCSHjqzePnyfnmW4S0BiTN8NcPM4jEbEj5dW9cxV2rkzkSn6Uyt+9oVuL9U+cSaNEf9IftN6V20aAy5i/qBWnjcbPcKuNMP97ZuI57up0G1xOZVXKjGRfrAjEsPELrrhj3kivx7MeuDL6N7EFjlFyt/OS5c/kbGt/EqFekJkI4BvjBb9N3R7JdRYy4WSZ+cdAf+ICLcAykinrSKilauzN2bCQt9VmQsCg1Su3LM1b/mRD8M1sYz1XaGfBs/JREteLtsQpDqJnOwluI5f0W2Of6O4QEBXJGmyOfKCNq5kmjo/7hwIDAQAB"
+}
