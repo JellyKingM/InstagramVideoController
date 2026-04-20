@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Instagram Video Kengaytirilgan Boshqaruvchisi - Eskirgan"
+  },
+  "extensionDescription": {
+    "message": "Instagram Reels video elementlarini oson boshqaring va foydalanuvchi tajribasini yanada yaxshilang."
+  },
+  "settings": {
+    "message": "Parametrlar Sozlamalari"
+  },
+  "developerLink": {
+    "message": "Dasturchi Sahifasi"
+  },
+  "donate": {
+    "message": "Dasturchiga Xayr-Ehson Qiling"
+  },
+  "muteText": {
+    "message": "Ovozni o'chirish"
+  },
+  "unmuteText": {
+    "message": "Ovozni yoqish"
+  }
+}
