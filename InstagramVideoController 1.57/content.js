@@ -49,9 +49,15 @@
     }
 
     function t(key, fallback) {
-        if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
-            const message = chrome.i18n.getMessage(key);
-            if (message) return message;
+        try {
+            if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
+                const message = chrome.i18n.getMessage(key);
+                if (message) return message;
+            }
+        } catch (error) {
+            if (!String(error && error.message).includes('Extension context invalidated')) {
+                log('i18n lookup failed', error);
+            }
         }
         return fallback;
     }
@@ -88,16 +94,23 @@
     }
 
     function loadOptionsFromExtensionStorage(callback) {
-        if (!chrome.storage || !chrome.storage.local) {
-            callback();
-            return;
-        }
+        try {
+            if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+                callback();
+                return;
+            }
 
-        chrome.storage.local.get({ [STORAGE_KEYS.debugRemoteVisible]: options.debugRemoteVisibleV }, result => {
-            options.debugRemoteVisibleV = result[STORAGE_KEYS.debugRemoteVisible] === true;
-            localStorage.setItem(STORAGE_KEYS.debugRemoteVisible, String(options.debugRemoteVisibleV));
+            chrome.storage.local.get({ [STORAGE_KEYS.debugRemoteVisible]: options.debugRemoteVisibleV }, result => {
+                options.debugRemoteVisibleV = result[STORAGE_KEYS.debugRemoteVisible] === true;
+                localStorage.setItem(STORAGE_KEYS.debugRemoteVisible, String(options.debugRemoteVisibleV));
+                callback();
+            });
+        } catch (error) {
+            if (!String(error && error.message).includes('Extension context invalidated')) {
+                log('storage lookup failed', error);
+            }
             callback();
-        });
+        }
     }
 
     function clamp(value, min, max) {
@@ -1254,12 +1267,18 @@
     }
 
     function installOptionListeners() {
-        if (!chrome.storage || !chrome.storage.onChanged) return;
+        try {
+            if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.onChanged) return;
 
-        chrome.storage.onChanged.addListener((changes, areaName) => {
-            if (areaName !== 'local' || !changes[STORAGE_KEYS.debugRemoteVisible]) return;
-            applyDebugRemoteVisibility(changes[STORAGE_KEYS.debugRemoteVisible].newValue === true);
-        });
+            chrome.storage.onChanged.addListener((changes, areaName) => {
+                if (areaName !== 'local' || !changes[STORAGE_KEYS.debugRemoteVisible]) return;
+                applyDebugRemoteVisibility(changes[STORAGE_KEYS.debugRemoteVisible].newValue === true);
+            });
+        } catch (error) {
+            if (!String(error && error.message).includes('Extension context invalidated')) {
+                log('storage listener install failed', error);
+            }
+        }
     }
 
     function initialize() {
