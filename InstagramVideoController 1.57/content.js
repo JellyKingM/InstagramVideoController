@@ -394,6 +394,17 @@
             : video.parentElement;
     }
 
+    function getReelPageSideBoxMaxWidth(anchor) {
+        if (!isSingleReelPage() || !anchor || !anchor.parentElement) return 0;
+
+        const siblings = Array.from(anchor.parentElement.children)
+            .filter(child => child !== sideBox && child !== sideBoxRestoreButton);
+        const lastSibling = siblings[siblings.length - 1];
+        if (!lastSibling) return 0;
+
+        return Math.round(lastSibling.getBoundingClientRect().width || lastSibling.offsetWidth || 0);
+    }
+
     function cleanupSideBox() {
         if (sideBoxResizeObserver) {
             sideBoxResizeObserver.disconnect();
@@ -536,14 +547,18 @@
     function sizeSideBoxToVideo(video) {
         if (!sideBox || !video) return;
 
-        const width = Math.round(video.offsetWidth || video.getBoundingClientRect().width);
+        const anchor = findSideBoxAnchor(video);
+        const maxWidth = getReelPageSideBoxMaxWidth(anchor);
+        const width = maxWidth || Math.round(video.offsetWidth || video.getBoundingClientRect().width);
         const height = Math.round(video.offsetHeight || video.getBoundingClientRect().height);
         if (width <= 0 || height <= 0) return;
 
         sideBox.style.width = `${width}px`;
         sideBox.style.minWidth = `${width}px`;
+        sideBox.style.maxWidth = `${width}px`;
         sideBox.style.height = `${height}px`;
         sideBox.style.minHeight = `${height}px`;
+        sideBox.style.maxHeight = `${height}px`;
     }
 
     function isDescriptionMoreButton(button) {
@@ -764,10 +779,12 @@
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
 
-            sideBoxResizeObserver = new ResizeObserver(() => {
-                sizeSideBoxToVideo(activeVideo);
-            });
-            sideBoxResizeObserver.observe(activeVideo);
+            if (!isSingleReelPage()) {
+                sideBoxResizeObserver = new ResizeObserver(() => {
+                    sizeSideBoxToVideo(activeVideo);
+                });
+                sideBoxResizeObserver.observe(activeVideo);
+            }
         }
 
         sizeSideBoxToVideo(activeVideo);
