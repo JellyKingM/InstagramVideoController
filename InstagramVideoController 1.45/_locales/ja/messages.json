@@ -1,0 +1,23 @@
+{
+  "extensionName": {
+    "message": "Instagram動作拡張コントローラー - 非推奨"
+  },
+  "extensionDescription": {
+    "message": "InstagramリールズのビデオエレメントをEAL制御し、ユーザー体験をさらに向上させます。"
+  },
+  "settings": {
+    "message": "オプション設定"
+  },
+  "developerLink": {
+    "message": "開発者ページ"
+  },
+  "donate": {
+    "message": "開発者に寄付する"
+  },
+  "muteText": {
+    "message": "ミュート"
+  },
+  "unmuteText": {
+    "message": "ミュート解除"
+  }
+}
