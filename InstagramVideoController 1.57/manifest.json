@@ -14,7 +14,8 @@
       "storage"
    ],
    "host_permissions": [
-      "https://www.instagram.com/*"
+      "https://www.instagram.com/reels/*",
+      "https://www.instagram.com/reel/*"
    ],
    "background": {
       "service_worker": "background.js"
@@ -35,12 +36,16 @@
    "content_scripts": [{
       "js": ["content.js"],
       "matches": [
-         "https://www.instagram.com/*"
+         "https://www.instagram.com/reels/*",
+         "https://www.instagram.com/reel/*"
       ]
    }],
    "web_accessible_resources": [{
       "resources": ["muted.png", "unmuted.png"],
-      "matches": ["https://www.instagram.com/*"]
+      "matches": [
+         "https://www.instagram.com/reels/*",
+         "https://www.instagram.com/reel/*"
+      ]
    }],
    "update_url": "https://clients2.google.com/service/update2/crx",
    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzZJr3WIeP/afJ8FNgUXItH12biA0QgPNtLFJXT+nCSHjqzePnyfnmW4S0BiTN8NcPM4jEbEj5dW9cxV2rkzkSn6Uyt+9oVuL9U+cSaNEf9IftN6V20aAy5i/qBWnjcbPcKuNMP97ZuI57up0G1xOZVXKjGRfrAjEsPELrrhj3kivx7MeuDL6N7EFjlFyt/OS5c/kbGt/EqFekJkI4BvjBb9N3R7JdRYy4WSZ+cdAf+ICLcAykinrSKilauzN2bCQt9VmQsCg1Su3LM1b/mRD8M1sYz1XaGfBs/JREteLtsQpDqJnOwluI5f0W2Of6O4QEBXJGmyOfKCNq5kmjo/7hwIDAQAB"
