@@ -1,0 +1,110 @@
+{
+  "extensionName": {
+    "message": "Instagram video boshqaruvchisi"
+  },
+  "extensionDescription": {
+    "message": "Instagram videolarining ijrosi, ovozi, tezligi, yon qutisi va malumotlarini osonroq boshqaring."
+  },
+  "settings": {
+    "message": "Sozlamalar"
+  },
+  "developerLink": {
+    "message": "Dasturchi sahifasi"
+  },
+  "donate": {
+    "message": "Dasturchini qollab-quvvatlash"
+  },
+  "panelTitle": {
+    "message": "Instagram video boshqaruvchisi"
+  },
+  "buttonPlay": {
+    "message": "Ijro"
+  },
+  "tooltipPlay": {
+    "message": "Faol videoni ijro etish yoki pauza qilish"
+  },
+  "buttonMute": {
+    "message": "Ovozni ochir"
+  },
+  "tooltipMute": {
+    "message": "Barcha videolar ovozini ochirish yoki yoqish"
+  },
+  "buttonControls": {
+    "message": "Boshqaruv"
+  },
+  "tooltipControls": {
+    "message": "Video ichki boshqaruvlarini almashtirish"
+  },
+  "buttonFind": {
+    "message": "Topish"
+  },
+  "tooltipFind": {
+    "message": "Videolarni qayta qidirish"
+  },
+  "tooltipBack": {
+    "message": "3 soniya orqaga"
+  },
+  "tooltipForward": {
+    "message": "3 soniya oldinga"
+  },
+  "tooltipSlowDown": {
+    "message": "Sekinlatish"
+  },
+  "tooltipSpeedUp": {
+    "message": "Tezlatish"
+  },
+  "buttonHideBox": {
+    "message": "Qutini yashir"
+  },
+  "tooltipHideBox": {
+    "message": "Yon qutini yashirish"
+  },
+  "buttonShowBox": {
+    "message": "Qutini korsat"
+  },
+  "tooltipShowBox": {
+    "message": "Yon qutini korsatish"
+  },
+  "volumeLabel": {
+    "message": "Ovoz"
+  },
+  "statusPlaying": {
+    "message": "Ijro etilmoqda"
+  },
+  "statusPaused": {
+    "message": "Pauza"
+  },
+  "statusMuted": {
+    "message": "Ovoz ochirilgan"
+  },
+  "statusUnmuted": {
+    "message": "Ovoz yoqilgan"
+  },
+  "statusVolumeShort": {
+    "message": "Ovoz"
+  },
+  "statusNoActiveVideo": {
+    "message": "Faol video topilmadi"
+  },
+  "tooltipShowController": {
+    "message": "Instagram video boshqaruvchisini korsat"
+  },
+  "noVideoInfo": {
+    "message": "Video malumot maydoni topilmadi."
+  },
+  "debugRemoteLabel": {
+    "message": "Dasturchi debug pulti"
+  },
+  "debugRemoteHint": {
+    "message": "Yoqilganda avtomatik bajarish toxtaydi va sahifaning ong tomonida bosqich tugmalari korinadi."
+  },
+  "saved": {
+    "message": "Saqlandi"
+  },
+  "muteText": {
+    "message": "Ovozni ochir"
+  },
+  "unmuteText": {
+    "message": "Ovozni yoq"
+  }
+}

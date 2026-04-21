@@ -1,0 +1,110 @@
+{
+  "extensionName": {
+    "message": "Controller video Instagram"
+  },
+  "extensionDescription": {
+    "message": "Controlla piu facilmente riproduzione, volume, velocita, riquadro laterale e informazioni dei video Instagram."
+  },
+  "settings": {
+    "message": "Opzioni"
+  },
+  "developerLink": {
+    "message": "Pagina sviluppatore"
+  },
+  "donate": {
+    "message": "Dona allo sviluppatore"
+  },
+  "panelTitle": {
+    "message": "Controller video Instagram"
+  },
+  "buttonPlay": {
+    "message": "Riproduci"
+  },
+  "tooltipPlay": {
+    "message": "Riproduci o metti in pausa il video attivo"
+  },
+  "buttonMute": {
+    "message": "Muto"
+  },
+  "tooltipMute": {
+    "message": "Attiva o disattiva laudio di tutti i video"
+  },
+  "buttonControls": {
+    "message": "Controlli"
+  },
+  "tooltipControls": {
+    "message": "Mostra o nasconde i controlli nativi del video"
+  },
+  "buttonFind": {
+    "message": "Trova"
+  },
+  "tooltipFind": {
+    "message": "Cerca di nuovo i video"
+  },
+  "tooltipBack": {
+    "message": "Indietro di 3 secondi"
+  },
+  "tooltipForward": {
+    "message": "Avanti di 3 secondi"
+  },
+  "tooltipSlowDown": {
+    "message": "Riduci velocita"
+  },
+  "tooltipSpeedUp": {
+    "message": "Aumenta velocita"
+  },
+  "buttonHideBox": {
+    "message": "Nascondi box"
+  },
+  "tooltipHideBox": {
+    "message": "Nasconde il riquadro laterale"
+  },
+  "buttonShowBox": {
+    "message": "Mostra box"
+  },
+  "tooltipShowBox": {
+    "message": "Mostra il riquadro laterale"
+  },
+  "volumeLabel": {
+    "message": "Volume"
+  },
+  "statusPlaying": {
+    "message": "In riproduzione"
+  },
+  "statusPaused": {
+    "message": "In pausa"
+  },
+  "statusMuted": {
+    "message": "Muto"
+  },
+  "statusUnmuted": {
+    "message": "Audio attivo"
+  },
+  "statusVolumeShort": {
+    "message": "Vol"
+  },
+  "statusNoActiveVideo": {
+    "message": "Nessun video attivo rilevato"
+  },
+  "tooltipShowController": {
+    "message": "Mostra controller video Instagram"
+  },
+  "noVideoInfo": {
+    "message": "Area informazioni video non rilevata."
+  },
+  "debugRemoteLabel": {
+    "message": "Telecomando debug sviluppatore"
+  },
+  "debugRemoteHint": {
+    "message": "Quando attivo, lesecuzione automatica si ferma e i pulsanti passo passo appaiono a destra della pagina."
+  },
+  "saved": {
+    "message": "Salvato"
+  },
+  "muteText": {
+    "message": "Muto"
+  },
+  "unmuteText": {
+    "message": "Audio attivo"
+  }
+}
