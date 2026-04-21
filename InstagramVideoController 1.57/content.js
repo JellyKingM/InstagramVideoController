@@ -2,6 +2,7 @@
     'use strict';
 
     const LOG_PREFIX = '[InstagramVideoController]';
+    const POST_TARGET_VIDEO_SELECTOR = 'video.x1lliihq.x5yr21d.xh8yej3';
     const STORAGE_KEYS = {
         volume: 'volumeSliderV',
         muted: 'volumeMute',
@@ -118,6 +119,10 @@
     }
 
     function getVideos() {
+        if (isPostPage()) {
+            return Array.from(document.querySelectorAll(POST_TARGET_VIDEO_SELECTOR));
+        }
+
         return Array.from(document.querySelectorAll('video'));
     }
 
@@ -399,8 +404,16 @@
         return /^\/reel\/[^/]+\/?/.test(location.pathname);
     }
 
+    function isPostPage() {
+        return /^\/p\/[^/]+\/?/.test(location.pathname);
+    }
+
+    function isDetailMediaPage() {
+        return isSingleReelPage() || isPostPage();
+    }
+
     function findSideBoxAnchor(video) {
-        const anchorLevels = isSingleReelPage() ? 9 : 7;
+        const anchorLevels = isDetailMediaPage() ? 9 : 7;
         const layoutAnchor = getAncestor(video, anchorLevels);
         return layoutAnchor && layoutAnchor.parentElement
             ? layoutAnchor
@@ -408,7 +421,7 @@
     }
 
     function getReelPageSideBoxMaxWidth(anchor) {
-        if (!isSingleReelPage() || !anchor || !anchor.parentElement) return 0;
+        if (!isDetailMediaPage() || !anchor || !anchor.parentElement) return 0;
 
         const siblings = Array.from(anchor.parentElement.children)
             .filter(child => child !== sideBox && child !== sideBoxRestoreButton);
@@ -755,7 +768,7 @@
     }
 
     function hideReelPageVideoNextSibling(video) {
-        if (!isSingleReelPage()) return false;
+        if (!isDetailMediaPage()) return false;
 
         const sibling = getVideoOverlay(video);
         if (!sibling) return false;
@@ -792,7 +805,7 @@
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
 
-            if (!isSingleReelPage()) {
+            if (!isDetailMediaPage()) {
                 sideBoxResizeObserver = new ResizeObserver(() => {
                     sizeSideBoxToVideo(activeVideo);
                 });
