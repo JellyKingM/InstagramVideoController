@@ -1,0 +1,119 @@
+{
+  "en": {
+    "extensionName": "Instagram Reels Video Extension Controller",
+    "extensionDescription": "Assists in controlling Instagram Reels videos.",
+    "settings": "Settings",
+    "developerLink": "Developer Page",
+    "donate": "Donate to Developer",
+    "muteText": "Mute",
+    "unmuteText": "Unmute"
+  },
+  "ko": {
+    "extensionName": "인스타그램 비디오 확장 컨트롤러",
+    "extensionDescription": "인스타그램의 릴스 비디오에 대한 컨트롤을 보조하는 확장프로그램입니다.",
+    "settings": "옵션 설정",
+    "developerLink": "개발자 페이지",
+    "donate": "개발자에게 기부하기",
+    "muteText": "음소거",
+    "unmuteText": "음소거 해제"
+  },
+  "es": {
+    "extensionName": "Controlador de Extensión de Videos de Instagram Reels",
+    "extensionDescription": "Un programa de extensión que ayuda a controlar los videos de Instagram Reels.",
+    "settings": "Configuraciones",
+    "developerLink": "Página del Desarrollador",
+    "donate": "Donar al Desarrollador",
+    "muteText": "Silenciar",
+    "unmuteText": "Activar Sonido"
+  },
+  "tr": {
+    "extensionName": "Instagram Reels Video Genişletme Denetleyici",
+    "extensionDescription": "Instagram Reels videolarını kontrol etmeye yardımcı olan bir genişletme programı.",
+    "settings": "Ayarlar",
+    "developerLink": "Geliştirici Sayfası",
+    "donate": "Geliştiriciye Bağış Yap",
+    "muteText": "Sessize Al",
+    "unmuteText": "Sesi Aç"
+  },
+  "pt": {
+    "extensionName": "Controlador de Extensão de Vídeo do Instagram Reels",
+    "extensionDescription": "Um programa de extensão que auxilia no controle de vídeos do Instagram Reels.",
+    "settings": "Configurações",
+    "developerLink": "Página do Desenvolvedor",
+    "donate": "Doar ao Desenvolvedor",
+    "muteText": "Silenciar",
+    "unmuteText": "Ativar Som"
+  },
+  "uk": {
+    "extensionName": "Контролер розширення відео Instagram Reels",
+    "extensionDescription": "Програма розширення, яка допомагає керувати відео Instagram Reels.",
+    "settings": "Налаштування",
+    "developerLink": "Сторінка Розробника",
+    "donate": "Пожертвувати Розробнику",
+    "muteText": "Вимкнути звук",
+    "unmuteText": "Увімкнути звук"
+  },
+  "ja": {
+    "extensionName": "インスタグラムリールビデオ拡張コントローラー",
+    "extensionDescription": "インスタグラムのリールビデオを制御するのを補助する拡張プログラムです。",
+    "settings": "設定",
+    "developerLink": "開発者ページ",
+    "donate": "開発者に寄付",
+    "muteText": "ミュート",
+    "unmuteText": "ミュート解除"
+  },
+  "zh": {
+    "extensionName": "Instagram Reels 视频扩展控制器",
+    "extensionDescription": "一款用于辅助控制 Instagram Reels 视频的扩展程序。",
+    "settings": "设置",
+    "developerLink": "开发者页面",
+    "donate": "捐赠给开发者",
+    "muteText": "静音",
+    "unmuteText": "取消静音"
+  },
+  "fr": {
+    "extensionName": "Contrôleur d'extension vidéo Instagram Reels",
+    "extensionDescription": "Aide à contrôler les vidéos Instagram Reels.",
+    "settings": "Paramètres",
+    "developerLink": "Page du développeur",
+    "donate": "Faire un don au développeur",
+    "muteText": "Muet",
+    "unmuteText": "Réactiver le son"
+  },
+  "tl": {
+    "extensionName": "Controller ng Pagpapalawak ng Video ng Instagram Reels",
+    "extensionDescription": "Tumutulong sa pagkontrol ng mga video sa Instagram Reels.",
+    "settings": "Mga Setting",
+    "developerLink": "Pahina ng Developer",
+    "donate": "Magbigay sa Developer",
+    "muteText": "I-mute",
+    "unmuteText": "I-unmute"
+  },
+  "id": {
+    "extensionName": "Pengontrol Ekstensi Video Instagram Reels",
+    "extensionDescription": "Membantu mengontrol video Instagram Reels.",
+    "settings": "Pengaturan",
+    "developerLink": "Halaman Pengembang",
+    "donate": "Donasi ke Pengembang",
+    "muteText": "Diam",
+    "unmuteText": "Bunyikan"
+  },
+  "hi": {
+    "extensionName": "इंस्टाग्राम रील्स वीडियो एक्सटेंशन कंट्रोलर",
+    "extensionDescription": "इंस्टाग्राम रील्स वीडियो को नियंत्रित करने में मदद करता है।",
+    "settings": "सेटिंग्स",
+    "developerLink": "डेवलपर पेज",
+    "donate": "डेवलपर को दान करें",
+    "muteText": "म्यूट",
+    "unmuteText": "अनम्यूट"
+  },
+  "it": {
+    "extensionName": "Controller di estensione video di Instagram Reels",
+    "extensionDescription": "Aiuta a controllare i video di Instagram Reels.",
+    "settings": "Impostazioni",
+    "developerLink": "Pagina dello Sviluppatore",
+    "donate": "Dona al Sviluppatore",
+    "muteText": "Disattiva audio",
+    "unmuteText": "Riattiva audio"
+  }
+}
