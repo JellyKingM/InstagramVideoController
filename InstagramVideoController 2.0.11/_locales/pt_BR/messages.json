@@ -1,0 +1,128 @@
+{
+  "extensionName": {
+    "message": "Controlador de video do Instagram"
+  },
+  "extensionDescription": {
+    "message": "Controle com facilidade a reproducao, o volume, a velocidade, a caixa lateral e as informacoes dos videos do Instagram."
+  },
+  "settings": {
+    "message": "Options"
+  },
+  "developerLink": {
+    "message": "Developer Page"
+  },
+  "donate": {
+    "message": "Doar ao desenvolvedor"
+  },
+  "panelTitle": {
+    "message": "Controlador de video do Instagram"
+  },
+  "buttonPlay": {
+    "message": "Reproduzir"
+  },
+  "tooltipPlay": {
+    "message": "Play or pause active video"
+  },
+  "buttonMute": {
+    "message": "Silenciar"
+  },
+  "tooltipMute": {
+    "message": "Mute or unmute all videos"
+  },
+  "buttonControls": {
+    "message": "Controles"
+  },
+  "tooltipControls": {
+    "message": "Toggle native video controls"
+  },
+  "buttonFind": {
+    "message": "Buscar"
+  },
+  "tooltipFind": {
+    "message": "Rescan videos"
+  },
+  "tooltipBack": {
+    "message": "Voltar 3 segundos"
+  },
+  "tooltipForward": {
+    "message": "Forward 3 seconds"
+  },
+  "tooltipSlowDown": {
+    "message": "Diminuir velocidade"
+  },
+  "tooltipSpeedUp": {
+    "message": "Aumentar velocidade"
+  },
+  "buttonHideBox": {
+    "message": "Ocultar caixa"
+  },
+  "tooltipHideBox": {
+    "message": "Ocultar a caixa lateral"
+  },
+  "buttonShowBox": {
+    "message": "Mostrar caixa"
+  },
+  "tooltipShowBox": {
+    "message": "Mostrar a caixa lateral"
+  },
+  "volumeLabel": {
+    "message": "Volume"
+  },
+  "statusPlaying": {
+    "message": "Reproduzindo"
+  },
+  "statusPaused": {
+    "message": "Pausado"
+  },
+  "statusMuted": {
+    "message": "Silenciado"
+  },
+  "statusUnmuted": {
+    "message": "Com som"
+  },
+  "statusVolumeShort": {
+    "message": "Vol"
+  },
+  "statusNoActiveVideo": {
+    "message": "No active video detected"
+  },
+  "tooltipShowController": {
+    "message": "Show Instagram Video Controller"
+  },
+  "noVideoInfo": {
+    "message": "No video info area detected."
+  },
+  "debugRemoteLabel": {
+    "message": "Developer debug remote"
+  },
+  "debugRemoteHint": {
+    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+  },
+  "saved": {
+    "message": "Salvo"
+  },
+  "muteText": {
+    "message": "Silenciar"
+  },
+  "unmuteText": {
+    "message": "Ativar som"
+  },
+  "tooltipDonate": {
+    "message": "Apoiar o desenvolvedor"
+  },
+  "donatePromptMessage": {
+    "message": "Est? gostando do app? Se estiver, considere apoiar o desenvolvedor."
+  },
+  "donatePromptLater": {
+    "message": "Mais tarde"
+  },
+  "donatePromptLaterTooltip": {
+    "message": "Ocultar este aviso por enquanto"
+  },
+  "donatePromptNever": {
+    "message": "N?o mostrar novamente"
+  },
+  "donatePromptNeverTooltip": {
+    "message": "N?o mostrar este aviso novamente"
+  }
+}
