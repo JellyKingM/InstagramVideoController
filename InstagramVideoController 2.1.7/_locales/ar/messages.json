@@ -1,0 +1,128 @@
+{
+  "extensionName": {
+    "message": "Instagram Video Controller"
+  },
+  "extensionDescription": {
+    "message": "Control Instagram video playback, volume, speed, side box, and video information more easily."
+  },
+  "settings": {
+    "message": "Options"
+  },
+  "developerLink": {
+    "message": "Developer Page"
+  },
+  "donate": {
+    "message": "Donate to Developer"
+  },
+  "panelTitle": {
+    "message": "Instagram Video Controller"
+  },
+  "buttonPlay": {
+    "message": "Play"
+  },
+  "tooltipPlay": {
+    "message": "Play or pause active video"
+  },
+  "buttonMute": {
+    "message": "Mute"
+  },
+  "tooltipMute": {
+    "message": "Mute or unmute all videos"
+  },
+  "buttonControls": {
+    "message": "Controls"
+  },
+  "tooltipControls": {
+    "message": "Toggle native video controls"
+  },
+  "buttonFind": {
+    "message": "Find"
+  },
+  "tooltipFind": {
+    "message": "Rescan videos"
+  },
+  "tooltipBack": {
+    "message": "Back 3 seconds"
+  },
+  "tooltipForward": {
+    "message": "Forward 3 seconds"
+  },
+  "tooltipSlowDown": {
+    "message": "Slow down"
+  },
+  "tooltipSpeedUp": {
+    "message": "Speed up"
+  },
+  "buttonHideBox": {
+    "message": "Hide box"
+  },
+  "tooltipHideBox": {
+    "message": "Hide the side box"
+  },
+  "buttonShowBox": {
+    "message": "Show box"
+  },
+  "tooltipShowBox": {
+    "message": "Show the side box"
+  },
+  "volumeLabel": {
+    "message": "Volume"
+  },
+  "statusPlaying": {
+    "message": "Playing"
+  },
+  "statusPaused": {
+    "message": "Paused"
+  },
+  "statusMuted": {
+    "message": "Muted"
+  },
+  "statusUnmuted": {
+    "message": "Unmuted"
+  },
+  "statusVolumeShort": {
+    "message": "Vol"
+  },
+  "statusNoActiveVideo": {
+    "message": "No active video detected"
+  },
+  "tooltipShowController": {
+    "message": "Show Instagram Video Controller"
+  },
+  "noVideoInfo": {
+    "message": "No video info area detected."
+  },
+  "debugRemoteLabel": {
+    "message": "Developer debug remote"
+  },
+  "debugRemoteHint": {
+    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+  },
+  "saved": {
+    "message": "Saved"
+  },
+  "muteText": {
+    "message": "Mute"
+  },
+  "unmuteText": {
+    "message": "Unmute"
+  },
+  "tooltipDonate": {
+    "message": "???? ??????"
+  },
+  "donatePromptMessage": {
+    "message": "?? ?????? ???????? ???????? ??? ?????? ????? ??? ??????."
+  },
+  "donatePromptLater": {
+    "message": "??????"
+  },
+  "donatePromptLaterTooltip": {
+    "message": "????? ??? ??????? ????"
+  },
+  "donatePromptNever": {
+    "message": "??? ??????? ??? ????"
+  },
+  "donatePromptNeverTooltip": {
+    "message": "?? ????? ??? ??????? ??? ????"
+  }
+}
