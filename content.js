@@ -555,7 +555,7 @@
         if ((isSingleReelPage() || isStoriesPage() || isPostPage()) && video) {
             const pageAnchor = getAncestor(
                 video,
-                isReelStyleLayout() ? 13 : (isStoriesPage() ? 18 : 17)
+                isReelStyleLayout() ? 13 : (isStoriesPage() ? 19 : 17)
             );
             if (pageAnchor && pageAnchor.parentElement) {
                 const parentAnchor = getInsertAnchorFromParent(pageAnchor.parentElement);
@@ -875,6 +875,8 @@
             sideBox.style.setProperty('min-width', `${width}px`, 'important');
             sideBox.style.setProperty('max-width', `${width}px`, 'important');
         }
+
+        sideBox.style.setProperty('align-self', isStoriesPage() ? 'flex-start' : 'stretch', 'important');
 
         sideBox.style.setProperty('height', `${height}px`, 'important');
         sideBox.style.setProperty('min-height', `${height}px`, 'important');
