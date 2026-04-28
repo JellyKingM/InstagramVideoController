@@ -1241,7 +1241,7 @@
         const movedInfo = moveVideoOverlayInfoToSideBox(activeVideo);
         if (movedInfo) {
             hideVideoClickOverlay(overlay);
-            if (!hiddenReelSibling) {
+            if (!hiddenReelSibling && !isReelStyleLayout()) {
                 hideVideoNextOverlay(activeVideo);
             }
             hideAllVideoPlayerElements();
