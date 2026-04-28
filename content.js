@@ -858,7 +858,7 @@
             sideBox.style.removeProperty('min-width');
             sideBox.style.removeProperty('max-width');
         } else {
-            const width = 337;
+            const width = (isReelsPage() || isSingleReelPage()) ? 497 : 337;
             if (width <= 0) return;
             sideBox.style.setProperty('width', `${width}px`, 'important');
             sideBox.style.setProperty('min-width', `${width}px`, 'important');
