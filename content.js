@@ -860,14 +860,14 @@
         } else {
             const width = 337;
             if (width <= 0) return;
-            sideBox.style.width = `${width}px`;
-            sideBox.style.minWidth = `${width}px`;
-            sideBox.style.maxWidth = `${width}px`;
+            sideBox.style.setProperty('width', `${width}px`, 'important');
+            sideBox.style.setProperty('min-width', `${width}px`, 'important');
+            sideBox.style.setProperty('max-width', `${width}px`, 'important');
         }
 
-        sideBox.style.height = `${height}px`;
-        sideBox.style.minHeight = `${height}px`;
-        sideBox.style.maxHeight = `${height}px`;
+        sideBox.style.setProperty('height', `${height}px`, 'important');
+        sideBox.style.setProperty('min-height', `${height}px`, 'important');
+        sideBox.style.setProperty('max-height', `${height}px`, 'important');
     }
 
     function isDescriptionMoreButton(button) {
