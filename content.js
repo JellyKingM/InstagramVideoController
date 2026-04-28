@@ -528,6 +528,14 @@
         return !!document.querySelector('div._ap3a._aaco._aacw._aacy._aad6');
     }
 
+    function isPopupPostLayout() {
+        return isPostPage() && !isStandalonePostPageLayout();
+    }
+
+    function isReelStyleLayout() {
+        return isSingleReelPage() || isPopupPostLayout();
+    }
+
     function usesDirectVideoSiblingAnchor() {
         return false;
     }
@@ -547,7 +555,7 @@
         if ((isSingleReelPage() || isStoriesPage() || isPostPage()) && video) {
             const pageAnchor = getAncestor(
                 video,
-                isSingleReelPage() ? 13 : (isStoriesPage() ? 15 : (isStandalonePostPageLayout() ? 17 : 13))
+                isReelStyleLayout() ? 13 : (isStoriesPage() ? 19 : 17)
             );
             if (pageAnchor && pageAnchor.parentElement) {
                 const parentAnchor = getInsertAnchorFromParent(pageAnchor.parentElement);
@@ -858,7 +866,7 @@
             sideBox.style.removeProperty('min-width');
             sideBox.style.removeProperty('max-width');
         } else {
-            const width = (isReelsPage() || isSingleReelPage()) ? 497 : 337;
+            const width = (isReelsPage() || isReelStyleLayout()) ? 497 : 337;
             if (width <= 0) return;
             sideBox.style.setProperty('width', `${width}px`, 'important');
             sideBox.style.setProperty('min-width', `${width}px`, 'important');
@@ -1143,7 +1151,7 @@
     }
 
     function hideAllVideoPlayerElements() {
-        if (isSingleReelPage()) return 0;
+        if (isReelStyleLayout()) return 0;
 
         const players = Array.from(document.querySelectorAll('[aria-label="Video player"]'));
         players.forEach(player => {
