@@ -10,5 +10,10 @@ legacy/
 *.pem
 *.key
 *.log
+11111.png
+메인페이지.png
+인스타 릴스페이지.png
+스토어설명.txt
+스토어설명_언어별.txt
 .DS_Store
 Thumbs.db
