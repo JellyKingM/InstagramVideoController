@@ -1206,6 +1206,7 @@
             if (!hiddenReelSibling) {
                 hideVideoNextOverlay(activeVideo);
             }
+            hideVideoPlayerElement(activeVideo);
         }
     }
 
