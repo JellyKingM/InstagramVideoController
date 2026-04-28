@@ -1240,7 +1240,9 @@
         const overlay = getVideoOverlay(activeVideo);
         const movedInfo = moveVideoOverlayInfoToSideBox(activeVideo);
         if (movedInfo) {
-            hideVideoClickOverlay(overlay);
+            if (!isReelStyleLayout()) {
+                hideVideoClickOverlay(overlay);
+            }
             if (!hiddenReelSibling && !isReelStyleLayout()) {
                 hideVideoNextOverlay(activeVideo);
             }
