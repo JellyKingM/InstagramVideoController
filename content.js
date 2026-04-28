@@ -255,11 +255,17 @@
         if (!video || !isStandalonePostPageLayout()) return;
 
         const container = getAncestor(video, 18);
+        const outerContainer = getAncestor(video, 19);
         if (!container) return;
 
         container.dataset.instagramVideoControllerStandalonePostLayout = 'true';
         container.style.setProperty('display', 'flex', 'important');
         container.style.setProperty('flex-wrap', 'wrap', 'important');
+
+        if (outerContainer) {
+            outerContainer.dataset.instagramVideoControllerStandalonePostOuterLayout = 'true';
+            outerContainer.style.setProperty('max-width', 'none', 'important');
+        }
     }
 
     function applySettingsToVideo(video) {
