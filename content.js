@@ -946,6 +946,14 @@
         return null;
     }
 
+    function getFixedInfoWrapperForVideo(video) {
+        if (!video || !isReelsPage()) return null;
+
+        const root = getAncestor(video, 11);
+        const firstChild = root && root.firstElementChild;
+        return firstChild instanceof Element ? firstChild : null;
+    }
+
     function findInfoElementByMoreButton(video) {
         const fixedInfoElement = getFixedInfoElementForVideo(video);
         if (fixedInfoElement) {
@@ -1059,6 +1067,12 @@
             sideBoxInfo.appendChild(infoElement);
         }
         movedInfoByVideo.set(video, infoElement);
+
+        const fixedInfoWrapper = getFixedInfoWrapperForVideo(video);
+        if (fixedInfoWrapper && fixedInfoWrapper.contains(infoElement) === false) {
+            fixedInfoWrapper.dataset.instagramVideoControllerHiddenInfoWrapper = 'true';
+            fixedInfoWrapper.style.setProperty('display', 'none', 'important');
+        }
 
         clickMoreButton(infoElement);
         return true;
