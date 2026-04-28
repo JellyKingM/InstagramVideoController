@@ -541,7 +541,7 @@
     }
 
     function isSupportedPage() {
-        return isSingleReelPage() || isReelsPage() || isPostPage() || isStoriesPage();
+        return isReelsPage() || isPostPage() || isStoriesPage();
     }
 
     function getInsertAnchorFromParent(parent) {
