@@ -555,7 +555,7 @@
         if ((isSingleReelPage() || isStoriesPage() || isPostPage()) && video) {
             const pageAnchor = getAncestor(
                 video,
-                isReelStyleLayout() ? 13 : (isStoriesPage() ? 19 : 17)
+                isReelStyleLayout() ? 13 : (isStoriesPage() ? 18 : 17)
             );
             if (pageAnchor && pageAnchor.parentElement) {
                 const parentAnchor = getInsertAnchorFromParent(pageAnchor.parentElement);
