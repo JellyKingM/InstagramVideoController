@@ -712,6 +712,7 @@
             flex: 0 0 auto;
             align-self: stretch;
             position: relative;
+            z-index: 2147483646;
             overflow: hidden;
             background: rgba(18, 18, 18, 0.96);
             pointer-events: auto;
@@ -866,7 +867,9 @@
             sideBox.style.removeProperty('min-width');
             sideBox.style.removeProperty('max-width');
         } else {
-            const width = (isReelsPage() || isReelStyleLayout()) ? 497 : 337;
+            const width = isStoriesPage()
+                ? Math.round(video.offsetWidth || videoRect.width)
+                : ((isReelsPage() || isReelStyleLayout()) ? 497 : 337);
             if (width <= 0) return;
             sideBox.style.setProperty('width', `${width}px`, 'important');
             sideBox.style.setProperty('min-width', `${width}px`, 'important');
