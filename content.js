@@ -1068,6 +1068,12 @@
     function moveVideoOverlayInfoToSideBox(video) {
         if (!sideBoxInfo || !video) return false;
 
+        if (isReelStyleLayout()) {
+            sideBoxInfo.replaceChildren();
+            delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
+            return false;
+        }
+
         if (attachMovedInfoToSideBox(video)) {
             clickMoreButton(movedInfoByVideo.get(video));
             return true;
