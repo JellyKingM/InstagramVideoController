@@ -573,6 +573,10 @@
         return Math.round(lastSibling.getBoundingClientRect().width || lastSibling.offsetWidth || 0);
     }
 
+    function clampNumber(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
     function cleanupSideBox() {
         if (sideBoxResizeObserver) {
             sideBoxResizeObserver.disconnect();
@@ -823,8 +827,25 @@
 
         const anchor = findSideBoxAnchor(video);
         const maxWidth = getReelPageSideBoxMaxWidth(anchor);
-        const width = maxWidth || Math.round(video.offsetWidth || video.getBoundingClientRect().width);
-        const height = Math.round(video.offsetHeight || video.getBoundingClientRect().height);
+        const videoRect = video.getBoundingClientRect();
+        const videoWidth = Math.round(video.offsetWidth || videoRect.width);
+        const height = Math.round(video.offsetHeight || videoRect.height);
+        let width = clampNumber(Math.round(videoWidth * 0.55), 300, 400);
+
+        if (maxWidth > 0) {
+            width = Math.min(width, maxWidth);
+        }
+
+        if (anchor) {
+            const anchorRect = anchor.getBoundingClientRect();
+            const availableWidth = Math.floor(anchorRect.left - 24);
+            if (availableWidth > 0) {
+                width = Math.min(width, Math.max(220, availableWidth));
+            }
+        } else {
+            width = Math.min(width, Math.max(220, Math.floor(window.innerWidth * 0.32)));
+        }
+
         if (width <= 0 || height <= 0) return;
 
         sideBox.style.width = `${width}px`;
@@ -921,6 +942,21 @@
             if (current !== stopAt) {
                 candidates.push(current);
             }
+        }
+
+        const topLevelInfoCandidate = [...candidates].reverse().find(candidate =>
+            candidate.contains(moreButton) &&
+            candidate.children.length >= 2 &&
+            candidate.firstElementChild &&
+            candidate.querySelector('[role="presentation"]') &&
+            (
+                candidate.firstElementChild.querySelector('img') ||
+                candidate.firstElementChild.querySelector('a[role="link"]') ||
+                candidate.firstElementChild.querySelector('[role="button"]')
+            )
+        );
+        if (topLevelInfoCandidate) {
+            return topLevelInfoCandidate;
         }
 
         return candidates.find(candidate =>
