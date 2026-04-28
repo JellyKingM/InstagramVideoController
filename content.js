@@ -825,26 +825,9 @@
     function sizeSideBoxToVideo(video) {
         if (!sideBox || !video) return;
 
-        const anchor = findSideBoxAnchor(video);
-        const maxWidth = getReelPageSideBoxMaxWidth(anchor);
         const videoRect = video.getBoundingClientRect();
-        const videoWidth = Math.round(video.offsetWidth || videoRect.width);
         const height = Math.round(video.offsetHeight || videoRect.height);
-        let width = clampNumber(Math.round(videoWidth * 0.55), 300, 400);
-
-        if (maxWidth > 0) {
-            width = Math.min(width, maxWidth);
-        }
-
-        if (anchor) {
-            const anchorRect = anchor.getBoundingClientRect();
-            const availableWidth = Math.floor(anchorRect.left - 24);
-            if (availableWidth > 0) {
-                width = Math.min(width, Math.max(220, availableWidth));
-            }
-        } else {
-            width = Math.min(width, Math.max(220, Math.floor(window.innerWidth * 0.32)));
-        }
+        const width = 1072;
 
         if (width <= 0 || height <= 0) return;
 
