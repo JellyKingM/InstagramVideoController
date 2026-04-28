@@ -827,7 +827,7 @@
 
         const videoRect = video.getBoundingClientRect();
         const height = Math.round(video.offsetHeight || videoRect.height);
-        const width = 1072;
+        const width = 497;
 
         if (width <= 0 || height <= 0) return;
 
