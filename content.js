@@ -541,7 +541,7 @@
         }
 
         if (isReelsPage()) {
-            const reelAnchorLevels = [9, 8, 7, 6];
+            const reelAnchorLevels = [11, 10, 9, 8, 7, 6];
             for (const level of reelAnchorLevels) {
                 const reelContainer = getAncestor(video, level);
                 if (!reelContainer || !reelContainer.parentElement) continue;
