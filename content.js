@@ -681,7 +681,7 @@
             align-self: stretch;
             position: relative;
             overflow: hidden;
-            background: transparent;
+            background: rgba(18, 18, 18, 0.96);
             pointer-events: auto;
             display: flex;
             flex-direction: column;
@@ -698,7 +698,7 @@
             overflow: auto;
             padding: 12px;
             color: #fff;
-            background: transparent;
+            background: rgba(18, 18, 18, 0.96);
             font-family: Arial, sans-serif;
             font-size: 14px;
             line-height: 1.35;
