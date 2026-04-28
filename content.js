@@ -504,6 +504,12 @@
         return /^\/stories\/[^/]+(?:\/[^/]+)?\/?/.test(location.pathname);
     }
 
+    function isStandalonePostPageLayout() {
+        if (!isPostPage()) return false;
+
+        return !!document.querySelector('div._ap3a._aaco._aacw._aacy._aad6');
+    }
+
     function usesDirectVideoSiblingAnchor() {
         return false;
     }
@@ -523,7 +529,7 @@
         if ((isSingleReelPage() || isStoriesPage() || isPostPage()) && video) {
             const pageAnchor = getAncestor(
                 video,
-                isSingleReelPage() ? 9 : (isStoriesPage() ? 15 : 13)
+                isSingleReelPage() ? 9 : (isStoriesPage() ? 15 : (isStandalonePostPageLayout() ? 17 : 13))
             );
             if (pageAnchor && pageAnchor.parentElement) {
                 const parentAnchor = getInsertAnchorFromParent(pageAnchor.parentElement);
