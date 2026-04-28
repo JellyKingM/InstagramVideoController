@@ -929,7 +929,29 @@
         return true;
     }
 
+    function getFixedInfoElementForVideo(video) {
+        if (!video) return null;
+
+        if (isReelsPage()) {
+            const root = getAncestor(video, 11);
+            const firstChild = root && root.firstElementChild;
+            const secondChild = firstChild && firstChild.children.length >= 2
+                ? firstChild.children[1]
+                : null;
+            if (secondChild instanceof Element) {
+                return secondChild;
+            }
+        }
+
+        return null;
+    }
+
     function findInfoElementByMoreButton(video) {
+        const fixedInfoElement = getFixedInfoElementForVideo(video);
+        if (fixedInfoElement) {
+            return fixedInfoElement;
+        }
+
         const moreButton = findMoreButtonForVideo(video);
         if (!moreButton) return null;
 
