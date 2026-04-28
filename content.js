@@ -251,6 +251,17 @@
         container.style.setProperty('border-radius', '0', 'important');
     }
 
+    function applyStandalonePostLayoutStyle(video) {
+        if (!video || !isStandalonePostPageLayout()) return;
+
+        const container = getAncestor(video, 18);
+        if (!container) return;
+
+        container.dataset.instagramVideoControllerStandalonePostLayout = 'true';
+        container.style.setProperty('display', 'flex', 'important');
+        container.style.setProperty('flex-wrap', 'wrap', 'important');
+    }
+
     function applySettingsToVideo(video) {
         if (!(video instanceof HTMLVideoElement)) return;
 
@@ -266,6 +277,7 @@
         }, 0);
         video.playbackRate = options.playbackRateV;
         applyVideoContainerStyle(video);
+        applyStandalonePostLayoutStyle(video);
         hideReelPageVideoNextSibling(video);
 
         if (video.dataset.instagramVideoControllerProcessed === 'true') return;
@@ -529,7 +541,7 @@
         if ((isSingleReelPage() || isStoriesPage() || isPostPage()) && video) {
             const pageAnchor = getAncestor(
                 video,
-                isSingleReelPage() ? 13 : (isStoriesPage() ? 15 : (isStandalonePostPageLayout() ? 18 : 13))
+                isSingleReelPage() ? 13 : (isStoriesPage() ? 15 : (isStandalonePostPageLayout() ? 17 : 13))
             );
             if (pageAnchor && pageAnchor.parentElement) {
                 const parentAnchor = getInsertAnchorFromParent(pageAnchor.parentElement);
@@ -833,7 +845,7 @@
 
         const videoRect = video.getBoundingClientRect();
         const height = Math.round(video.offsetHeight || videoRect.height);
-        const width = 497;
+        const width = 337;
 
         if (width <= 0 || height <= 0) return;
 
