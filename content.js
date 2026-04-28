@@ -1184,7 +1184,7 @@
             return;
         }
 
-        if (!sideBox || sideBoxVideo !== activeVideo || sideBox.nextElementSibling !== anchor) {
+        if (!sideBox || sideBoxVideo !== activeVideo) {
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
             recordSideBoxShown();
@@ -1195,6 +1195,9 @@
                 });
                 sideBoxResizeObserver.observe(activeVideo);
             }
+        }
+        else if (sideBox.parentElement !== anchor.parentElement || sideBox.nextElementSibling !== anchor) {
+            anchor.parentElement.insertBefore(sideBox, anchor);
         }
 
         sizeSideBoxToVideo(activeVideo);
