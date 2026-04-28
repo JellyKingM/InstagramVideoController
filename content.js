@@ -956,6 +956,13 @@
             )
         );
         if (topLevelInfoCandidate) {
+            const infoWrapper = topLevelInfoCandidate.firstElementChild;
+            const infoSection = infoWrapper && infoWrapper.children.length >= 2
+                ? infoWrapper.children[1]
+                : null;
+            if (infoSection instanceof Element && infoSection.contains(moreButton)) {
+                return infoSection;
+            }
             return topLevelInfoCandidate;
         }
 
