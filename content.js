@@ -677,7 +677,7 @@
             align-self: stretch;
             position: relative;
             overflow: hidden;
-            background: #000;
+            background: transparent;
             pointer-events: auto;
             display: flex;
             flex-direction: column;
@@ -694,6 +694,7 @@
             overflow: auto;
             padding: 12px;
             color: #fff;
+            background: transparent;
             font-family: Arial, sans-serif;
             font-size: 14px;
             line-height: 1.35;
@@ -855,6 +856,39 @@
             .find(isDescriptionMoreButton) || null;
     }
 
+    function getDescriptionSearchRoots(video) {
+        const roots = [];
+        const pushRoot = root => {
+            if (!root || !(root instanceof Element)) return;
+            if (video && root === video) return;
+            if (video && root.contains(video) && root.tagName === 'VIDEO') return;
+            if (!roots.includes(root)) roots.push(root);
+        };
+
+        pushRoot(getVideoOverlay(video));
+
+        if (video && (isReelsPage() || isSingleReelPage())) {
+            const levels = [11, 10, 9, 8];
+            for (const level of levels) {
+                const container = getAncestor(video, level);
+                if (!container) continue;
+                pushRoot(container.firstElementChild);
+                pushRoot(container);
+            }
+        }
+
+        return roots;
+    }
+
+    function findMoreButtonForVideo(video) {
+        const roots = getDescriptionSearchRoots(video);
+        for (const root of roots) {
+            const button = findMoreButton(root);
+            if (button) return button;
+        }
+        return null;
+    }
+
     function clickMoreButton(root) {
         const moreButton = findMoreButton(root);
         if (!moreButton || moreButton.dataset.instagramVideoControllerClickedMore === 'true') return;
@@ -864,16 +898,27 @@
         log('clicked more button', moreButton);
     }
 
+    function clickMoreButtonForVideo(video) {
+        const moreButton = findMoreButtonForVideo(video);
+        if (!moreButton || moreButton.dataset.instagramVideoControllerClickedMore === 'true') return false;
+
+        moreButton.dataset.instagramVideoControllerClickedMore = 'true';
+        moreButton.click();
+        log('clicked more button for video', moreButton);
+        return true;
+    }
+
     function findInfoElementByMoreButton(video) {
-        const overlay = getVideoOverlay(video);
-        const moreButton = findMoreButton(overlay);
+        const moreButton = findMoreButtonForVideo(video);
         if (!moreButton) return null;
 
         const candidates = [];
         let current = moreButton;
-        while (current && current.parentElement && current !== overlay) {
+        const searchRoots = getDescriptionSearchRoots(video);
+        const stopAt = searchRoots.find(root => root && root.contains(moreButton)) || null;
+        while (current && current.parentElement && current !== stopAt) {
             current = current.parentElement;
-            if (current !== overlay) {
+            if (current !== stopAt) {
                 candidates.push(current);
             }
         }
@@ -923,6 +968,13 @@
     function moveVideoOverlayInfoToSideBox(video) {
         if (!sideBoxInfo || !video) return false;
 
+        if (isReelsPage() || isSingleReelPage()) {
+            sideBoxInfo.replaceChildren();
+            delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
+            clickMoreButtonForVideo(video);
+            return false;
+        }
+
         if (attachMovedInfoToSideBox(video)) {
             clickMoreButton(movedInfoByVideo.get(video));
             return true;
@@ -930,7 +982,7 @@
 
         const overlay = getVideoOverlay(video);
         restoreVideoClickOverlayForInfoSearch(overlay);
-        clickMoreButton(overlay);
+        clickMoreButtonForVideo(video);
 
         let infoElement = findInfoElementByMoreButton(video);
         if (!infoElement) {
