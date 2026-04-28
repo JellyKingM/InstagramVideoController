@@ -1143,6 +1143,8 @@
     }
 
     function hideAllVideoPlayerElements() {
+        if (isSingleReelPage()) return 0;
+
         const players = Array.from(document.querySelectorAll('[aria-label="Video player"]'));
         players.forEach(player => {
             player.dataset.instagramVideoControllerHiddenVideoPlayer = 'true';
@@ -1164,12 +1166,7 @@
     function hideReelPageVideoNextSibling(video) {
         if (!isSingleReelPage()) return false;
 
-        const sibling = getVideoOverlay(video);
-        if (!sibling) return false;
-
-        sibling.dataset.instagramVideoControllerHiddenReelSibling = 'true';
-        sibling.style.setProperty('display', 'none', 'important');
-        return true;
+        return false;
     }
 
     function updateSideBox() {
