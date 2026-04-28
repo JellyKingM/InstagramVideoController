@@ -851,13 +851,20 @@
 
         const videoRect = video.getBoundingClientRect();
         const height = Math.round(video.offsetHeight || videoRect.height);
-        const width = 337;
+        if (height <= 0) return;
 
-        if (width <= 0 || height <= 0) return;
+        if (isStandalonePostPageLayout()) {
+            sideBox.style.removeProperty('width');
+            sideBox.style.removeProperty('min-width');
+            sideBox.style.removeProperty('max-width');
+        } else {
+            const width = 337;
+            if (width <= 0) return;
+            sideBox.style.width = `${width}px`;
+            sideBox.style.minWidth = `${width}px`;
+            sideBox.style.maxWidth = `${width}px`;
+        }
 
-        sideBox.style.width = `${width}px`;
-        sideBox.style.minWidth = `${width}px`;
-        sideBox.style.maxWidth = `${width}px`;
         sideBox.style.height = `${height}px`;
         sideBox.style.minHeight = `${height}px`;
         sideBox.style.maxHeight = `${height}px`;
