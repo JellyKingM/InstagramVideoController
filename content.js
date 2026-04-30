@@ -891,10 +891,19 @@
         const text = button.textContent || '';
         const hiddenMore = button.querySelector('span[aria-hidden="true"]');
         const autoText = button.querySelector('[dir="auto"]');
-        return (text.includes('더 보기') || text.includes('더보기') || text.toLowerCase().includes('more')) &&
-            hiddenMore &&
-            autoText &&
+        const normalizedText = text.toLowerCase();
+        const hasMoreText =
+            normalizedText.includes('more') ||
+            normalizedText.includes('see more');
+        const matchesWrapperShape =
+            !!button.querySelector('.x1xmf6yo') &&
+            !!autoText &&
             !button.querySelector('svg');
+
+        return (
+            (hasMoreText && hiddenMore && autoText && !button.querySelector('svg')) ||
+            (matchesWrapperShape && !!button.closest('[role="presentation"]'))
+        );
     }
 
     function findMoreButton(root) {
