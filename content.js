@@ -1212,18 +1212,21 @@
     }
 
     function hideReelPageClickCover(video) {
-        if (!isSingleReelPage() || !video) return false;
+        if (!isReelStyleLayout() || !video) return false;
 
         const ancestor = getAncestor(video, 7);
         if (!ancestor || !ancestor.parentElement) return false;
 
         const siblings = Array.from(ancestor.parentElement.children)
             .filter(child => child !== sideBox && child !== sideBoxRestoreButton);
-        const lastSibling = siblings[siblings.length - 1];
-        if (!lastSibling || lastSibling === ancestor) return false;
+        const ancestorIndex = siblings.indexOf(ancestor);
+        if (ancestorIndex < 0) return false;
 
-        lastSibling.dataset.instagramVideoControllerHiddenReelClickCover = 'true';
-        lastSibling.style.setProperty('display', 'none', 'important');
+        const nextSibling = siblings[ancestorIndex + 1];
+        if (!nextSibling) return false;
+
+        nextSibling.dataset.instagramVideoControllerHiddenReelClickCover = 'true';
+        nextSibling.style.setProperty('display', 'none', 'important');
         return true;
     }
 
