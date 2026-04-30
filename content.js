@@ -354,7 +354,7 @@
         return button;
     }
 
-    function downloadActiveVideo() {
+    async function downloadActiveVideo() {
         if (!activeVideo || !document.contains(activeVideo)) {
             activeVideo = pickActiveVideo();
         }
@@ -363,14 +363,27 @@
         const sourceUrl = activeVideo.currentSrc || activeVideo.src;
         if (!sourceUrl) return;
 
-        const link = document.createElement('a');
-        link.href = sourceUrl;
-        link.download = '';
-        link.rel = 'noopener noreferrer';
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        try {
+            const response = await fetch(sourceUrl, {
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                throw new Error(`download failed: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        } catch (error) {
+            log('video download fallback', error);
+            window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+        }
     }
 
     function createPanel() {
