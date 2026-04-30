@@ -360,7 +360,10 @@
         }
         if (!activeVideo) return;
 
-        const sourceUrl = activeVideo.currentSrc || activeVideo.src;
+        const diagnostics = getVideoDownloadDiagnostics(activeVideo);
+        log('video download diagnostics', diagnostics);
+
+        const sourceUrl = diagnostics.primaryUrl;
         if (!sourceUrl) return;
 
         try {
@@ -373,10 +376,46 @@
             if (!response || !response.ok) {
                 throw new Error(response && response.error ? response.error : 'download request failed');
             }
+            log('video download started', {
+                url: sourceUrl,
+                downloadId: response.downloadId
+            });
         } catch (error) {
             log('video download fallback', error);
             window.open(sourceUrl, '_blank', 'noopener,noreferrer');
         }
+    }
+
+    function getVideoDownloadDiagnostics(video) {
+        const sourceElements = Array.from(video ? video.querySelectorAll('source') : []);
+        const sourceUrls = sourceElements
+            .map(source => ({
+                src: source.src || source.getAttribute('src') || '',
+                type: source.type || source.getAttribute('type') || ''
+            }))
+            .filter(item => item.src);
+
+        const primaryUrl = (video && (video.currentSrc || video.src)) || sourceUrls[0]?.src || '';
+        return {
+            primaryUrl,
+            currentSrc: video ? video.currentSrc || '' : '',
+            src: video ? video.src || '' : '',
+            currentTime: video ? video.currentTime : null,
+            duration: video ? video.duration : null,
+            paused: video ? video.paused : null,
+            readyState: video ? video.readyState : null,
+            sourceUrls,
+            guessedType: guessVideoSourceType(primaryUrl)
+        };
+    }
+
+    function guessVideoSourceType(url) {
+        if (!url) return 'missing';
+        if (url.startsWith('blob:')) return 'blob';
+        if (/\.m3u8($|\?)/i.test(url)) return 'm3u8';
+        if (/\.mpd($|\?)/i.test(url)) return 'mpd';
+        if (/\.mp4($|\?)/i.test(url)) return 'mp4';
+        return 'unknown';
     }
 
     function getDownloadFileName(sourceUrl) {

@@ -25,12 +25,14 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     }
 
     if (message.downloadVideo && message.downloadVideo.url) {
+        console.log('[InstagramVideoController]', 'download request', message.downloadVideo);
         chrome.downloads.download({
             url: message.downloadVideo.url,
             filename: message.downloadVideo.filename || 'instagram-video.mp4',
             saveAs: false
         }, function (downloadId) {
             if (chrome.runtime.lastError) {
+                console.log('[InstagramVideoController]', 'download error', chrome.runtime.lastError.message);
                 sendResponse({
                     ok: false,
                     error: chrome.runtime.lastError.message
@@ -38,6 +40,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                 return;
             }
 
+            console.log('[InstagramVideoController]', 'download started', downloadId);
             sendResponse({
                 ok: true,
                 downloadId
