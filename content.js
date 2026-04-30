@@ -541,7 +541,7 @@
     }
 
     function isSupportedPage() {
-        return isReelsPage() || isPostPage() || isStoriesPage();
+        return isSingleReelPage() || isReelsPage() || isPostPage() || isStoriesPage();
     }
 
     function getInsertAnchorFromParent(parent) {
@@ -1056,6 +1056,15 @@
         });
     }
 
+    function applyWhiteTextToInfoElement(infoElement) {
+        if (!(infoElement instanceof Element)) return;
+
+        infoElement.style.setProperty('color', '#fff', 'important');
+        Array.from(infoElement.querySelectorAll('*')).forEach(child => {
+            child.style.setProperty('color', 'inherit', 'important');
+        });
+    }
+
     function hasMovedInfoForVideo(video) {
         const infoElement = movedInfoByVideo.get(video);
         return infoElement &&
@@ -1080,6 +1089,9 @@
         if (isReelStyleLayout()) {
             sideBoxInfo.replaceChildren();
             delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
+            clickMoreButtonForVideo(video);
+            const infoElement = findInfoElementByMoreButton(video);
+            applyWhiteTextToInfoElement(infoElement);
             return false;
         }
 
