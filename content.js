@@ -367,6 +367,12 @@
         if (!sourceUrl) return;
 
         try {
+            if (diagnostics.guessedType === 'blob') {
+                await downloadBlobVideoInPage(sourceUrl);
+                log('video blob download started', { url: sourceUrl });
+                return;
+            }
+
             const response = await chrome.runtime.sendMessage({
                 downloadVideo: {
                     url: sourceUrl,
@@ -384,6 +390,26 @@
             log('video download fallback', error);
             window.open(sourceUrl, '_blank', 'noopener,noreferrer');
         }
+    }
+
+    async function downloadBlobVideoInPage(sourceUrl) {
+        const response = await fetch(sourceUrl);
+        if (!response.ok) {
+            throw new Error(`blob fetch failed: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = getDownloadFileName(sourceUrl);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        window.setTimeout(() => {
+            URL.revokeObjectURL(objectUrl);
+            link.remove();
+        }, 30000);
     }
 
     function getVideoDownloadDiagnostics(video) {
