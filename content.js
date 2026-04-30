@@ -375,14 +375,27 @@
             const objectUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = objectUrl;
-            link.download = '';
+            link.download = getDownloadFileName(sourceUrl);
+            link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
-            link.remove();
-            window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+            window.setTimeout(() => {
+                URL.revokeObjectURL(objectUrl);
+                link.remove();
+            }, 30000);
         } catch (error) {
             log('video download fallback', error);
             window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+        }
+    }
+
+    function getDownloadFileName(sourceUrl) {
+        try {
+            const url = new URL(sourceUrl, location.href);
+            const pathName = url.pathname.split('/').filter(Boolean).pop() || 'instagram-video.mp4';
+            return pathName.includes('.') ? pathName : `${pathName}.mp4`;
+        } catch (error) {
+            return 'instagram-video.mp4';
         }
     }
 
