@@ -1211,6 +1211,22 @@
         return false;
     }
 
+    function hideReelPageClickCover(video) {
+        if (!isSingleReelPage() || !video) return false;
+
+        const ancestor = getAncestor(video, 7);
+        if (!ancestor || !ancestor.parentElement) return false;
+
+        const siblings = Array.from(ancestor.parentElement.children)
+            .filter(child => child !== sideBox && child !== sideBoxRestoreButton);
+        const lastSibling = siblings[siblings.length - 1];
+        if (!lastSibling || lastSibling === ancestor) return false;
+
+        lastSibling.dataset.instagramVideoControllerHiddenReelClickCover = 'true';
+        lastSibling.style.setProperty('display', 'none', 'important');
+        return true;
+    }
+
     function updateSideBox() {
         if (!isSupportedPage()) {
             cleanupSideBox();
@@ -1233,6 +1249,7 @@
         hideAllVideoPlayerElements();
 
         const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
+        hideReelPageClickCover(activeVideo);
 
         if (!options.sideBoxVisibleV) {
             cleanupSideBox();
