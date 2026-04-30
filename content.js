@@ -62,49 +62,8 @@
 
         const script = document.createElement('script');
         script.id = 'instagram-video-controller-download-bridge';
-        script.textContent = `
-            (() => {
-                const requestEvent = '${PAGE_DOWNLOAD_REQUEST_EVENT}';
-                const resultEvent = '${PAGE_DOWNLOAD_RESULT_EVENT}';
-                window.addEventListener(requestEvent, async event => {
-                    const detail = event && event.detail ? event.detail : {};
-                    const requestId = detail.requestId;
-                    const sourceUrl = detail.url;
-                    const filename = detail.filename || 'instagram-video.mp4';
-                    try {
-                        const response = await fetch(sourceUrl);
-                        if (!response.ok) {
-                            throw new Error('blob fetch failed: ' + response.status);
-                        }
-                        const blob = await response.blob();
-                        const objectUrl = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = objectUrl;
-                        link.download = filename;
-                        link.style.display = 'none';
-                        document.documentElement.appendChild(link);
-                        link.click();
-                        setTimeout(() => {
-                            URL.revokeObjectURL(objectUrl);
-                            link.remove();
-                        }, 30000);
-                        window.dispatchEvent(new CustomEvent(resultEvent, {
-                            detail: { requestId, ok: true }
-                        }));
-                    } catch (error) {
-                        window.dispatchEvent(new CustomEvent(resultEvent, {
-                            detail: {
-                                requestId,
-                                ok: false,
-                                error: error && error.message ? error.message : String(error)
-                            }
-                        }));
-                    }
-                });
-            })();
-        `;
+        script.src = chrome.runtime.getURL('page-download-bridge.js');
         document.documentElement.appendChild(script);
-        script.remove();
     }
 
     function t(key, fallback) {
