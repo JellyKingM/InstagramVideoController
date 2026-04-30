@@ -368,8 +368,20 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                await downloadBlobVideoInPage(sourceUrl);
-                log('video blob download started', { url: sourceUrl });
+                const dataUrl = await getBlobVideoDataUrl(sourceUrl);
+                const response = await chrome.runtime.sendMessage({
+                    downloadVideo: {
+                        url: dataUrl,
+                        filename: getDownloadFileName(sourceUrl)
+                    }
+                });
+                if (!response || !response.ok) {
+                    throw new Error(response && response.error ? response.error : 'blob download request failed');
+                }
+                log('video blob download started', {
+                    url: sourceUrl,
+                    downloadId: response.downloadId
+                });
                 return;
             }
 
@@ -392,24 +404,23 @@
         }
     }
 
-    async function downloadBlobVideoInPage(sourceUrl) {
+    async function getBlobVideoDataUrl(sourceUrl) {
         const response = await fetch(sourceUrl);
         if (!response.ok) {
             throw new Error(`blob fetch failed: ${response.status}`);
         }
 
         const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = objectUrl;
-        link.download = getDownloadFileName(sourceUrl);
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        window.setTimeout(() => {
-            URL.revokeObjectURL(objectUrl);
-            link.remove();
-        }, 30000);
+        return await blobToDataUrl(blob);
+    }
+
+    function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(reader.error || new Error('file reader failed'));
+            reader.readAsDataURL(blob);
+        });
     }
 
     function getVideoDownloadDiagnostics(video) {
