@@ -969,13 +969,21 @@
         if (!video) return null;
 
         if (isReelsPage()) {
-            const root = getAncestor(video, 11);
-            const firstChild = root && root.firstElementChild;
-            const secondChild = firstChild && firstChild.children.length >= 2
-                ? firstChild.children[1]
-                : null;
-            if (secondChild instanceof Element) {
-                return secondChild;
+            for (const level of [11, 10, 9, 8]) {
+                const root = getAncestor(video, level);
+                const firstChild = root && root.firstElementChild;
+                const secondChild = firstChild && firstChild.children.length >= 2
+                    ? firstChild.children[1]
+                    : null;
+                if (!(secondChild instanceof Element)) continue;
+
+                if (
+                    secondChild.querySelector('a[role="link"]') ||
+                    secondChild.querySelector('[role="presentation"]') ||
+                    secondChild.querySelector('[role="button"]')
+                ) {
+                    return secondChild;
+                }
             }
         }
 
