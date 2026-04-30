@@ -124,5 +124,11 @@
   },
   "donatePromptNeverTooltip": {
     "message": "이 안내를 다시 표시하지 않습니다"
+  },
+  "buttonDownloadVideo": {
+    "message": "비디오 다운로드"
+  },
+  "tooltipDownloadVideo": {
+    "message": "현재 활성 비디오를 다운로드"
   }
 }

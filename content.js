@@ -354,6 +354,25 @@
         return button;
     }
 
+    function downloadActiveVideo() {
+        if (!activeVideo || !document.contains(activeVideo)) {
+            activeVideo = pickActiveVideo();
+        }
+        if (!activeVideo) return;
+
+        const sourceUrl = activeVideo.currentSrc || activeVideo.src;
+        if (!sourceUrl) return;
+
+        const link = document.createElement('a');
+        link.href = sourceUrl;
+        link.download = '';
+        link.rel = 'noopener noreferrer';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
     function createPanel() {
         if (panel) return panel;
 
@@ -394,11 +413,24 @@
         `;
 
         const row1 = document.createElement('div');
-        row1.style.cssText = 'display: flex; gap: 6px; margin-bottom: 8px;';
-        row1.appendChild(createButton(t('buttonPlay', 'Play'), t('tooltipPlay', 'Play or pause active video'), togglePlay));
-        row1.appendChild(createButton(t('buttonMute', 'Mute'), t('tooltipMute', 'Mute or unmute all videos'), toggleMute));
-        row1.appendChild(createButton(t('buttonControls', 'Controls'), t('tooltipControls', 'Toggle native video controls'), toggleNativeControls));
-        row1.appendChild(createButton(t('buttonFind', 'Find'), t('tooltipFind', 'Rescan videos'), processVideos));
+        row1.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;';
+
+        const row1Left = document.createElement('div');
+        row1Left.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap;';
+        row1Left.appendChild(createButton(t('buttonPlay', 'Play'), t('tooltipPlay', 'Play or pause active video'), togglePlay));
+        row1Left.appendChild(createButton(t('buttonMute', 'Mute'), t('tooltipMute', 'Mute or unmute all videos'), toggleMute));
+        row1Left.appendChild(createButton(t('buttonControls', 'Controls'), t('tooltipControls', 'Toggle native video controls'), toggleNativeControls));
+        row1Left.appendChild(createButton(t('buttonFind', 'Find'), t('tooltipFind', 'Rescan videos'), processVideos));
+
+        const downloadButton = createButton(
+            t('buttonDownloadVideo', 'Download video'),
+            t('tooltipDownloadVideo', 'Download the active video'),
+            downloadActiveVideo
+        );
+        downloadButton.style.marginLeft = 'auto';
+
+        row1.appendChild(row1Left);
+        row1.appendChild(downloadButton);
 
         const row2 = document.createElement('div');
         row2.style.cssText = 'display: flex; gap: 6px; margin-bottom: 8px;';

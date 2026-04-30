@@ -124,5 +124,11 @@
   },
   "donatePromptNeverTooltip": {
     "message": "No volver a mostrar este aviso"
+  },
+  "buttonDownloadVideo": {
+    "message": "Download video"
+  },
+  "tooltipDownloadVideo": {
+    "message": "Download the active video"
   }
 }
