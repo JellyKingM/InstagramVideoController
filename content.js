@@ -14,6 +14,8 @@
         donatePromptNextAt: 'donatePromptNextAtV',
         donatePromptDismissed: 'donatePromptDismissedV'
     };
+    const PAGE_DOWNLOAD_REQUEST_EVENT = 'instagram-video-controller-download-request';
+    const PAGE_DOWNLOAD_RESULT_EVENT = 'instagram-video-controller-download-result';
 
     const options = {
         videoControllerV: true,
@@ -53,6 +55,56 @@
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
+    }
+
+    function ensurePageDownloadBridge() {
+        if (document.getElementById('instagram-video-controller-download-bridge')) return;
+
+        const script = document.createElement('script');
+        script.id = 'instagram-video-controller-download-bridge';
+        script.textContent = `
+            (() => {
+                const requestEvent = '${PAGE_DOWNLOAD_REQUEST_EVENT}';
+                const resultEvent = '${PAGE_DOWNLOAD_RESULT_EVENT}';
+                window.addEventListener(requestEvent, async event => {
+                    const detail = event && event.detail ? event.detail : {};
+                    const requestId = detail.requestId;
+                    const sourceUrl = detail.url;
+                    const filename = detail.filename || 'instagram-video.mp4';
+                    try {
+                        const response = await fetch(sourceUrl);
+                        if (!response.ok) {
+                            throw new Error('blob fetch failed: ' + response.status);
+                        }
+                        const blob = await response.blob();
+                        const objectUrl = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = objectUrl;
+                        link.download = filename;
+                        link.style.display = 'none';
+                        document.documentElement.appendChild(link);
+                        link.click();
+                        setTimeout(() => {
+                            URL.revokeObjectURL(objectUrl);
+                            link.remove();
+                        }, 30000);
+                        window.dispatchEvent(new CustomEvent(resultEvent, {
+                            detail: { requestId, ok: true }
+                        }));
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent(resultEvent, {
+                            detail: {
+                                requestId,
+                                ok: false,
+                                error: error && error.message ? error.message : String(error)
+                            }
+                        }));
+                    }
+                });
+            })();
+        `;
+        document.documentElement.appendChild(script);
+        script.remove();
     }
 
     function t(key, fallback) {
@@ -368,19 +420,9 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                const dataUrl = await getBlobVideoDataUrl(sourceUrl);
-                const response = await chrome.runtime.sendMessage({
-                    downloadVideo: {
-                        url: dataUrl,
-                        filename: getDownloadFileName(sourceUrl)
-                    }
-                });
-                if (!response || !response.ok) {
-                    throw new Error(response && response.error ? response.error : 'blob download request failed');
-                }
+                await requestPageBlobDownload(sourceUrl, getDownloadFileName(sourceUrl));
                 log('video blob download started', {
-                    url: sourceUrl,
-                    downloadId: response.downloadId
+                    url: sourceUrl
                 });
                 return;
             }
@@ -404,22 +446,30 @@
         }
     }
 
-    async function getBlobVideoDataUrl(sourceUrl) {
-        const response = await fetch(sourceUrl);
-        if (!response.ok) {
-            throw new Error(`blob fetch failed: ${response.status}`);
-        }
-
-        const blob = await response.blob();
-        return await blobToDataUrl(blob);
-    }
-
-    function blobToDataUrl(blob) {
+    function requestPageBlobDownload(sourceUrl, filename) {
         return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(reader.error || new Error('file reader failed'));
-            reader.readAsDataURL(blob);
+            ensurePageDownloadBridge();
+            const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+            const onResult = event => {
+                const detail = event && event.detail ? event.detail : {};
+                if (detail.requestId !== requestId) return;
+                window.removeEventListener(PAGE_DOWNLOAD_RESULT_EVENT, onResult);
+                if (detail.ok) {
+                    resolve();
+                    return;
+                }
+                reject(new Error(detail.error || 'page blob download failed'));
+            };
+
+            window.addEventListener(PAGE_DOWNLOAD_RESULT_EVENT, onResult);
+            window.dispatchEvent(new CustomEvent(PAGE_DOWNLOAD_REQUEST_EVENT, {
+                detail: {
+                    requestId,
+                    url: sourceUrl,
+                    filename
+                }
+            }));
         });
     }
 
