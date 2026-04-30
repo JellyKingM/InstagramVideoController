@@ -18,8 +18,31 @@ chrome.action.onClicked.addListener(function () {
     chrome.tabs.create({ url: IVC_SHARED.LINKS.developer });
 });
 
-chrome.runtime.onMessage.addListener(function (message) {
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.redirect) {
         chrome.tabs.create({ url: message.redirect });
+        return;
+    }
+
+    if (message.downloadVideo && message.downloadVideo.url) {
+        chrome.downloads.download({
+            url: message.downloadVideo.url,
+            filename: message.downloadVideo.filename || 'instagram-video.mp4',
+            saveAs: false
+        }, function (downloadId) {
+            if (chrome.runtime.lastError) {
+                sendResponse({
+                    ok: false,
+                    error: chrome.runtime.lastError.message
+                });
+                return;
+            }
+
+            sendResponse({
+                ok: true,
+                downloadId
+            });
+        });
+        return true;
     }
 });

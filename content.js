@@ -364,25 +364,15 @@
         if (!sourceUrl) return;
 
         try {
-            const response = await fetch(sourceUrl, {
-                credentials: 'include'
+            const response = await chrome.runtime.sendMessage({
+                downloadVideo: {
+                    url: sourceUrl,
+                    filename: getDownloadFileName(sourceUrl)
+                }
             });
-            if (!response.ok) {
-                throw new Error(`download failed: ${response.status}`);
+            if (!response || !response.ok) {
+                throw new Error(response && response.error ? response.error : 'download request failed');
             }
-
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = objectUrl;
-            link.download = getDownloadFileName(sourceUrl);
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            window.setTimeout(() => {
-                URL.revokeObjectURL(objectUrl);
-                link.remove();
-            }, 30000);
         } catch (error) {
             log('video download fallback', error);
             window.open(sourceUrl, '_blank', 'noopener,noreferrer');
