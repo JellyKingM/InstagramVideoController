@@ -12,7 +12,7 @@
 
         try {
             if (sourceUrl && sourceUrl.startsWith('blob:')) {
-                const recordedBlob = await recordBlobVideo(sourceUrl);
+                const recordedBlob = await recordExistingBlobVideo(detail.targetId);
                 const recordedUrl = URL.createObjectURL(recordedBlob);
                 const recordedName = filename.replace(/\.[a-z0-9]+$/i, '') + '.webm';
                 const link = document.createElement('a');
@@ -64,69 +64,63 @@
         }
     });
 
-    async function recordBlobVideo(sourceUrl) {
-        const video = document.createElement('video');
-        video.src = sourceUrl;
-        video.muted = true;
-        video.playsInline = true;
-        video.preload = 'auto';
-        video.style.display = 'none';
-        document.documentElement.appendChild(video);
-
-        try {
-            await waitForEvent(video, 'loadedmetadata');
-            if (!Number.isFinite(video.duration) || video.duration <= 0) {
-                throw new Error('video duration unavailable');
-            }
-
-            const stream = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
-            if (!stream) {
-                throw new Error('captureStream unavailable');
-            }
-
-            const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-                ? 'video/webm;codecs=vp9,opus'
-                : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
-                    ? 'video/webm;codecs=vp8,opus'
-                    : 'video/webm');
-
-            const chunks = [];
-            const recorder = new MediaRecorder(stream, { mimeType });
-            recorder.addEventListener('dataavailable', event => {
-                if (event.data && event.data.size > 0) {
-                    chunks.push(event.data);
-                }
-            });
-
-            const stopPromise = new Promise((resolve, reject) => {
-                recorder.addEventListener('stop', resolve, { once: true });
-                recorder.addEventListener('error', event => reject(event.error || new Error('media recorder failed')), { once: true });
-            });
-
-            recorder.start();
-            await video.play();
-
-            await Promise.race([
-                waitForEvent(video, 'ended'),
-                waitForTimeout(Math.ceil(video.duration * 1000) + 2000)
-            ]);
-
-            if (recorder.state !== 'inactive') {
-                recorder.stop();
-            }
-            await stopPromise;
-
-            if (chunks.length === 0) {
-                throw new Error('recording produced no data');
-            }
-
-            return new Blob(chunks, { type: mimeType });
-        } finally {
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-            video.remove();
+    async function recordExistingBlobVideo(targetId) {
+        const video = targetId
+            ? document.querySelector(`video[data-instagram-video-controller-download-target="${targetId}"]`)
+            : null;
+        if (!video) {
+            throw new Error('target video not found');
         }
+
+        if (!Number.isFinite(video.duration) || video.duration <= 0) {
+            throw new Error('video duration unavailable');
+        }
+
+        const stream = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+        if (!stream) {
+            throw new Error('captureStream unavailable');
+        }
+
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+            ? 'video/webm;codecs=vp9,opus'
+            : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+                ? 'video/webm;codecs=vp8,opus'
+                : 'video/webm');
+
+        const chunks = [];
+        const recorder = new MediaRecorder(stream, { mimeType });
+        recorder.addEventListener('dataavailable', event => {
+            if (event.data && event.data.size > 0) {
+                chunks.push(event.data);
+            }
+        });
+
+        const stopPromise = new Promise((resolve, reject) => {
+            recorder.addEventListener('stop', resolve, { once: true });
+            recorder.addEventListener('error', event => reject(event.error || new Error('media recorder failed')), { once: true });
+        });
+
+        const remainingMs = Math.max(1000, Math.ceil((video.duration - video.currentTime) * 1000) + 1000);
+        recorder.start();
+        if (video.paused) {
+            await video.play();
+        }
+
+        await Promise.race([
+            waitForEvent(video, 'ended'),
+            waitForTimeout(remainingMs)
+        ]);
+
+        if (recorder.state !== 'inactive') {
+            recorder.stop();
+        }
+        await stopPromise;
+
+        if (chunks.length === 0) {
+            throw new Error('recording produced no data');
+        }
+
+        return new Blob(chunks, { type: mimeType });
     }
 
     function waitForEvent(target, eventName) {

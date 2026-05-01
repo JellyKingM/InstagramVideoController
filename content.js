@@ -379,7 +379,7 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                await requestPageBlobDownload(sourceUrl, getDownloadFileName(sourceUrl));
+                await requestPageBlobDownload(activeVideo, sourceUrl, getDownloadFileName(sourceUrl));
                 log('video blob download started', {
                     url: sourceUrl
                 });
@@ -405,15 +405,22 @@
         }
     }
 
-    function requestPageBlobDownload(sourceUrl, filename) {
+    function requestPageBlobDownload(video, sourceUrl, filename) {
         return new Promise((resolve, reject) => {
             ensurePageDownloadBridge();
             const requestId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            const targetId = `ivc-download-${requestId}`;
+            if (video) {
+                video.dataset.instagramVideoControllerDownloadTarget = targetId;
+            }
 
             const onResult = event => {
                 const detail = event && event.detail ? event.detail : {};
                 if (detail.requestId !== requestId) return;
                 window.removeEventListener(PAGE_DOWNLOAD_RESULT_EVENT, onResult);
+                if (video && video.dataset.instagramVideoControllerDownloadTarget === targetId) {
+                    delete video.dataset.instagramVideoControllerDownloadTarget;
+                }
                 if (detail.ok) {
                     resolve();
                     return;
@@ -426,7 +433,8 @@
                 detail: {
                     requestId,
                     url: sourceUrl,
-                    filename
+                    filename,
+                    targetId
                 }
             }));
         });
