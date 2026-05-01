@@ -379,10 +379,13 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                await requestPageBlobDownload(activeVideo, sourceUrl, getDownloadFileName(sourceUrl));
-                log('video blob download started', {
-                    url: sourceUrl
+                const capturedResponse = await chrome.runtime.sendMessage({
+                    downloadCapturedVideo: true
                 });
+                if (!capturedResponse || !capturedResponse.ok) {
+                    throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
+                }
+                log('captured media download started', capturedResponse);
                 return;
             }
 

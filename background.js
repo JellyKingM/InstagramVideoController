@@ -1,5 +1,9 @@
 importScripts('shared.js');
 
+const mediaRequestsByTab = new Map();
+const MEDIA_REQUEST_LIMIT = 80;
+const MEDIA_REQUEST_TTL_MS = 10 * 60 * 1000;
+
 chrome.runtime.onInstalled.addListener(function () {
     chrome.contextMenus.create({
         title: chrome.i18n.getMessage('donate') || 'Donate to Developer',
@@ -18,10 +22,76 @@ chrome.action.onClicked.addListener(function () {
     chrome.tabs.create({ url: IVC_SHARED.LINKS.developer });
 });
 
+chrome.webRequest.onCompleted.addListener(function (details) {
+    try {
+        if (details.tabId < 0 || details.statusCode < 200 || details.statusCode >= 400) {
+            return;
+        }
+
+        const candidate = buildMediaRequestCandidate(details.url);
+        if (!candidate) return;
+
+        const list = mediaRequestsByTab.get(details.tabId) || [];
+        list.push(candidate);
+        pruneMediaRequests(list);
+        mediaRequestsByTab.set(details.tabId, list);
+        console.log('[InstagramVideoController]', 'captured media request', candidate);
+    } catch (error) {
+        console.log('[InstagramVideoController]', 'capture media request failed', error);
+    }
+}, {
+    urls: [
+        'https://*.cdninstagram.com/*',
+        'https://*.fbcdn.net/*'
+    ]
+});
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     if (message.redirect) {
         chrome.tabs.create({ url: message.redirect });
         return;
+    }
+
+    if (message.downloadCapturedVideo) {
+        const tabId = sender && sender.tab ? sender.tab.id : -1;
+        const candidate = pickBestMediaRequestForTab(tabId);
+        if (!candidate) {
+            sendResponse({
+                ok: false,
+                error: 'no captured media request'
+            });
+            return;
+        }
+
+        const url = stripByteRangeParams(candidate.url);
+        const filename = buildCapturedMediaFilename(candidate);
+        console.log('[InstagramVideoController]', 'download captured media', {
+            tabId,
+            candidate,
+            url,
+            filename
+        });
+        chrome.downloads.download({
+            url,
+            filename,
+            saveAs: false
+        }, function (downloadId) {
+            if (chrome.runtime.lastError) {
+                sendResponse({
+                    ok: false,
+                    error: chrome.runtime.lastError.message,
+                    candidate
+                });
+                return;
+            }
+
+            sendResponse({
+                ok: true,
+                downloadId,
+                candidate
+            });
+        });
+        return true;
     }
 
     if (message.downloadVideo && message.downloadVideo.url) {
@@ -49,3 +119,85 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return true;
     }
 });
+
+function buildMediaRequestCandidate(url) {
+    if (!url || !/\.mp4($|\?)/i.test(url)) return null;
+
+    const parsed = new URL(url);
+    const params = parsed.searchParams;
+    const efg = params.get('efg');
+    const meta = parseEfgPayload(efg);
+    const tag = String(meta.vencode_tag || '').toLowerCase();
+    const bitrate = Number(meta.bitrate || 0);
+    const duration = Number(meta.duration_s || 0);
+
+    return {
+        url,
+        capturedAt: Date.now(),
+        bitrate,
+        duration,
+        tag,
+        assetId: meta.xpv_asset_id || '',
+        isAudio: /audio/.test(tag),
+        isVideo: /vp9|avc|h264|basic|dash/.test(tag) && !/audio/.test(tag)
+    };
+}
+
+function parseEfgPayload(rawValue) {
+    if (!rawValue) return {};
+    try {
+        const decoded = atob(rawValue);
+        return JSON.parse(decoded);
+    } catch (error) {
+        try {
+            const decoded = atob(decodeURIComponent(rawValue));
+            return JSON.parse(decoded);
+        } catch (nestedError) {
+            return {};
+        }
+    }
+}
+
+function pruneMediaRequests(list) {
+    const minTime = Date.now() - MEDIA_REQUEST_TTL_MS;
+    const filtered = list.filter(item => item.capturedAt >= minTime);
+    filtered.sort((a, b) => b.capturedAt - a.capturedAt);
+    list.length = 0;
+    list.push(...filtered.slice(0, MEDIA_REQUEST_LIMIT));
+}
+
+function pickBestMediaRequestForTab(tabId) {
+    const list = mediaRequestsByTab.get(tabId) || [];
+    pruneMediaRequests(list);
+    if (list.length === 0) return null;
+
+    const videoCandidates = list.filter(item => item.isVideo);
+    if (videoCandidates.length > 0) {
+        videoCandidates.sort((a, b) => {
+            if (b.bitrate !== a.bitrate) return b.bitrate - a.bitrate;
+            return b.capturedAt - a.capturedAt;
+        });
+        return videoCandidates[0];
+    }
+
+    const nonAudioCandidates = list.filter(item => !item.isAudio);
+    if (nonAudioCandidates.length > 0) {
+        nonAudioCandidates.sort((a, b) => b.capturedAt - a.capturedAt);
+        return nonAudioCandidates[0];
+    }
+
+    return list[0];
+}
+
+function stripByteRangeParams(url) {
+    const parsed = new URL(url);
+    parsed.searchParams.delete('bytestart');
+    parsed.searchParams.delete('byteend');
+    return parsed.toString();
+}
+
+function buildCapturedMediaFilename(candidate) {
+    const assetId = candidate.assetId || 'instagram-video';
+    const suffix = candidate.isAudio ? 'audio' : 'video';
+    return `${assetId}-${suffix}.mp4`;
+}
