@@ -344,6 +344,10 @@
             }
         });
 
+        video.addEventListener('click', () => {
+            scheduleRestoreInfoAfterInteraction(video);
+        }, true);
+
         video.addEventListener('volumechange', () => {
             if (applyingVolume || applyingMute) return;
             options.volumeSliderV = video.volume;
@@ -454,9 +458,8 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                const capturedResponse = await chrome.runtime.sendMessage({
-                    downloadCapturedVideo: true
-                });
+                await chrome.runtime.sendMessage({ pinCapturedVideo: true });
+                const capturedResponse = await chrome.runtime.sendMessage({ downloadCapturedVideo: true });
                 if (!capturedResponse || !capturedResponse.ok) {
                     throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
                 }
@@ -479,7 +482,9 @@
             });
         } catch (error) {
             log('video download fallback', error);
-            window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+            if (diagnostics.guessedType !== 'blob') {
+                window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+            }
         }
     }
 
@@ -1193,6 +1198,13 @@
         if (!video) return null;
 
         if (isReelsPage()) {
+            if (isWideReelsVideo(video)) {
+                const wideInfoElement = getWideReelsInfoElement(video);
+                if (wideInfoElement) {
+                    return wideInfoElement;
+                }
+            }
+
             for (const level of [11, 10, 9, 8]) {
                 const root = getAncestor(video, level);
                 const firstChild = root && root.firstElementChild;
@@ -1229,6 +1241,16 @@
         }
 
         return null;
+    }
+
+    function getWideReelsInfoElement(video) {
+        const root = getAncestor(video, 10);
+        if (!root || !root.parentElement) return null;
+
+        const sibling = Array.from(root.parentElement.children)
+            .find(child => child !== root);
+
+        return sibling instanceof Element ? sibling : null;
     }
 
     function getFixedInfoWrapperForVideo(video) {
@@ -1330,6 +1352,19 @@
     function preCaptureWideReelsInfo(video) {
         if (!isWideReelsVideo(video) || hasMovedInfoForVideo(video)) return false;
 
+        const fixedWideInfo = getWideReelsInfoElement(video);
+        if (fixedWideInfo) {
+            const directMoreButton = findMoreButton(fixedWideInfo);
+            if (directMoreButton && directMoreButton.dataset.instagramVideoControllerClickedMore !== 'true') {
+                directMoreButton.dataset.instagramVideoControllerClickedMore = 'true';
+                directMoreButton.click();
+            }
+            prepareMovedInfoElement(fixedWideInfo);
+            movedInfoByVideo.set(video, fixedWideInfo);
+            fixedWideInfo.remove();
+            return true;
+        }
+
         clickMoreButtonForVideo(video);
 
         const infoElement = findInfoElementByMoreButton(video);
@@ -1339,6 +1374,30 @@
         movedInfoByVideo.set(video, infoElement);
         infoElement.remove();
         return true;
+    }
+
+    function ensureMovedInfoExpanded(video) {
+        const infoElement = movedInfoByVideo.get(video);
+        if (!(infoElement instanceof Element)) return;
+
+        applyWhiteTextToInfoElement(infoElement);
+
+        const moreButton = findMoreButton(infoElement);
+        if (!moreButton) return;
+        if (moreButton.dataset.instagramVideoControllerClickedMore === 'true') return;
+
+        moreButton.dataset.instagramVideoControllerClickedMore = 'true';
+        moreButton.click();
+    }
+
+    function scheduleRestoreInfoAfterInteraction(video) {
+        if (!video) return;
+
+        window.setTimeout(() => {
+            if (!document.contains(video)) return;
+            if (!hasMovedInfoForVideo(video)) return;
+            ensureMovedInfoExpanded(video);
+        }, 180);
     }
 
     function clearWideReelsInfoObserver() {
@@ -1402,6 +1461,7 @@
 
         if (attachMovedInfoToSideBox(video)) {
             applyWhiteTextToInfoElement(movedInfoByVideo.get(video));
+            ensureMovedInfoExpanded(video);
             return true;
         }
 
@@ -1427,6 +1487,7 @@
         }
         movedInfoByVideo.set(video, infoElement);
         applyWhiteTextToInfoElement(infoElement);
+        ensureMovedInfoExpanded(video);
         return true;
     }
 
