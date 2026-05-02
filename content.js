@@ -45,6 +45,8 @@
     let donatePrompt = null;
     let movedInfoByVideo = new WeakMap();
     let expandedInfoByVideo = new WeakSet();
+    let movedInfoColorObserverByVideo = new WeakMap();
+    let restoreInfoTimerByVideo = new WeakMap();
     let debugPanel = null;
     let debugOutput = null;
     let debugAnchor = null;
@@ -1244,13 +1246,16 @@
     }
 
     function getWideReelsInfoElement(video) {
-        const root = getAncestor(video, 10);
-        if (!root || !root.parentElement) return null;
+        const seventhParent = getAncestor(video, 7);
+        const sibling = seventhParent && seventhParent.nextElementSibling;
+        const fifthChild = sibling && sibling.children.length >= 5
+            ? sibling.children[4]
+            : null;
+        const lastChild = fifthChild && fifthChild.lastElementChild
+            ? fifthChild.lastElementChild
+            : null;
 
-        const sibling = Array.from(root.parentElement.children)
-            .find(child => child !== root);
-
-        return sibling instanceof Element ? sibling : null;
+        return lastChild instanceof Element ? lastChild : null;
     }
 
     function getFixedInfoWrapperForVideo(video) {
@@ -1336,6 +1341,38 @@
         });
     }
 
+    function installMovedInfoColorObserver(video, infoElement) {
+        if (!(video instanceof HTMLVideoElement) || !(infoElement instanceof Element)) return;
+
+        const existing = movedInfoColorObserverByVideo.get(video);
+        if (existing) {
+            existing.disconnect();
+        }
+
+        const observer = new MutationObserver(() => {
+            applyWhiteTextToInfoElement(infoElement);
+        });
+
+        observer.observe(infoElement, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+
+        movedInfoColorObserverByVideo.set(video, observer);
+    }
+
+    function isCollapsedMoreButton(button) {
+        if (!(button instanceof Element)) return false;
+
+        const hiddenMore = button.querySelector('span[aria-hidden="true"]');
+        if (hiddenMore && /(더 보기|more|see more)/i.test(hiddenMore.textContent || '')) {
+            return true;
+        }
+
+        return /(더 보기|more|see more)/i.test(button.textContent || '');
+    }
+
     function hasMovedInfoForVideo(video) {
         const infoElement = movedInfoByVideo.get(video);
         return infoElement &&
@@ -1361,6 +1398,7 @@
             }
             prepareMovedInfoElement(fixedWideInfo);
             movedInfoByVideo.set(video, fixedWideInfo);
+            installMovedInfoColorObserver(video, fixedWideInfo);
             fixedWideInfo.remove();
             return true;
         }
@@ -1372,6 +1410,7 @@
 
         prepareMovedInfoElement(infoElement);
         movedInfoByVideo.set(video, infoElement);
+        installMovedInfoColorObserver(video, infoElement);
         infoElement.remove();
         return true;
     }
@@ -1384,6 +1423,7 @@
 
         const moreButton = findMoreButton(infoElement);
         if (!moreButton) return;
+        if (!isCollapsedMoreButton(moreButton)) return;
         if (moreButton.dataset.instagramVideoControllerClickedMore === 'true') return;
 
         moreButton.dataset.instagramVideoControllerClickedMore = 'true';
@@ -1393,11 +1433,19 @@
     function scheduleRestoreInfoAfterInteraction(video) {
         if (!video) return;
 
-        window.setTimeout(() => {
+        const existingTimer = restoreInfoTimerByVideo.get(video);
+        if (existingTimer) {
+            clearTimeout(existingTimer);
+        }
+
+        const timerId = window.setTimeout(() => {
+            restoreInfoTimerByVideo.delete(video);
             if (!document.contains(video)) return;
             if (!hasMovedInfoForVideo(video)) return;
             ensureMovedInfoExpanded(video);
-        }, 180);
+        }, 250);
+
+        restoreInfoTimerByVideo.set(video, timerId);
     }
 
     function clearWideReelsInfoObserver() {
@@ -1486,6 +1534,7 @@
             sideBoxInfo.appendChild(infoElement);
         }
         movedInfoByVideo.set(video, infoElement);
+        installMovedInfoColorObserver(video, infoElement);
         applyWhiteTextToInfoElement(infoElement);
         ensureMovedInfoExpanded(video);
         return true;
