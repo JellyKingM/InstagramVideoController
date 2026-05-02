@@ -460,8 +460,7 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                await chrome.runtime.sendMessage({ pinCapturedVideo: true });
-                const capturedResponse = await chrome.runtime.sendMessage({ downloadCapturedVideo: true });
+                const capturedResponse = await downloadCapturedVideoWithRetry();
                 if (!capturedResponse || !capturedResponse.ok) {
                     throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
                 }
@@ -488,6 +487,35 @@
                 window.open(sourceUrl, '_blank', 'noopener,noreferrer');
             }
         }
+    }
+
+    async function downloadCapturedVideoWithRetry() {
+        const delays = [0, 800, 1500];
+
+        for (const delay of delays) {
+            if (delay > 0) {
+                await wait(delay);
+            }
+
+            const pinResponse = await chrome.runtime.sendMessage({ pinCapturedVideo: true });
+            log('pin captured media before download', pinResponse);
+
+            const response = await chrome.runtime.sendMessage({ downloadCapturedVideo: true });
+            if (response && response.ok) {
+                return response;
+            }
+        }
+
+        return {
+            ok: false,
+            error: 'no captured media request'
+        };
+    }
+
+    function wait(ms) {
+        return new Promise(resolve => {
+            window.setTimeout(resolve, ms);
+        });
     }
 
     function requestPageBlobDownload(video, sourceUrl, filename) {
@@ -1351,6 +1379,7 @@
 
         const observer = new MutationObserver(() => {
             applyWhiteTextToInfoElement(infoElement);
+            ensureInfoElementExpanded(infoElement);
         });
 
         observer.observe(infoElement, {
@@ -1373,6 +1402,11 @@
         return /(더 보기|more|see more)/i.test(button.textContent || '');
     }
 
+    function findCollapsedMoreButton(root) {
+        if (!(root instanceof Element)) return null;
+        return Array.from(root.querySelectorAll('[role="button"]')).find(isCollapsedMoreButton) || null;
+    }
+
     function hasMovedInfoForVideo(video) {
         const infoElement = movedInfoByVideo.get(video);
         return infoElement &&
@@ -1391,10 +1425,13 @@
 
         const fixedWideInfo = getWideReelsInfoElement(video);
         if (fixedWideInfo) {
-            const directMoreButton = findMoreButton(fixedWideInfo);
-            if (directMoreButton && directMoreButton.dataset.instagramVideoControllerClickedMore !== 'true') {
-                directMoreButton.dataset.instagramVideoControllerClickedMore = 'true';
-                directMoreButton.click();
+            const collapsedButton = findCollapsedMoreButton(fixedWideInfo);
+            if (collapsedButton) {
+                if (collapsedButton.dataset.instagramVideoControllerClickedMore !== 'true') {
+                    collapsedButton.dataset.instagramVideoControllerClickedMore = 'true';
+                    collapsedButton.click();
+                }
+                return false;
             }
             prepareMovedInfoElement(fixedWideInfo);
             movedInfoByVideo.set(video, fixedWideInfo);
@@ -1415,19 +1452,22 @@
         return true;
     }
 
-    function ensureMovedInfoExpanded(video) {
-        const infoElement = movedInfoByVideo.get(video);
-        if (!(infoElement instanceof Element)) return;
-
+    function ensureInfoElementExpanded(infoElement) {
         applyWhiteTextToInfoElement(infoElement);
 
-        const moreButton = findMoreButton(infoElement);
+        const moreButton = findCollapsedMoreButton(infoElement) || findMoreButton(infoElement);
         if (!moreButton) return;
         if (!isCollapsedMoreButton(moreButton)) return;
         if (moreButton.dataset.instagramVideoControllerClickedMore === 'true') return;
 
         moreButton.dataset.instagramVideoControllerClickedMore = 'true';
         moreButton.click();
+    }
+
+    function ensureMovedInfoExpanded(video) {
+        const infoElement = movedInfoByVideo.get(video);
+        if (!(infoElement instanceof Element)) return;
+        ensureInfoElementExpanded(infoElement);
     }
 
     function scheduleRestoreInfoAfterInteraction(video) {
