@@ -3,6 +3,7 @@ importScripts('shared.js');
 const mediaRequestsByTab = new Map();
 const MEDIA_REQUEST_LIMIT = 80;
 const MEDIA_REQUEST_TTL_MS = 10 * 60 * 1000;
+const RECENT_MEDIA_WINDOW_MS = 20 * 1000;
 
 chrome.runtime.onInstalled.addListener(function () {
     chrome.contextMenus.create({
@@ -138,6 +139,8 @@ function buildMediaRequestCandidate(url) {
         duration,
         tag,
         assetId: meta.xpv_asset_id || '',
+        byteStart: Number(params.get('bytestart') || -1),
+        byteEnd: Number(params.get('byteend') || -1),
         isAudio: /audio/.test(tag),
         isVideo: /vp9|avc|h264|basic|dash/.test(tag) && !/audio/.test(tag)
     };
@@ -171,22 +174,50 @@ function pickBestMediaRequestForTab(tabId) {
     pruneMediaRequests(list);
     if (list.length === 0) return null;
 
-    const videoCandidates = list.filter(item => item.isVideo);
+    const now = Date.now();
+    const recentList = list.filter(item => now - item.capturedAt <= RECENT_MEDIA_WINDOW_MS);
+    const videoCandidates = recentList.filter(item => item.isVideo);
     if (videoCandidates.length > 0) {
-        videoCandidates.sort((a, b) => {
-            if (b.bitrate !== a.bitrate) return b.bitrate - a.bitrate;
-            return b.capturedAt - a.capturedAt;
-        });
+        videoCandidates.sort(compareMediaCandidates);
         return videoCandidates[0];
     }
 
-    const nonAudioCandidates = list.filter(item => !item.isAudio);
+    const fallbackVideoCandidates = list.filter(item => item.isVideo);
+    if (fallbackVideoCandidates.length > 0) {
+        fallbackVideoCandidates.sort(compareMediaCandidates);
+        return fallbackVideoCandidates[0];
+    }
+
+    const nonAudioCandidates = recentList.filter(item => !item.isAudio);
     if (nonAudioCandidates.length > 0) {
-        nonAudioCandidates.sort((a, b) => b.capturedAt - a.capturedAt);
+        nonAudioCandidates.sort(compareMediaCandidates);
         return nonAudioCandidates[0];
     }
 
-    return list[0];
+    const fallbackNonAudio = list.filter(item => !item.isAudio);
+    if (fallbackNonAudio.length > 0) {
+        fallbackNonAudio.sort(compareMediaCandidates);
+        return fallbackNonAudio[0];
+    }
+
+    return [...list].sort(compareMediaCandidates)[0];
+}
+
+function compareMediaCandidates(a, b) {
+    if (b.capturedAt !== a.capturedAt) return b.capturedAt - a.capturedAt;
+    if (b.bitrate !== a.bitrate) return b.bitrate - a.bitrate;
+
+    const rangeA = getRangeLength(a);
+    const rangeB = getRangeLength(b);
+    if (rangeB !== rangeA) return rangeB - rangeA;
+
+    return String(b.assetId || '').localeCompare(String(a.assetId || ''));
+}
+
+function getRangeLength(item) {
+    if (!Number.isFinite(item.byteStart) || !Number.isFinite(item.byteEnd)) return 0;
+    if (item.byteStart < 0 || item.byteEnd < item.byteStart) return 0;
+    return item.byteEnd - item.byteStart;
 }
 
 function stripByteRangeParams(url) {

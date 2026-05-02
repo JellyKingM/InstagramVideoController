@@ -44,6 +44,7 @@
     let sideBoxRestoreButton = null;
     let donatePrompt = null;
     let movedInfoByVideo = new WeakMap();
+    let expandedInfoByVideo = new WeakSet();
     let debugPanel = null;
     let debugOutput = null;
     let debugAnchor = null;
@@ -52,6 +53,7 @@
     let donatePromptSeenCount = 0;
     let donatePromptNextAt = 30;
     let donatePromptDismissed = false;
+    let wideReelsInfoObserver = null;
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
@@ -232,7 +234,16 @@
 
         if (eligibleVideos.length > 0) {
             return eligibleVideos
-                .sort((a, b) => getVisibleArea(b) - getVisibleArea(a))[0] || null;
+                .sort((a, b) => {
+                    const areaDiff = getVisibleArea(b) - getVisibleArea(a);
+                    if (areaDiff !== 0) return areaDiff;
+
+                    const centerA = getVideoCenterDistance(a);
+                    const centerB = getVideoCenterDistance(b);
+                    if (centerA !== centerB) return centerA - centerB;
+
+                    return getDomDepth(b) - getDomDepth(a);
+                })[0] || null;
         }
 
         if (isPostPage()) {
@@ -240,6 +251,25 @@
         }
 
         return videos[0] || null;
+    }
+
+    function getVideoCenterDistance(video) {
+        const rect = video.getBoundingClientRect();
+        const centerX = rect.left + (rect.width / 2);
+        const centerY = rect.top + (rect.height / 2);
+        const viewportCenterX = window.innerWidth / 2;
+        const viewportCenterY = window.innerHeight / 2;
+        return Math.abs(centerX - viewportCenterX) + Math.abs(centerY - viewportCenterY);
+    }
+
+    function getDomDepth(element) {
+        let depth = 0;
+        let current = element;
+        while (current && current.parentElement) {
+            depth += 1;
+            current = current.parentElement;
+        }
+        return depth;
     }
 
     function markActiveVideo(video) {
@@ -1100,11 +1130,16 @@
     }
 
     function clickMoreButtonForVideo(video) {
+        if (video && expandedInfoByVideo.has(video)) return false;
+
         const moreButton = findMoreButtonForVideo(video);
         if (!moreButton || moreButton.dataset.instagramVideoControllerClickedMore === 'true') return false;
 
         moreButton.dataset.instagramVideoControllerClickedMore = 'true';
         moreButton.click();
+        if (video) {
+            expandedInfoByVideo.add(video);
+        }
         log('clicked more button for video', moreButton);
         return true;
     }
@@ -1217,11 +1252,11 @@
         infoElement.style.height = 'auto';
         infoElement.style.overflow = 'visible';
         infoElement.style.pointerEvents = 'auto';
-        infoElement.style.color = '#fff';
+        infoElement.style.setProperty('color', '#fff', 'important');
 
         Array.from(infoElement.querySelectorAll('*')).forEach(child => {
             child.style.pointerEvents = 'auto';
-            child.style.color = 'inherit';
+            child.style.setProperty('color', '#fff', 'important');
         });
     }
 
@@ -1230,7 +1265,7 @@
 
         infoElement.style.setProperty('color', '#fff', 'important');
         Array.from(infoElement.querySelectorAll('*')).forEach(child => {
-            child.style.setProperty('color', 'inherit', 'important');
+            child.style.setProperty('color', '#fff', 'important');
         });
     }
 
@@ -1259,6 +1294,41 @@
         movedInfoByVideo.set(video, infoElement);
         infoElement.remove();
         return true;
+    }
+
+    function clearWideReelsInfoObserver() {
+        if (!wideReelsInfoObserver) return;
+        wideReelsInfoObserver.disconnect();
+        wideReelsInfoObserver = null;
+    }
+
+    function waitForWideReelsInfo(video) {
+        if (!isWideReelsVideo(video) || hasMovedInfoForVideo(video)) {
+            clearWideReelsInfoObserver();
+            return;
+        }
+
+        clearWideReelsInfoObserver();
+
+        const root = getAncestor(video, 11) || getAncestor(video, 10) || video.parentElement;
+        if (!root) return;
+
+        wideReelsInfoObserver = new MutationObserver(() => {
+            if (!activeVideo || activeVideo !== video || !document.contains(video)) {
+                clearWideReelsInfoObserver();
+                return;
+            }
+
+            if (preCaptureWideReelsInfo(video)) {
+                clearWideReelsInfoObserver();
+                updateSideBox();
+            }
+        });
+
+        wideReelsInfoObserver.observe(root, {
+            childList: true,
+            subtree: true
+        });
     }
 
     function attachMovedInfoToSideBox(video) {
@@ -1416,18 +1486,21 @@
         if (!isSupportedPage()) {
             cleanupSideBox();
             hideSideBoxRestoreButton();
+            clearWideReelsInfoObserver();
             return;
         }
 
         if (isPostPage() && activeVideo && !isEligibleVideo(activeVideo)) {
             cleanupSideBox();
             hideSideBoxRestoreButton();
+            clearWideReelsInfoObserver();
             return;
         }
 
         if (!activeVideo || !document.contains(activeVideo) || !isVisibleVideo(activeVideo)) {
             cleanupSideBox();
             hideSideBoxRestoreButton();
+            clearWideReelsInfoObserver();
             return;
         }
 
@@ -1436,7 +1509,16 @@
         const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
         hideReelPageClickCover(activeVideo);
 
-        preCaptureWideReelsInfo(activeVideo);
+        if (isWideReelsVideo(activeVideo) && !hasMovedInfoForVideo(activeVideo)) {
+            if (!preCaptureWideReelsInfo(activeVideo)) {
+                waitForWideReelsInfo(activeVideo);
+                cleanupSideBox();
+                return;
+            }
+            clearWideReelsInfoObserver();
+        } else {
+            clearWideReelsInfoObserver();
+        }
 
         if (!options.sideBoxVisibleV) {
             cleanupSideBox();
