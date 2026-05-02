@@ -1129,6 +1129,23 @@
                     return secondChild;
                 }
             }
+
+            const wideVideoRoot = getAncestor(video, 10);
+            if (wideVideoRoot && wideVideoRoot.parentElement) {
+                const wideVideoSibling = Array.from(wideVideoRoot.parentElement.children)
+                    .find(child => child !== wideVideoRoot);
+
+                if (
+                    wideVideoSibling instanceof Element &&
+                    (
+                        wideVideoSibling.querySelector('a[role="link"]') ||
+                        wideVideoSibling.querySelector('[role="presentation"]') ||
+                        wideVideoSibling.querySelector('[role="button"]')
+                    )
+                ) {
+                    return wideVideoSibling;
+                }
+            }
         }
 
         return null;
