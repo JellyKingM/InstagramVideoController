@@ -1427,20 +1427,22 @@
 
     function clickMoreButton(root) {
         const moreButton = findMoreButton(root);
-        if (!moreButton || moreButton.dataset.instagramVideoControllerClickedMore === 'true') return;
+        if (!moreButton) return;
+        const lastClickAt = Number(moreButton.dataset.instagramVideoControllerClickedMoreAt || '0');
+        if (Date.now() - lastClickAt < 400) return;
 
-        moreButton.dataset.instagramVideoControllerClickedMore = 'true';
+        moreButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
         moreButton.click();
         log('clicked more button', moreButton);
     }
 
     function clickMoreButtonForVideo(video) {
-        if (video && expandedInfoByVideo.has(video)) return false;
-
         const moreButton = findMoreButtonForVideo(video);
-        if (!moreButton || moreButton.dataset.instagramVideoControllerClickedMore === 'true') return false;
+        if (!moreButton) return false;
+        const lastClickAt = Number(moreButton.dataset.instagramVideoControllerClickedMoreAt || '0');
+        if (Date.now() - lastClickAt < 400) return false;
 
-        moreButton.dataset.instagramVideoControllerClickedMore = 'true';
+        moreButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
         moreButton.click();
         if (video) {
             expandedInfoByVideo.add(video);
@@ -1500,15 +1502,40 @@
 
     function getWideReelsInfoElement(video) {
         const seventhParent = getAncestor(video, 7);
-        const sibling = seventhParent && seventhParent.nextElementSibling;
-        const fifthChild = sibling && sibling.children.length >= 5
+        if (!(seventhParent instanceof Element)) {
+            log('wide reels path missing ancestor', { level: 7, video: describeVideo(video) });
+            return null;
+        }
+
+        const sibling = seventhParent.nextElementSibling;
+        if (!(sibling instanceof Element)) {
+            log('wide reels path missing next sibling', { seventhParent: describeElement(seventhParent) });
+            return null;
+        }
+
+        const fifthChild = sibling.children.length >= 5
             ? sibling.children[4]
             : null;
-        const lastChild = fifthChild && fifthChild.lastElementChild
+        if (!(fifthChild instanceof Element)) {
+            log('wide reels path missing fifth child', {
+                sibling: describeElement(sibling),
+                childCount: sibling.children.length
+            });
+            return null;
+        }
+
+        const lastChild = fifthChild.lastElementChild
             ? fifthChild.lastElementChild
             : null;
+        if (!(lastChild instanceof Element)) {
+            log('wide reels path missing last child', {
+                fifthChild: describeElement(fifthChild),
+                childCount: fifthChild.children.length
+            });
+            return null;
+        }
 
-        return lastChild instanceof Element ? lastChild : null;
+        return lastChild;
     }
 
     function getFixedInfoWrapperForVideo(video) {
@@ -1700,15 +1727,7 @@
         }
 
         log('wide reels fixed info candidate missing', describeVideo(video));
-        clickMoreButtonForVideo(video);
-
-        const infoElement = findInfoElementByMoreButton(video);
-        if (!(infoElement instanceof Element)) {
-            log('wide reels fallback info candidate missing', describeVideo(video));
-            return false;
-        }
-
-        return stashMovedInfoForVideo(video, infoElement);
+        return false;
     }
 
     function ensureInfoElementExpanded(infoElement) {
