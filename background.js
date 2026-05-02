@@ -115,6 +115,65 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return true;
     }
 
+    if (message.downloadMediaBundle && message.downloadMediaBundle.bundle) {
+        const bundle = message.downloadMediaBundle.bundle;
+        if (!bundle || !bundle.video || !bundle.video.url) {
+            sendResponse({
+                ok: false,
+                error: 'invalid explicit media bundle'
+            });
+            return;
+        }
+
+        const videoUrl = stripByteRangeParams(bundle.video.url);
+        const videoFilename = buildCapturedMediaFilename(bundle.video);
+        console.log('[InstagramVideoController]', 'download explicit media bundle', {
+            bundle,
+            videoUrl,
+            videoFilename
+        });
+
+        chrome.downloads.download({
+            url: videoUrl,
+            filename: videoFilename,
+            saveAs: false
+        }, function (videoDownloadId) {
+            if (chrome.runtime.lastError) {
+                sendResponse({
+                    ok: false,
+                    error: chrome.runtime.lastError.message,
+                    bundle
+                });
+                return;
+            }
+
+            if (bundle.audio && bundle.audio.url) {
+                chrome.downloads.download({
+                    url: stripByteRangeParams(bundle.audio.url),
+                    filename: buildCapturedMediaFilename(bundle.audio),
+                    saveAs: false
+                }, function (audioDownloadId) {
+                    sendResponse({
+                        ok: true,
+                        videoDownloadId,
+                        audioDownloadId: chrome.runtime.lastError ? null : audioDownloadId,
+                        separateAudio: true,
+                        bundle
+                    });
+                });
+                return;
+            }
+
+            sendResponse({
+                ok: true,
+                videoDownloadId,
+                separateAudio: false,
+                bundle
+            });
+        });
+        return true;
+    }
+
     if (message.pinCapturedVideo) {
         const tabId = sender && sender.tab ? sender.tab.id : -1;
         const bundle = pickBestMediaBundleForTab(tabId, message.hint || null);

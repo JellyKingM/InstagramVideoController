@@ -61,9 +61,78 @@
     let pendingSideBoxVideo = null;
     let mediaHintStartedAt = 0;
     let fullscreenVideo = null;
+    let internalLogs = [];
+    let capturedMediaBundleByVideo = new WeakMap();
+    const MAX_INTERNAL_LOGS = 600;
 
     function log(...args) {
+        try {
+            const rendered = args.map(renderLogValue).join(' ');
+            internalLogs.push(`[${new Date().toISOString()}] ${rendered}`);
+            if (internalLogs.length > MAX_INTERNAL_LOGS) {
+                internalLogs = internalLogs.slice(-MAX_INTERNAL_LOGS);
+            }
+        } catch (error) {
+            console.log(LOG_PREFIX, 'failed to record internal log', error);
+        }
         console.log(LOG_PREFIX, ...args);
+    }
+
+    function renderLogValue(value) {
+        if (value instanceof HTMLVideoElement) {
+            return describeVideo(value);
+        }
+        if (value instanceof Element) {
+            return describeElement(value);
+        }
+        if (value instanceof Error) {
+            return `${value.name}: ${value.message}`;
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        try {
+            return JSON.stringify(value);
+        } catch (error) {
+            return String(value);
+        }
+    }
+
+    function describeElement(element) {
+        if (!(element instanceof Element)) return String(element);
+        const id = element.id ? `#${element.id}` : '';
+        const className = typeof element.className === 'string' && element.className.trim()
+            ? `.${element.className.trim().replace(/\s+/g, '.')}`
+            : '';
+        return `<${element.tagName.toLowerCase()}${id}${className}>`;
+    }
+
+    function describeVideo(video) {
+        if (!(video instanceof HTMLVideoElement)) return String(video);
+        const rect = video.getBoundingClientRect();
+        return `video{currentTime=${Number(video.currentTime || 0).toFixed(2)},duration=${Number(video.duration || 0).toFixed(2)},paused=${video.paused},muted=${video.muted},volume=${Number(video.volume || 0).toFixed(2)},size=${Math.round(rect.width)}x${Math.round(rect.height)}}`;
+    }
+
+    function exportInternalLogs() {
+        const lines = [
+            'Instagram Video Controller internal log',
+            `time=${new Date().toISOString()}`,
+            `url=${location.href}`,
+            `activeVideo=${renderLogValue(activeVideo)}`,
+            `sideBoxVideo=${renderLogValue(sideBoxVideo)}`,
+            '',
+            ...internalLogs
+        ];
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `instagram-video-controller-log-${Date.now()}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+        log('exported internal logs', { count: internalLogs.length });
     }
 
     function ensurePageDownloadBridge() {
@@ -365,6 +434,14 @@
             scheduleRestoreInfoAfterInteraction(video);
         }, true);
 
+        video.addEventListener('dblclick', () => {
+            scheduleRestoreInfoAfterInteraction(video);
+        }, true);
+
+        video.addEventListener('pointerup', () => {
+            scheduleRestoreInfoAfterInteraction(video);
+        }, true);
+
         video.addEventListener('volumechange', () => {
             if (applyingVolume || applyingMute) return;
 
@@ -475,6 +552,9 @@
                     log('pin captured media failed', chrome.runtime.lastError.message);
                     return;
                 }
+                if (response && response.ok && response.bundle && targetVideo instanceof HTMLVideoElement) {
+                    capturedMediaBundleByVideo.set(targetVideo, response.bundle);
+                }
                 log('pinned captured media', response);
             });
         } catch (error) {
@@ -507,6 +587,20 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
+                const directBundle = capturedMediaBundleByVideo.get(targetVideo);
+                if (directBundle && directBundle.video && directBundle.video.url) {
+                    const explicitResponse = await chrome.runtime.sendMessage({
+                        downloadMediaBundle: {
+                            bundle: directBundle
+                        }
+                    });
+                    if (explicitResponse && explicitResponse.ok) {
+                        log('explicit media bundle download started', explicitResponse);
+                        return;
+                    }
+                    log('explicit media bundle download failed', explicitResponse);
+                }
+
                 const capturedResponse = await downloadCapturedVideoWithRetry(targetVideo);
                 if (capturedResponse && capturedResponse.ok) {
                     log('captured media download started', capturedResponse);
@@ -765,15 +859,25 @@
         row1Left.appendChild(createButton(t('buttonControls', 'Controls'), t('tooltipControls', 'Toggle native video controls'), toggleNativeControls));
         row1Left.appendChild(createButton(t('buttonFind', 'Find'), t('tooltipFind', 'Rescan videos'), processVideos));
 
+        const row1Right = document.createElement('div');
+        row1Right.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;';
+
         const downloadButton = createButton(
             t('buttonDownloadVideo', 'Download video'),
             t('tooltipDownloadVideo', 'Download the active video'),
             downloadActiveVideo
         );
-        downloadButton.style.marginLeft = 'auto';
+
+        const saveLogButton = createButton(
+            t('buttonSaveLog', 'Save log'),
+            t('tooltipSaveLog', 'Save extension internal logs to a text file'),
+            exportInternalLogs
+        );
 
         row1.appendChild(row1Left);
-        row1.appendChild(downloadButton);
+        row1Right.appendChild(downloadButton);
+        row1Right.appendChild(saveLogButton);
+        row1.appendChild(row1Right);
 
         const row2 = document.createElement('div');
         row2.style.cssText = 'display: flex; gap: 6px; margin-bottom: 8px;';
@@ -1516,6 +1620,7 @@
 
     function isCollapsedMoreButton(button) {
         if (!(button instanceof Element)) return false;
+        if (isStructureCollapsedMoreButton(button)) return true;
 
         const hiddenMore = button.querySelector('span[aria-hidden="true"]');
         if (hiddenMore && /(더 보기|more|see more)/i.test(hiddenMore.textContent || '')) {
@@ -1528,6 +1633,24 @@
     function findCollapsedMoreButton(root) {
         if (!(root instanceof Element)) return null;
         return Array.from(root.querySelectorAll('[role="button"]')).find(isCollapsedMoreButton) || null;
+    }
+
+    function isStructureCollapsedMoreButton(button) {
+        if (!(button instanceof Element)) return false;
+
+        const wrapper = button.querySelector(':scope > .x1xmf6yo');
+        if (!(wrapper instanceof Element)) return false;
+
+        const directDiv = Array.from(wrapper.children).find(child =>
+            child instanceof HTMLDivElement &&
+            child.getAttribute('dir') === 'auto'
+        );
+        const directSpan = Array.from(wrapper.children).find(child =>
+            child instanceof HTMLSpanElement &&
+            child.getAttribute('dir') === 'auto'
+        );
+
+        return !!directDiv && !directSpan;
     }
 
     function hasMovedInfoForVideo(video) {
@@ -1543,37 +1666,49 @@
         return rect.width > rect.height;
     }
 
-    function preCaptureWideReelsInfo(video) {
-        if (!isWideReelsVideo(video) || hasMovedInfoForVideo(video)) return false;
-
-        const fixedWideInfo = getWideReelsInfoElement(video);
-        if (fixedWideInfo) {
-            const collapsedButton = findCollapsedMoreButton(fixedWideInfo);
-            if (collapsedButton) {
-                const lastClickAt = Number(collapsedButton.dataset.instagramVideoControllerClickedMoreAt || '0');
-                if (Date.now() - lastClickAt >= 400) {
-                    collapsedButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
-                    collapsedButton.click();
-                }
-                return false;
-            }
-            prepareMovedInfoElement(fixedWideInfo);
-            movedInfoByVideo.set(video, fixedWideInfo);
-            installMovedInfoColorObserver(video, fixedWideInfo);
-            ensureMovedInfoStash().appendChild(fixedWideInfo);
-            return true;
-        }
-
-        clickMoreButtonForVideo(video);
-
-        const infoElement = findInfoElementByMoreButton(video);
-        if (!(infoElement instanceof Element)) return false;
+    function stashMovedInfoForVideo(video, infoElement) {
+        if (!(video instanceof HTMLVideoElement) || !(infoElement instanceof Element)) return false;
 
         prepareMovedInfoElement(infoElement);
         movedInfoByVideo.set(video, infoElement);
         installMovedInfoColorObserver(video, infoElement);
         ensureMovedInfoStash().appendChild(infoElement);
+        log('stashed moved info', {
+            video: describeVideo(video),
+            info: describeElement(infoElement)
+        });
         return true;
+    }
+
+    function preCaptureWideReelsInfo(video) {
+        if (!isWideReelsVideo(video) || hasMovedInfoForVideo(video)) return false;
+
+        const fixedWideInfo = getWideReelsInfoElement(video);
+        if (fixedWideInfo) {
+            log('wide reels fixed info candidate', describeElement(fixedWideInfo));
+            const collapsedButton = findCollapsedMoreButton(fixedWideInfo);
+            if (collapsedButton) {
+                const lastClickAt = Number(collapsedButton.dataset.instagramVideoControllerClickedMoreAt || '0');
+                if (Date.now() - lastClickAt >= 400) {
+                    collapsedButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
+                    log('wide reels pre-capture clicking collapsed button', describeElement(collapsedButton));
+                    collapsedButton.click();
+                }
+                return false;
+            }
+            return stashMovedInfoForVideo(video, fixedWideInfo);
+        }
+
+        log('wide reels fixed info candidate missing', describeVideo(video));
+        clickMoreButtonForVideo(video);
+
+        const infoElement = findInfoElementByMoreButton(video);
+        if (!(infoElement instanceof Element)) {
+            log('wide reels fallback info candidate missing', describeVideo(video));
+            return false;
+        }
+
+        return stashMovedInfoForVideo(video, infoElement);
     }
 
     function ensureInfoElementExpanded(infoElement) {
@@ -1586,6 +1721,7 @@
         if (Date.now() - lastClickAt < 400) return;
 
         moreButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
+        log('re-expanding collapsed info', describeElement(moreButton));
         moreButton.click();
     }
 
@@ -1600,17 +1736,25 @@
 
         const existingTimer = restoreInfoTimerByVideo.get(video);
         if (existingTimer) {
-            clearTimeout(existingTimer);
+            existingTimer.forEach(timerId => clearTimeout(timerId));
         }
 
-        const timerId = window.setTimeout(() => {
-            restoreInfoTimerByVideo.delete(video);
+        const timers = [250, 700, 1400].map(delay => window.setTimeout(() => {
             if (!document.contains(video)) return;
             if (!hasMovedInfoForVideo(video)) return;
+            log('restoring moved info after interaction', {
+                video: describeVideo(video),
+                delay
+            });
             ensureMovedInfoExpanded(video);
-        }, 250);
+        }, delay));
 
-        restoreInfoTimerByVideo.set(video, timerId);
+        const cleanupTimer = window.setTimeout(() => {
+            restoreInfoTimerByVideo.delete(video);
+        }, 1600);
+
+        timers.push(cleanupTimer);
+        restoreInfoTimerByVideo.set(video, timers);
     }
 
     function clearWideReelsInfoObserver() {
@@ -1632,6 +1776,10 @@
         const root = getWideReelsInfoElement(video)?.parentElement || getAncestor(video, 10) || video.parentElement;
         if (!root) return;
 
+        log('waiting for wide reels info', {
+            video: describeVideo(video),
+            root: describeElement(root)
+        });
         wideReelsInfoObserver = new MutationObserver(() => {
             if (!document.contains(video)) {
                 clearWideReelsInfoObserver();
@@ -1641,6 +1789,7 @@
             if (preCaptureWideReelsInfo(video)) {
                 clearWideReelsInfoObserver();
                 activeVideo = video;
+                log('wide reels info captured after observer', describeVideo(video));
                 updateSideBox();
             }
         });
