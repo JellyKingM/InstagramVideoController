@@ -42,6 +42,7 @@
     let sideBoxInfo = null;
     let sideBoxControls = null;
     let sideBoxRestoreButton = null;
+    let floatingLogButton = null;
     let donatePrompt = null;
     let movedInfoByVideo = new WeakMap();
     let expandedInfoByVideo = new WeakSet();
@@ -466,10 +467,13 @@
     }
 
     function processVideos() {
+        updateFloatingLogButton();
+
         if (!isSupportedPage()) {
             activeVideo = null;
             cleanupSideBox();
             hideSideBoxRestoreButton();
+            removeFloatingLogButton();
             markActiveVideo(null);
             updatePanel();
             return;
@@ -1109,6 +1113,49 @@
         if (!sideBoxRestoreButton) return;
         sideBoxRestoreButton.remove();
         sideBoxRestoreButton = null;
+    }
+
+    function removeFloatingLogButton() {
+        if (!floatingLogButton) return;
+        floatingLogButton.remove();
+        floatingLogButton = null;
+    }
+
+    function updateFloatingLogButton() {
+        if (!isSupportedPage()) {
+            removeFloatingLogButton();
+            return;
+        }
+
+        if (!floatingLogButton) {
+            floatingLogButton = document.createElement('button');
+            floatingLogButton.type = 'button';
+            floatingLogButton.id = 'instagram-video-controller-save-log-floating';
+            floatingLogButton.textContent = t('buttonSaveLog', 'Save log');
+            floatingLogButton.title = t('tooltipSaveLog', 'Save extension internal logs to a text file');
+            floatingLogButton.style.cssText = `
+                position: fixed;
+                left: 16px;
+                bottom: 16px;
+                z-index: 2147483647;
+                min-width: 82px;
+                height: 32px;
+                border: 0;
+                border-radius: 6px;
+                background: rgba(18,18,18,0.96);
+                color: #fff;
+                cursor: pointer;
+                font: 700 12px Arial, sans-serif;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+                opacity: 0.92;
+            `;
+            floatingLogButton.addEventListener('click', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                exportInternalLogs();
+            });
+            document.documentElement.appendChild(floatingLogButton);
+        }
     }
 
     function updateSideBoxRestoreButton(video) {
@@ -1973,9 +2020,12 @@
     }
 
     function updateSideBox() {
+        updateFloatingLogButton();
+
         if (!isSupportedPage()) {
             cleanupSideBox();
             hideSideBoxRestoreButton();
+            removeFloatingLogButton();
             clearWideReelsInfoObserver();
             return;
         }
