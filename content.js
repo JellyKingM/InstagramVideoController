@@ -65,6 +65,7 @@
     let internalLogs = [];
     let capturedMediaBundleByVideo = new WeakMap();
     let mediaHintStartedAtByVideo = new WeakMap();
+    let mediaIdentityByVideo = new WeakMap();
     const MAX_INTERNAL_LOGS = 600;
 
     function log(...args) {
@@ -555,6 +556,34 @@
         };
     }
 
+    function getVideoIdentity(video) {
+        if (!(video instanceof HTMLVideoElement)) return '';
+        return `${video.currentSrc || video.src || ''}::${Number(video.duration || 0).toFixed(3)}`;
+    }
+
+    function shouldReplaceCapturedBundle(video, nextBundle) {
+        if (!(video instanceof HTMLVideoElement)) return true;
+        if (!nextBundle || !nextBundle.video) return false;
+
+        const existingBundle = capturedMediaBundleByVideo.get(video);
+        if (!existingBundle || !existingBundle.video) return true;
+
+        const videoDuration = Number(video.duration || 0);
+        const existingDelta = videoDuration > 0 ? Math.abs(Number(existingBundle.video.duration || 0) - videoDuration) : 0;
+        const nextDelta = videoDuration > 0 ? Math.abs(Number(nextBundle.video.duration || 0) - videoDuration) : 0;
+
+        if (existingDelta <= 0.75 && nextDelta > 0.75) {
+            log('skipping bundle replacement due to worse duration match', {
+                video: describeVideo(video),
+                existing: existingBundle.video,
+                next: nextBundle.video
+            });
+            return false;
+        }
+
+        return true;
+    }
+
     function pinCapturedMediaForVideo(video) {
         if (!(video instanceof HTMLVideoElement)) {
             return Promise.resolve({ ok: false, error: 'invalid target video' });
@@ -573,8 +602,9 @@
                         resolve(failure);
                         return;
                     }
-                    if (response && response.ok && response.bundle) {
+                    if (response && response.ok && response.bundle && shouldReplaceCapturedBundle(video, response.bundle)) {
                         capturedMediaBundleByVideo.set(video, response.bundle);
+                        mediaIdentityByVideo.set(video, getVideoIdentity(video));
                     }
                     log('pinned captured media', response);
                     resolve(response || { ok: false, error: 'empty pin response' });
@@ -620,8 +650,10 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
+                const currentIdentity = getVideoIdentity(targetVideo);
+                const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
                 const directBundle = capturedMediaBundleByVideo.get(targetVideo);
-                if (directBundle && directBundle.video && directBundle.video.url) {
+                if (directBundle && directBundle.video && directBundle.video.url && currentIdentity === cachedIdentity) {
                     const explicitResponse = await chrome.runtime.sendMessage({
                         downloadMediaBundle: {
                             bundle: directBundle
@@ -1601,6 +1633,11 @@
             ? sibling.children[4]
             : null;
         if (!(fifthChild instanceof Element)) {
+            const subtreeCandidate = findWideReelsInfoInSiblingSubtree(sibling);
+            if (subtreeCandidate) {
+                log('wide reels subtree fallback candidate', describeElement(subtreeCandidate));
+                return subtreeCandidate;
+            }
             log('wide reels path missing fifth child', {
                 sibling: describeElement(sibling),
                 childCount: sibling.children.length
@@ -1620,6 +1657,31 @@
         }
 
         return lastChild;
+    }
+
+    function findWideReelsInfoInSiblingSubtree(sibling) {
+        if (!(sibling instanceof Element)) return null;
+
+        const candidates = Array.from(sibling.querySelectorAll('div'))
+            .filter(candidate =>
+                !candidate.querySelector('video') &&
+                candidate.querySelector('a[role="link"]') &&
+                candidate.querySelector('[role="button"]') &&
+                candidate.querySelector('[role="presentation"]')
+            );
+
+        candidates.sort((a, b) => getElementDepth(b) - getElementDepth(a));
+        return candidates[0] || null;
+    }
+
+    function getElementDepth(element) {
+        let depth = 0;
+        let current = element;
+        while (current && current.parentElement) {
+            depth += 1;
+            current = current.parentElement;
+        }
+        return depth;
     }
 
     function getFixedInfoWrapperForVideo(video) {
