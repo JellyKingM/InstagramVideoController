@@ -57,6 +57,7 @@
     let donatePromptDismissed = false;
     let wideReelsInfoObserver = null;
     let pinMediaTimer = null;
+    let movedInfoStash = null;
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
@@ -409,6 +410,18 @@
         return button;
     }
 
+    function ensureMovedInfoStash() {
+        if (movedInfoStash && document.contains(movedInfoStash)) {
+            return movedInfoStash;
+        }
+
+        movedInfoStash = document.createElement('div');
+        movedInfoStash.id = 'instagram-video-controller-info-stash';
+        movedInfoStash.style.cssText = 'display:none !important;';
+        document.documentElement.appendChild(movedInfoStash);
+        return movedInfoStash;
+    }
+
     function getDownloadTargetVideo() {
         if (sideBoxVideo && document.contains(sideBoxVideo) && isVisibleVideo(sideBoxVideo)) {
             return sideBoxVideo;
@@ -423,7 +436,13 @@
 
     function pinCapturedMediaForCurrentTarget() {
         try {
-            chrome.runtime.sendMessage({ pinCapturedVideo: true }, response => {
+            const targetVideo = getDownloadTargetVideo();
+            const hint = {
+                duration: Number(targetVideo && targetVideo.duration) || 0,
+                currentTime: Number(targetVideo && targetVideo.currentTime) || 0
+            };
+
+            chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
                 if (chrome.runtime.lastError) {
                     log('pin captured media failed', chrome.runtime.lastError.message);
                     return;
@@ -460,7 +479,7 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
-                const capturedResponse = await downloadCapturedVideoWithRetry();
+                const capturedResponse = await downloadCapturedVideoWithRetry(targetVideo);
                 if (!capturedResponse || !capturedResponse.ok) {
                     throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
                 }
@@ -489,15 +508,19 @@
         }
     }
 
-    async function downloadCapturedVideoWithRetry() {
+    async function downloadCapturedVideoWithRetry(video) {
         const delays = [0, 800, 1500];
+        const hint = {
+            duration: Number(video && video.duration) || 0,
+            currentTime: Number(video && video.currentTime) || 0
+        };
 
         for (const delay of delays) {
             if (delay > 0) {
                 await wait(delay);
             }
 
-            const pinResponse = await chrome.runtime.sendMessage({ pinCapturedVideo: true });
+            const pinResponse = await chrome.runtime.sendMessage({ pinCapturedVideo: true, hint });
             log('pin captured media before download', pinResponse);
 
             const response = await chrome.runtime.sendMessage({ downloadCapturedVideo: true });
@@ -1385,7 +1408,9 @@
         observer.observe(infoElement, {
             childList: true,
             subtree: true,
-            characterData: true
+            characterData: true,
+            attributes: true,
+            attributeFilter: ['class', 'style', 'hidden', 'aria-hidden']
         });
 
         movedInfoColorObserverByVideo.set(video, observer);
@@ -1427,8 +1452,9 @@
         if (fixedWideInfo) {
             const collapsedButton = findCollapsedMoreButton(fixedWideInfo);
             if (collapsedButton) {
-                if (collapsedButton.dataset.instagramVideoControllerClickedMore !== 'true') {
-                    collapsedButton.dataset.instagramVideoControllerClickedMore = 'true';
+                const lastClickAt = Number(collapsedButton.dataset.instagramVideoControllerClickedMoreAt || '0');
+                if (Date.now() - lastClickAt >= 400) {
+                    collapsedButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
                     collapsedButton.click();
                 }
                 return false;
@@ -1436,7 +1462,7 @@
             prepareMovedInfoElement(fixedWideInfo);
             movedInfoByVideo.set(video, fixedWideInfo);
             installMovedInfoColorObserver(video, fixedWideInfo);
-            fixedWideInfo.remove();
+            ensureMovedInfoStash().appendChild(fixedWideInfo);
             return true;
         }
 
@@ -1448,7 +1474,7 @@
         prepareMovedInfoElement(infoElement);
         movedInfoByVideo.set(video, infoElement);
         installMovedInfoColorObserver(video, infoElement);
-        infoElement.remove();
+        ensureMovedInfoStash().appendChild(infoElement);
         return true;
     }
 
@@ -1458,9 +1484,10 @@
         const moreButton = findCollapsedMoreButton(infoElement) || findMoreButton(infoElement);
         if (!moreButton) return;
         if (!isCollapsedMoreButton(moreButton)) return;
-        if (moreButton.dataset.instagramVideoControllerClickedMore === 'true') return;
+        const lastClickAt = Number(moreButton.dataset.instagramVideoControllerClickedMoreAt || '0');
+        if (Date.now() - lastClickAt < 400) return;
 
-        moreButton.dataset.instagramVideoControllerClickedMore = 'true';
+        moreButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
         moreButton.click();
     }
 

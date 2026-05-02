@@ -117,7 +117,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
     if (message.pinCapturedVideo) {
         const tabId = sender && sender.tab ? sender.tab.id : -1;
-        const bundle = pickBestMediaBundleForTab(tabId);
+        const bundle = pickBestMediaBundleForTab(tabId, message.hint || null);
         if (bundle && bundle.video) {
             pinnedMediaByTab.set(tabId, bundle);
             sendResponse({
@@ -208,20 +208,20 @@ function pruneMediaRequests(list) {
     list.push(...filtered.slice(0, MEDIA_REQUEST_LIMIT));
 }
 
-function pickBestMediaRequestForTab(tabId) {
+function pickBestMediaRequestForTab(tabId, hint = null) {
     const list = mediaRequestsByTab.get(tabId) || [];
     pruneMediaRequests(list);
     if (list.length === 0) return null;
 
     const now = Date.now();
     const recentList = list.filter(item => now - item.capturedAt <= RECENT_MEDIA_WINDOW_MS);
-    const videoCandidates = recentList.filter(item => item.isVideo);
+    const videoCandidates = applyDurationHint(recentList.filter(item => item.isVideo), hint);
     if (videoCandidates.length > 0) {
         videoCandidates.sort(compareMediaCandidates);
         return videoCandidates[0];
     }
 
-    const fallbackVideoCandidates = list.filter(item => item.isVideo);
+    const fallbackVideoCandidates = applyDurationHint(list.filter(item => item.isVideo), hint);
     if (fallbackVideoCandidates.length > 0) {
         fallbackVideoCandidates.sort(compareMediaCandidates);
         return fallbackVideoCandidates[0];
@@ -242,12 +242,12 @@ function pickBestMediaRequestForTab(tabId) {
     return [...list].sort(compareMediaCandidates)[0];
 }
 
-function pickBestMediaBundleForTab(tabId) {
+function pickBestMediaBundleForTab(tabId, hint = null) {
     const list = mediaRequestsByTab.get(tabId) || [];
     pruneMediaRequests(list);
     if (list.length === 0) return null;
 
-    const video = pickBestMediaRequestForTab(tabId);
+    const video = pickBestMediaRequestForTab(tabId, hint);
     if (!video) return null;
 
     const audioCandidates = list.filter(item =>
@@ -261,6 +261,24 @@ function pickBestMediaBundleForTab(tabId) {
         video,
         audio: audioCandidates[0] || null
     };
+}
+
+function applyDurationHint(candidates, hint) {
+    if (!hint || !Number.isFinite(hint.duration) || hint.duration <= 0) {
+        return candidates;
+    }
+
+    const exactish = candidates.filter(item =>
+        Number.isFinite(item.duration) &&
+        item.duration > 0 &&
+        Math.abs(item.duration - hint.duration) <= 0.75
+    );
+
+    if (exactish.length > 0) {
+        return exactish;
+    }
+
+    return candidates;
 }
 
 function compareMediaCandidates(a, b) {
