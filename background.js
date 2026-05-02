@@ -1,6 +1,7 @@
 importScripts('shared.js');
 
 const mediaRequestsByTab = new Map();
+const pinnedMediaByTab = new Map();
 const MEDIA_REQUEST_LIMIT = 80;
 const MEDIA_REQUEST_TTL_MS = 10 * 60 * 1000;
 const RECENT_MEDIA_WINDOW_MS = 20 * 1000;
@@ -55,8 +56,8 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
     if (message.downloadCapturedVideo) {
         const tabId = sender && sender.tab ? sender.tab.id : -1;
-        const candidate = pickBestMediaRequestForTab(tabId);
-        if (!candidate) {
+        const bundle = pinnedMediaByTab.get(tabId) || pickBestMediaBundleForTab(tabId);
+        if (!bundle || !bundle.video) {
             sendResponse({
                 ok: false,
                 error: 'no captured media request'
@@ -64,35 +65,73 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             return;
         }
 
-        const url = stripByteRangeParams(candidate.url);
-        const filename = buildCapturedMediaFilename(candidate);
+        const videoUrl = stripByteRangeParams(bundle.video.url);
+        const videoFilename = buildCapturedMediaFilename(bundle.video);
         console.log('[InstagramVideoController]', 'download captured media', {
             tabId,
-            candidate,
-            url,
-            filename
+            bundle,
+            videoUrl,
+            videoFilename
         });
+
         chrome.downloads.download({
-            url,
-            filename,
+            url: videoUrl,
+            filename: videoFilename,
             saveAs: false
-        }, function (downloadId) {
+        }, function (videoDownloadId) {
             if (chrome.runtime.lastError) {
                 sendResponse({
                     ok: false,
                     error: chrome.runtime.lastError.message,
-                    candidate
+                    bundle
+                });
+                return;
+            }
+
+            if (bundle.audio) {
+                chrome.downloads.download({
+                    url: stripByteRangeParams(bundle.audio.url),
+                    filename: buildCapturedMediaFilename(bundle.audio),
+                    saveAs: false
+                }, function (audioDownloadId) {
+                    sendResponse({
+                        ok: true,
+                        videoDownloadId,
+                        audioDownloadId: chrome.runtime.lastError ? null : audioDownloadId,
+                        separateAudio: true,
+                        bundle
+                    });
                 });
                 return;
             }
 
             sendResponse({
                 ok: true,
-                downloadId,
-                candidate
+                videoDownloadId,
+                separateAudio: false,
+                bundle
             });
         });
         return true;
+    }
+
+    if (message.pinCapturedVideo) {
+        const tabId = sender && sender.tab ? sender.tab.id : -1;
+        const bundle = pickBestMediaBundleForTab(tabId);
+        if (bundle && bundle.video) {
+            pinnedMediaByTab.set(tabId, bundle);
+            sendResponse({
+                ok: true,
+                bundle
+            });
+            return;
+        }
+
+        sendResponse({
+            ok: false,
+            error: 'no media bundle to pin'
+        });
+        return;
     }
 
     if (message.downloadVideo && message.downloadVideo.url) {
@@ -201,6 +240,27 @@ function pickBestMediaRequestForTab(tabId) {
     }
 
     return [...list].sort(compareMediaCandidates)[0];
+}
+
+function pickBestMediaBundleForTab(tabId) {
+    const list = mediaRequestsByTab.get(tabId) || [];
+    pruneMediaRequests(list);
+    if (list.length === 0) return null;
+
+    const video = pickBestMediaRequestForTab(tabId);
+    if (!video) return null;
+
+    const audioCandidates = list.filter(item =>
+        item.isAudio &&
+        (!video.assetId || item.assetId === video.assetId)
+    );
+
+    audioCandidates.sort(compareMediaCandidates);
+
+    return {
+        video,
+        audio: audioCandidates[0] || null
+    };
 }
 
 function compareMediaCandidates(a, b) {

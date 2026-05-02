@@ -333,6 +333,7 @@
         video.addEventListener('play', () => {
             activeVideo = video;
             applySettingsToVideo(video);
+            pinCapturedMediaForCurrentTarget();
             updatePanel();
         });
 
@@ -395,13 +396,39 @@
         return button;
     }
 
-    async function downloadActiveVideo() {
-        if (!activeVideo || !document.contains(activeVideo)) {
-            activeVideo = pickActiveVideo();
+    function getDownloadTargetVideo() {
+        if (sideBoxVideo && document.contains(sideBoxVideo) && isVisibleVideo(sideBoxVideo)) {
+            return sideBoxVideo;
         }
-        if (!activeVideo) return;
 
-        const diagnostics = getVideoDownloadDiagnostics(activeVideo);
+        if (activeVideo && document.contains(activeVideo) && isVisibleVideo(activeVideo)) {
+            return activeVideo;
+        }
+
+        return pickActiveVideo();
+    }
+
+    function pinCapturedMediaForCurrentTarget() {
+        try {
+            chrome.runtime.sendMessage({ pinCapturedVideo: true }, response => {
+                if (chrome.runtime.lastError) {
+                    log('pin captured media failed', chrome.runtime.lastError.message);
+                    return;
+                }
+                log('pinned captured media', response);
+            });
+        } catch (error) {
+            log('pin captured media exception', error);
+        }
+    }
+
+    async function downloadActiveVideo() {
+        const targetVideo = getDownloadTargetVideo();
+        if (!targetVideo) return;
+
+        activeVideo = targetVideo;
+
+        const diagnostics = getVideoDownloadDiagnostics(targetVideo);
         log('video download diagnostics', diagnostics);
 
         const sourceUrl = diagnostics.primaryUrl;
@@ -1538,6 +1565,7 @@
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
             recordSideBoxShown();
+            pinCapturedMediaForCurrentTarget();
 
             if (!isSingleReelPage()) {
                 sideBoxResizeObserver = new ResizeObserver(() => {
