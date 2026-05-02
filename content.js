@@ -54,6 +54,7 @@
     let donatePromptNextAt = 30;
     let donatePromptDismissed = false;
     let wideReelsInfoObserver = null;
+    let pinMediaTimer = null;
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
@@ -333,8 +334,14 @@
         video.addEventListener('play', () => {
             activeVideo = video;
             applySettingsToVideo(video);
-            pinCapturedMediaForCurrentTarget();
+            schedulePinCapturedMedia(800);
             updatePanel();
+        });
+
+        video.addEventListener('loadeddata', () => {
+            if (video === activeVideo || video === sideBoxVideo) {
+                schedulePinCapturedMedia(1200);
+            }
         });
 
         video.addEventListener('volumechange', () => {
@@ -420,6 +427,17 @@
         } catch (error) {
             log('pin captured media exception', error);
         }
+    }
+
+    function schedulePinCapturedMedia(delay = 900) {
+        if (pinMediaTimer) {
+            clearTimeout(pinMediaTimer);
+        }
+
+        pinMediaTimer = window.setTimeout(() => {
+            pinMediaTimer = null;
+            pinCapturedMediaForCurrentTarget();
+        }, delay);
     }
 
     async function downloadActiveVideo() {
@@ -1383,7 +1401,7 @@
         }
 
         if (attachMovedInfoToSideBox(video)) {
-            clickMoreButton(movedInfoByVideo.get(video));
+            applyWhiteTextToInfoElement(movedInfoByVideo.get(video));
             return true;
         }
 
@@ -1408,8 +1426,7 @@
             sideBoxInfo.appendChild(infoElement);
         }
         movedInfoByVideo.set(video, infoElement);
-
-        clickMoreButton(infoElement);
+        applyWhiteTextToInfoElement(infoElement);
         return true;
     }
 
@@ -1565,7 +1582,7 @@
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
             recordSideBoxShown();
-            pinCapturedMediaForCurrentTarget();
+            schedulePinCapturedMedia(1200);
 
             if (!isSingleReelPage()) {
                 sideBoxResizeObserver = new ResizeObserver(() => {
