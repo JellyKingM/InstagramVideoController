@@ -60,6 +60,7 @@
     let movedInfoStash = null;
     let pendingSideBoxVideo = null;
     let mediaHintStartedAt = 0;
+    let fullscreenVideo = null;
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
@@ -507,11 +508,29 @@
         try {
             if (diagnostics.guessedType === 'blob') {
                 const capturedResponse = await downloadCapturedVideoWithRetry(targetVideo);
-                if (!capturedResponse || !capturedResponse.ok) {
-                    throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
+                if (capturedResponse && capturedResponse.ok) {
+                    log('captured media download started', capturedResponse);
+                    return;
                 }
-                log('captured media download started', capturedResponse);
-                return;
+
+                const performanceUrl = findPerformanceVideoUrl(targetVideo);
+                if (performanceUrl) {
+                    const response = await chrome.runtime.sendMessage({
+                        downloadVideo: {
+                            url: performanceUrl,
+                            filename: getDownloadFileName(performanceUrl)
+                        }
+                    });
+                    if (response && response.ok) {
+                        log('performance video download started', {
+                            url: performanceUrl,
+                            downloadId: response.downloadId
+                        });
+                        return;
+                    }
+                }
+
+                throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
             }
 
             const response = await chrome.runtime.sendMessage({
@@ -532,6 +551,57 @@
             if (diagnostics.guessedType !== 'blob') {
                 window.open(sourceUrl, '_blank', 'noopener,noreferrer');
             }
+        }
+    }
+
+    function findPerformanceVideoUrl(video) {
+        if (!window.performance || !window.performance.getEntriesByType) return '';
+
+        const hintDuration = Number(video && video.duration) || 0;
+        const entries = window.performance.getEntriesByType('resource')
+            .filter(entry =>
+                typeof entry.name === 'string' &&
+                /\.mp4($|\?)/i.test(entry.name)
+            )
+            .map(entry => ({
+                name: entry.name,
+                startTime: Number(entry.startTime) || 0,
+                durationHint: extractDurationHintFromUrl(entry.name)
+            }));
+
+        const filtered = hintDuration > 0
+            ? entries.filter(entry =>
+                entry.durationHint > 0 &&
+                Math.abs(entry.durationHint - hintDuration) <= 0.75
+            )
+            : entries;
+
+        const candidate = (filtered.length > 0 ? filtered : entries)
+            .sort((a, b) => b.startTime - a.startTime)[0];
+
+        return candidate ? stripByteRangeFromUrl(candidate.name) : '';
+    }
+
+    function extractDurationHintFromUrl(url) {
+        try {
+            const parsed = new URL(url);
+            const efg = parsed.searchParams.get('efg');
+            if (!efg) return 0;
+            const decoded = JSON.parse(atob(efg));
+            return Number(decoded.duration_s || 0);
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    function stripByteRangeFromUrl(url) {
+        try {
+            const parsed = new URL(url);
+            parsed.searchParams.delete('bytestart');
+            parsed.searchParams.delete('byteend');
+            return parsed.toString();
+        } catch (error) {
+            return url;
         }
     }
 
@@ -1981,6 +2051,33 @@
         window.addEventListener('scroll', updateSideBox, { passive: true, capture: true });
     }
 
+    function installFullscreenListeners() {
+        document.addEventListener('fullscreenchange', () => {
+            const currentFullscreenVideo = document.fullscreenElement instanceof HTMLVideoElement
+                ? document.fullscreenElement
+                : document.fullscreenElement && document.fullscreenElement.querySelector
+                    ? document.fullscreenElement.querySelector('video')
+                    : null;
+
+            if (fullscreenVideo && fullscreenVideo !== currentFullscreenVideo) {
+                fullscreenVideo.style.removeProperty('object-fit');
+                fullscreenVideo.style.removeProperty('width');
+                fullscreenVideo.style.removeProperty('height');
+                fullscreenVideo = null;
+            }
+
+            if (currentFullscreenVideo instanceof HTMLVideoElement) {
+                fullscreenVideo = currentFullscreenVideo;
+                currentFullscreenVideo.style.setProperty('object-fit', 'contain', 'important');
+                currentFullscreenVideo.style.setProperty('width', '100%', 'important');
+                currentFullscreenVideo.style.setProperty('height', '100%', 'important');
+                cleanupSideBox();
+            } else {
+                updateSideBox();
+            }
+        }, true);
+    }
+
     function createDebugPanel() {
         if (debugPanel) return debugPanel;
 
@@ -2320,6 +2417,7 @@
             installVideoObserver();
             installKeyboardShortcuts();
             installViewportListeners();
+            installFullscreenListeners();
             installOptionListeners();
             startScanning();
         });
