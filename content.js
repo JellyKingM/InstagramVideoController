@@ -1240,6 +1240,27 @@
             infoElement.dataset.instagramVideoControllerMovedInfo === 'true';
     }
 
+    function isWideReelsVideo(video) {
+        if (!video || !isReelsPage()) return false;
+
+        const rect = video.getBoundingClientRect();
+        return rect.width > rect.height;
+    }
+
+    function preCaptureWideReelsInfo(video) {
+        if (!isWideReelsVideo(video) || hasMovedInfoForVideo(video)) return false;
+
+        clickMoreButtonForVideo(video);
+
+        const infoElement = findInfoElementByMoreButton(video);
+        if (!(infoElement instanceof Element)) return false;
+
+        prepareMovedInfoElement(infoElement);
+        movedInfoByVideo.set(video, infoElement);
+        infoElement.remove();
+        return true;
+    }
+
     function attachMovedInfoToSideBox(video) {
         if (!sideBoxInfo || !hasMovedInfoForVideo(video)) return false;
 
@@ -1414,6 +1435,8 @@
 
         const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
         hideReelPageClickCover(activeVideo);
+
+        preCaptureWideReelsInfo(activeVideo);
 
         if (!options.sideBoxVisibleV) {
             cleanupSideBox();

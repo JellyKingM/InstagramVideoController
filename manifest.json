@@ -1,8 +1,8 @@
-{
+﻿{
   "manifest_version": 3,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "2.2.11",
+  "version": "2.2.12",
   "default_locale": "en",
   "icons": {
     "128": "Icon.png",
