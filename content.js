@@ -64,6 +64,7 @@
     let fullscreenVideo = null;
     let internalLogs = [];
     let capturedMediaBundleByVideo = new WeakMap();
+    let mediaHintStartedAtByVideo = new WeakMap();
     const MAX_INTERNAL_LOGS = 600;
 
     function log(...args) {
@@ -408,6 +409,7 @@
             applyingMute = false;
         }, 0);
         mediaHintStartedAt = Date.now();
+        mediaHintStartedAtByVideo.set(video, mediaHintStartedAt);
         video.playbackRate = options.playbackRateV;
         applyVideoContainerStyle(video);
         applyStandalonePostLayoutStyle(video);
@@ -419,15 +421,17 @@
         video.addEventListener('play', () => {
             activeVideo = video;
             mediaHintStartedAt = Date.now();
+            mediaHintStartedAtByVideo.set(video, mediaHintStartedAt);
             applySettingsToVideo(video);
-            schedulePinCapturedMedia(800);
+            schedulePinCapturedMedia(video, 800);
             updatePanel();
         });
 
         video.addEventListener('loadeddata', () => {
             if (video === activeVideo || video === sideBoxVideo) {
                 mediaHintStartedAt = Date.now();
-                schedulePinCapturedMedia(1200);
+                mediaHintStartedAtByVideo.set(video, mediaHintStartedAt);
+                schedulePinCapturedMedia(video, 1200);
             }
         });
 
@@ -542,38 +546,63 @@
         return pickActiveVideo();
     }
 
-    function pinCapturedMediaForCurrentTarget() {
-        try {
-            const targetVideo = getDownloadTargetVideo();
-            const hint = {
-                duration: Number(targetVideo && targetVideo.duration) || 0,
-                currentTime: Number(targetVideo && targetVideo.currentTime) || 0,
-                capturedAfter: mediaHintStartedAt > 0 ? Math.max(0, mediaHintStartedAt - 2500) : 0
-            };
+    function buildVideoMediaHint(video) {
+        const startedAt = mediaHintStartedAtByVideo.get(video) || mediaHintStartedAt || 0;
+        return {
+            duration: Number(video && video.duration) || 0,
+            currentTime: Number(video && video.currentTime) || 0,
+            capturedAfter: startedAt > 0 ? Math.max(0, startedAt - 2500) : 0
+        };
+    }
 
-            chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
-                if (chrome.runtime.lastError) {
-                    log('pin captured media failed', chrome.runtime.lastError.message);
-                    return;
-                }
-                if (response && response.ok && response.bundle && targetVideo instanceof HTMLVideoElement) {
-                    capturedMediaBundleByVideo.set(targetVideo, response.bundle);
-                }
-                log('pinned captured media', response);
+    function pinCapturedMediaForVideo(video) {
+        if (!(video instanceof HTMLVideoElement)) {
+            return Promise.resolve({ ok: false, error: 'invalid target video' });
+        }
+
+        try {
+            const hint = buildVideoMediaHint(video);
+            return new Promise(resolve => {
+                chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
+                    if (chrome.runtime.lastError) {
+                        const failure = {
+                            ok: false,
+                            error: chrome.runtime.lastError.message
+                        };
+                        log('pin captured media failed', failure);
+                        resolve(failure);
+                        return;
+                    }
+                    if (response && response.ok && response.bundle) {
+                        capturedMediaBundleByVideo.set(video, response.bundle);
+                    }
+                    log('pinned captured media', response);
+                    resolve(response || { ok: false, error: 'empty pin response' });
+                });
             });
         } catch (error) {
             log('pin captured media exception', error);
+            return Promise.resolve({ ok: false, error: String(error && error.message || error) });
         }
     }
 
-    function schedulePinCapturedMedia(delay = 900) {
+    function pinCapturedMediaForCurrentTarget() {
+        const targetVideo = getDownloadTargetVideo();
+        if (!(targetVideo instanceof HTMLVideoElement)) return;
+        pinCapturedMediaForVideo(targetVideo);
+    }
+
+    function schedulePinCapturedMedia(video = null, delay = 900) {
         if (pinMediaTimer) {
             clearTimeout(pinMediaTimer);
         }
 
         pinMediaTimer = window.setTimeout(() => {
             pinMediaTimer = null;
-            pinCapturedMediaForCurrentTarget();
+            const targetVideo = video instanceof HTMLVideoElement ? video : getDownloadTargetVideo();
+            if (targetVideo instanceof HTMLVideoElement) {
+                pinCapturedMediaForVideo(targetVideo);
+            }
         }, delay);
     }
 
@@ -705,21 +734,24 @@
 
     async function downloadCapturedVideoWithRetry(video) {
         const delays = [0, 800, 1500];
-        const hint = {
-            duration: Number(video && video.duration) || 0,
-            currentTime: Number(video && video.currentTime) || 0,
-            capturedAfter: mediaHintStartedAt > 0 ? Math.max(0, mediaHintStartedAt - 2500) : 0
-        };
 
         for (const delay of delays) {
             if (delay > 0) {
                 await wait(delay);
             }
 
-            const pinResponse = await chrome.runtime.sendMessage({ pinCapturedVideo: true, hint });
+            const pinResponse = await pinCapturedMediaForVideo(video);
             log('pin captured media before download', pinResponse);
 
-            const response = await chrome.runtime.sendMessage({ downloadCapturedVideo: true });
+            if (!pinResponse || !pinResponse.ok || !pinResponse.bundle) {
+                continue;
+            }
+
+            const response = await chrome.runtime.sendMessage({
+                downloadMediaBundle: {
+                    bundle: pinResponse.bundle
+                }
+            });
             if (response && response.ok) {
                 return response;
             }
@@ -1554,10 +1586,15 @@
             return null;
         }
 
-        const sibling = seventhParent.nextElementSibling;
-        if (!(sibling instanceof Element)) {
+        const rawSibling = seventhParent.nextElementSibling;
+        if (!(rawSibling instanceof Element)) {
             log('wide reels path missing next sibling', { seventhParent: describeElement(seventhParent) });
             return null;
+        }
+
+        let sibling = rawSibling;
+        while (sibling.children.length === 1 && sibling.firstElementChild instanceof Element) {
+            sibling = sibling.firstElementChild;
         }
 
         const fifthChild = sibling.children.length >= 5
@@ -2081,7 +2118,7 @@
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
             recordSideBoxShown();
-            schedulePinCapturedMedia(1200);
+            schedulePinCapturedMedia(activeVideo, 1200);
 
             if (!isSingleReelPage()) {
                 sideBoxResizeObserver = new ResizeObserver(() => {

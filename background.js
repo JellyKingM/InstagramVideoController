@@ -65,11 +65,14 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             return;
         }
 
-        const videoUrl = stripByteRangeParams(bundle.video.url);
-        const videoFilename = buildCapturedMediaFilename(bundle.video);
+        const muxedCandidate = findMuxedMediaCandidateForBundle(tabId, bundle);
+        const targetVideo = muxedCandidate || bundle.video;
+        const videoUrl = stripByteRangeParams(targetVideo.url);
+        const videoFilename = buildCapturedMediaFilename(targetVideo);
         console.log('[InstagramVideoController]', 'download captured media', {
             tabId,
             bundle,
+            muxedCandidate,
             videoUrl,
             videoFilename
         });
@@ -88,7 +91,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                 return;
             }
 
-            if (bundle.audio) {
+            if (!muxedCandidate && bundle.audio) {
                 chrome.downloads.download({
                     url: stripByteRangeParams(bundle.audio.url),
                     filename: buildCapturedMediaFilename(bundle.audio),
@@ -116,6 +119,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     }
 
     if (message.downloadMediaBundle && message.downloadMediaBundle.bundle) {
+        const tabId = sender && sender.tab ? sender.tab.id : -1;
         const bundle = message.downloadMediaBundle.bundle;
         if (!bundle || !bundle.video || !bundle.video.url) {
             sendResponse({
@@ -125,10 +129,13 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             return;
         }
 
-        const videoUrl = stripByteRangeParams(bundle.video.url);
-        const videoFilename = buildCapturedMediaFilename(bundle.video);
+        const muxedCandidate = findMuxedMediaCandidateForBundle(tabId, bundle);
+        const targetVideo = muxedCandidate || bundle.video;
+        const videoUrl = stripByteRangeParams(targetVideo.url);
+        const videoFilename = buildCapturedMediaFilename(targetVideo);
         console.log('[InstagramVideoController]', 'download explicit media bundle', {
             bundle,
+            muxedCandidate,
             videoUrl,
             videoFilename
         });
@@ -147,7 +154,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                 return;
             }
 
-            if (bundle.audio && bundle.audio.url) {
+            if (!muxedCandidate && bundle.audio && bundle.audio.url) {
                 chrome.downloads.download({
                     url: stripByteRangeParams(bundle.audio.url),
                     filename: buildCapturedMediaFilename(bundle.audio),
@@ -323,6 +330,24 @@ function pickBestMediaBundleForTab(tabId, hint = null) {
         video,
         audio: audioCandidates[0] || null
     };
+}
+
+function findMuxedMediaCandidateForBundle(tabId, bundle) {
+    const list = mediaRequestsByTab.get(tabId) || [];
+    pruneMediaRequests(list);
+    if (!bundle || !bundle.video) return null;
+
+    const video = bundle.video;
+    const candidates = list.filter(item =>
+        !item.isAudio &&
+        (!video.assetId || item.assetId === video.assetId) &&
+        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.75) &&
+        !/dash/i.test(String(item.tag || ''))
+    );
+
+    if (candidates.length === 0) return null;
+    candidates.sort(compareMediaCandidates);
+    return candidates[0];
 }
 
 function applyDurationHint(candidates, hint) {
