@@ -1994,21 +1994,24 @@
             return;
         }
 
-        hideAllVideoPlayerElements();
-
-        const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
-        hideReelPageClickCover(activeVideo);
-
         if (isWideReelsVideo(activeVideo) && !hasMovedInfoForVideo(activeVideo)) {
+            log('wide reels sidebox precheck start', describeVideo(activeVideo));
             if (!preCaptureWideReelsInfo(activeVideo)) {
                 waitForWideReelsInfo(activeVideo);
+                log('wide reels sidebox blocked until info captured', describeVideo(activeVideo));
                 cleanupSideBox();
                 return;
             }
             clearWideReelsInfoObserver();
+            log('wide reels sidebox precheck success', describeVideo(activeVideo));
         } else {
             clearWideReelsInfoObserver();
         }
+
+        hideAllVideoPlayerElements();
+
+        const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
+        hideReelPageClickCover(activeVideo);
 
         if (!options.sideBoxVisibleV) {
             cleanupSideBox();
