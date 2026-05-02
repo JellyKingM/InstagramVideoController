@@ -58,6 +58,8 @@
     let wideReelsInfoObserver = null;
     let pinMediaTimer = null;
     let movedInfoStash = null;
+    let pendingSideBoxVideo = null;
+    let mediaHintStartedAt = 0;
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
@@ -231,6 +233,14 @@
     }
 
     function pickActiveVideo() {
+        if (pendingSideBoxVideo && document.contains(pendingSideBoxVideo) && isVisibleVideo(pendingSideBoxVideo)) {
+            return pendingSideBoxVideo;
+        }
+
+        if (sideBoxVideo && document.contains(sideBoxVideo) && isVisibleVideo(sideBoxVideo)) {
+            return sideBoxVideo;
+        }
+
         const videos = getVideos();
         const eligibleVideos = videos.filter(isEligibleVideo);
         const playing = eligibleVideos.find(video => !video.paused && !video.ended);
@@ -326,6 +336,7 @@
         window.setTimeout(() => {
             applyingMute = false;
         }, 0);
+        mediaHintStartedAt = Date.now();
         video.playbackRate = options.playbackRateV;
         applyVideoContainerStyle(video);
         applyStandalonePostLayoutStyle(video);
@@ -336,6 +347,7 @@
         video.dataset.instagramVideoControllerProcessed = 'true';
         video.addEventListener('play', () => {
             activeVideo = video;
+            mediaHintStartedAt = Date.now();
             applySettingsToVideo(video);
             schedulePinCapturedMedia(800);
             updatePanel();
@@ -343,6 +355,7 @@
 
         video.addEventListener('loadeddata', () => {
             if (video === activeVideo || video === sideBoxVideo) {
+                mediaHintStartedAt = Date.now();
                 schedulePinCapturedMedia(1200);
             }
         });
@@ -353,8 +366,21 @@
 
         video.addEventListener('volumechange', () => {
             if (applyingVolume || applyingMute) return;
-            options.volumeSliderV = video.volume;
-            localStorage.setItem(STORAGE_KEYS.volume, String(options.volumeSliderV));
+
+            const needsRestore =
+                Math.abs(video.volume - options.volumeSliderV) > 0.01 ||
+                video.muted !== options.volumeMute;
+
+            if (needsRestore) {
+                applyingVolume = true;
+                applyingMute = true;
+                video.volume = options.volumeSliderV;
+                video.muted = options.volumeMute;
+                window.setTimeout(() => {
+                    applyingVolume = false;
+                    applyingMute = false;
+                }, 0);
+            }
             updatePanel();
         });
 
@@ -439,7 +465,8 @@
             const targetVideo = getDownloadTargetVideo();
             const hint = {
                 duration: Number(targetVideo && targetVideo.duration) || 0,
-                currentTime: Number(targetVideo && targetVideo.currentTime) || 0
+                currentTime: Number(targetVideo && targetVideo.currentTime) || 0,
+                capturedAfter: mediaHintStartedAt > 0 ? Math.max(0, mediaHintStartedAt - 2500) : 0
             };
 
             chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
@@ -512,7 +539,8 @@
         const delays = [0, 800, 1500];
         const hint = {
             duration: Number(video && video.duration) || 0,
-            currentTime: Number(video && video.currentTime) || 0
+            currentTime: Number(video && video.currentTime) || 0,
+            capturedAfter: mediaHintStartedAt > 0 ? Math.max(0, mediaHintStartedAt - 2500) : 0
         };
 
         for (const delay of delays) {
@@ -1519,6 +1547,7 @@
         if (!wideReelsInfoObserver) return;
         wideReelsInfoObserver.disconnect();
         wideReelsInfoObserver = null;
+        pendingSideBoxVideo = null;
     }
 
     function waitForWideReelsInfo(video) {
@@ -1528,18 +1557,20 @@
         }
 
         clearWideReelsInfoObserver();
+        pendingSideBoxVideo = video;
 
-        const root = getAncestor(video, 11) || getAncestor(video, 10) || video.parentElement;
+        const root = getWideReelsInfoElement(video)?.parentElement || getAncestor(video, 10) || video.parentElement;
         if (!root) return;
 
         wideReelsInfoObserver = new MutationObserver(() => {
-            if (!activeVideo || activeVideo !== video || !document.contains(video)) {
+            if (!document.contains(video)) {
                 clearWideReelsInfoObserver();
                 return;
             }
 
             if (preCaptureWideReelsInfo(video)) {
                 clearWideReelsInfoObserver();
+                activeVideo = video;
                 updateSideBox();
             }
         });

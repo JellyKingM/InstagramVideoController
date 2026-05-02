@@ -214,14 +214,17 @@ function pickBestMediaRequestForTab(tabId, hint = null) {
     if (list.length === 0) return null;
 
     const now = Date.now();
-    const recentList = list.filter(item => now - item.capturedAt <= RECENT_MEDIA_WINDOW_MS);
+    const recentList = applyTimeHint(
+        list.filter(item => now - item.capturedAt <= RECENT_MEDIA_WINDOW_MS),
+        hint
+    );
     const videoCandidates = applyDurationHint(recentList.filter(item => item.isVideo), hint);
     if (videoCandidates.length > 0) {
         videoCandidates.sort(compareMediaCandidates);
         return videoCandidates[0];
     }
 
-    const fallbackVideoCandidates = applyDurationHint(list.filter(item => item.isVideo), hint);
+    const fallbackVideoCandidates = applyDurationHint(applyTimeHint(list.filter(item => item.isVideo), hint), hint);
     if (fallbackVideoCandidates.length > 0) {
         fallbackVideoCandidates.sort(compareMediaCandidates);
         return fallbackVideoCandidates[0];
@@ -250,10 +253,10 @@ function pickBestMediaBundleForTab(tabId, hint = null) {
     const video = pickBestMediaRequestForTab(tabId, hint);
     if (!video) return null;
 
-    const audioCandidates = list.filter(item =>
+    const audioCandidates = applyTimeHint(list.filter(item =>
         item.isAudio &&
         (!video.assetId || item.assetId === video.assetId)
-    );
+    ), hint);
 
     audioCandidates.sort(compareMediaCandidates);
 
@@ -279,6 +282,15 @@ function applyDurationHint(candidates, hint) {
     }
 
     return candidates;
+}
+
+function applyTimeHint(candidates, hint) {
+    if (!hint || !Number.isFinite(hint.capturedAfter) || hint.capturedAfter <= 0) {
+        return candidates;
+    }
+
+    const filtered = candidates.filter(item => item.capturedAt >= hint.capturedAfter);
+    return filtered.length > 0 ? filtered : candidates;
 }
 
 function compareMediaCandidates(a, b) {
