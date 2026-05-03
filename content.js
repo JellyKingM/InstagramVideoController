@@ -127,12 +127,28 @@
     }
 
     function exportInternalLogs() {
+        const currentDownloadFileName = (() => {
+            try {
+                const targetVideo = getDownloadTargetVideo();
+                if (targetVideo instanceof HTMLVideoElement) {
+                    return getDownloadFileName(targetVideo.currentSrc || targetVideo.src || location.href);
+                }
+            } catch (error) {
+                return '';
+            }
+            return '';
+        })();
         const lines = [
             'Instagram Video Controller internal log',
             `time=${new Date().toISOString()}`,
             `url=${location.href}`,
             `activeVideo=${renderLogValue(activeVideo)}`,
             `sideBoxVideo=${renderLogValue(sideBoxVideo)}`,
+            `sideBoxVideoIdentity=${sideBoxVideoIdentity || ''}`,
+            `sideBoxCreatedAt=${sideBoxCreatedAt || 0}`,
+            `lockedSideBoxIdentity=${lockedSideBoxIdentity || ''}`,
+            `lockedSideBoxBundle=${renderLogValue(lockedSideBoxBundle)}`,
+            `currentDownloadFileName=${currentDownloadFileName}`,
             '',
             ...internalLogs
         ];
@@ -624,6 +640,21 @@
         return hint;
     }
 
+    function isBundleDurationCompatible(video, bundle, tolerance = 1.0) {
+        if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
+            return false;
+        }
+
+        const videoDuration = Number(video.duration || 0);
+        const bundleDuration = Number(bundle.video.duration || 0);
+
+        if (!(videoDuration > 0) || !(bundleDuration > 0)) {
+            return true;
+        }
+
+        return Math.abs(videoDuration - bundleDuration) <= tolerance;
+    }
+
     function getVideoIdentity(video) {
         if (!(video instanceof HTMLVideoElement)) return '';
         return `${video.currentSrc || video.src || ''}::${Number(video.duration || 0).toFixed(3)}`;
@@ -674,6 +705,21 @@
                             error: chrome.runtime.lastError.message
                         };
                         log('pin captured media failed', failure);
+                        resolve(failure);
+                        return;
+                    }
+                    if (response && response.ok && response.bundle && !isBundleDurationCompatible(video, response.bundle)) {
+                        const failure = {
+                            ok: false,
+                            error: 'bundle duration mismatch',
+                            expectedDuration: Number(video.duration || 0),
+                            actualDuration: Number(response.bundle.video && response.bundle.video.duration || 0),
+                            bundle: response.bundle
+                        };
+                        log('rejecting pinned media due to duration mismatch', {
+                            video: describeVideo(video),
+                            failure
+                        });
                         resolve(failure);
                         return;
                     }
@@ -1022,8 +1068,10 @@
 
     function buildDescriptiveVideoFileName() {
         const publisher = sanitizeFileNamePart(getPublisherNameForDownload()) || 'instagram';
-        const snippet = sanitizeFileNamePart(getInfoSnippetForDownload()) || 'video';
-        return `${publisher}_${snippet}.mp4`;
+        const snippet = sanitizeFileNamePart(getInfoSnippetForDownload());
+        const shortcode = sanitizeFileNamePart(getCurrentShortcode());
+        const suffix = snippet || shortcode || 'video';
+        return `${publisher}_${suffix}.mp4`;
     }
 
     function getPublisherNameForDownload() {
@@ -1101,6 +1149,16 @@
             .replace(/[\\/:*?"<>|]/g, '')
             .replace(/[.]+$/g, '')
             .slice(0, 40);
+    }
+
+    function getCurrentShortcode() {
+        try {
+            const path = String(location.pathname || '');
+            const match = path.match(/\/(?:reels?|p|stories)\/([^/?#]+)/i);
+            return match ? match[1] : '';
+        } catch (error) {
+            return '';
+        }
     }
 
     function createPanel() {
