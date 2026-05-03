@@ -2000,18 +2000,6 @@
             }
         }
 
-        if (narrowedElement instanceof Element) {
-            const parentCandidate = narrowedElement.parentElement;
-            if (
-                parentCandidate instanceof Element &&
-                parentCandidate !== infoElement &&
-                infoElement.contains(parentCandidate) &&
-                !parentCandidate.querySelector('video')
-            ) {
-                return parentCandidate;
-            }
-        }
-
         return narrowedElement || infoElement;
     }
 
