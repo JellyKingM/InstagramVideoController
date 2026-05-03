@@ -741,7 +741,8 @@
                     (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
                     const explicitResponse = await chrome.runtime.sendMessage({
                         downloadMediaBundle: {
-                            bundle: directBundle
+                            bundle: directBundle,
+                            filename: getDownloadFileName(sourceUrl)
                         }
                     });
                     if (explicitResponse && explicitResponse.ok) {
@@ -916,7 +917,8 @@
 
             const response = await chrome.runtime.sendMessage({
                 downloadMediaBundle: {
-                    bundle: pinResponse.bundle
+                    bundle: pinResponse.bundle,
+                    filename: getDownloadFileName(video.currentSrc || video.src || '')
                 }
             });
             if (response && response.ok) {
@@ -1004,6 +1006,11 @@
     }
 
     function getDownloadFileName(sourceUrl) {
+        const descriptiveName = buildDescriptiveVideoFileName();
+        if (descriptiveName) {
+            return descriptiveName;
+        }
+
         try {
             const url = new URL(sourceUrl, location.href);
             const pathName = url.pathname.split('/').filter(Boolean).pop() || 'instagram-video.mp4';
@@ -1011,6 +1018,68 @@
         } catch (error) {
             return 'instagram-video.mp4';
         }
+    }
+
+    function buildDescriptiveVideoFileName() {
+        const publisher = sanitizeFileNamePart(getPublisherNameForDownload()) || 'instagram';
+        const snippet = sanitizeFileNamePart(getInfoSnippetForDownload()) || 'video';
+        return `${publisher}_${snippet}.mp4`;
+    }
+
+    function getPublisherNameForDownload() {
+        const roots = [];
+        if (sideBoxInfo && document.contains(sideBoxInfo)) {
+            roots.push(sideBoxInfo);
+        }
+        if (sideBox && document.contains(sideBox)) {
+            roots.push(sideBox);
+        }
+        if (activeVideo && document.contains(activeVideo)) {
+            const overlay = getVideoOverlay(activeVideo);
+            if (overlay) roots.push(overlay);
+        }
+
+        for (const root of roots) {
+            const link = root.querySelector('a[href^="/"][role="link"], a[href^="/"]');
+            const text = normalizeText(link && link.textContent);
+            if (text) return text;
+        }
+
+        return '';
+    }
+
+    function getInfoSnippetForDownload() {
+        const roots = [];
+        if (sideBoxInfo && document.contains(sideBoxInfo)) {
+            roots.push(sideBoxInfo);
+        }
+        if (sideBox && document.contains(sideBox)) {
+            roots.push(sideBox);
+        }
+
+        for (const root of roots) {
+            const text = normalizeText(root.textContent)
+                .replace(/\b(Play|Pause|Mute|Unmute|Controls|Find|Donate|Download video|Save log|Show box|Hide box)\b/gi, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (text) {
+                const compact = Array.from(text).slice(0, 12).join('');
+                if (compact) return compact;
+            }
+        }
+
+        return '';
+    }
+
+    function normalizeText(value) {
+        return String(value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function sanitizeFileNamePart(value) {
+        return normalizeText(value)
+            .replace(/[\\/:*?"<>|]/g, '')
+            .replace(/[.]+$/g, '')
+            .slice(0, 40);
     }
 
     function createPanel() {
