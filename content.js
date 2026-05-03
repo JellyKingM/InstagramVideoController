@@ -129,7 +129,7 @@
         return `video{currentTime=${Number(video.currentTime || 0).toFixed(2)},duration=${Number(video.duration || 0).toFixed(2)},paused=${video.paused},muted=${video.muted},volume=${Number(video.volume || 0).toFixed(2)},size=${Math.round(rect.width)}x${Math.round(rect.height)}}`;
     }
 
-    function exportInternalLogs() {
+    async function exportInternalLogs() {
         const currentDownloadFileName = (() => {
             try {
                 const targetVideo = getDownloadTargetVideo();
@@ -141,6 +141,8 @@
             }
             return '';
         })();
+
+        const downloadDebugLines = await buildDownloadDebugLines();
         const lines = [
             'Instagram Video Controller internal log',
             `time=${new Date().toISOString()}`,
@@ -154,6 +156,10 @@
             `lastRejectedBundleInfo=${renderLogValue(lastRejectedBundleInfo)}`,
             `currentDownloadFileName=${currentDownloadFileName}`,
             '',
+            '=== download debug ===',
+            ...downloadDebugLines,
+            '',
+            '=== internal logs ===',
             ...internalLogs
         ];
         const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
@@ -166,6 +172,68 @@
         link.remove();
         window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
         log('exported internal logs', { count: internalLogs.length });
+    }
+
+    async function buildDownloadDebugLines() {
+        const lines = [];
+        const targetVideo = getDownloadTargetVideo();
+        const allVideos = getVideos();
+        const videoSnapshots = allVideos.map((video, index) => describeVideoDebug(video, index));
+
+        lines.push(`pageVideoCount=${allVideos.length}`);
+        lines.push(`targetVideoIndex=${targetVideo instanceof HTMLVideoElement ? allVideos.indexOf(targetVideo) : -1}`);
+        lines.push(`targetVideoIdentity=${targetVideo instanceof HTMLVideoElement ? getVideoIdentity(targetVideo) : ''}`);
+        lines.push(`targetVideoHint=${targetVideo instanceof HTMLVideoElement ? JSON.stringify(buildVideoMediaHint(targetVideo)) : '{}'}`);
+
+        if (targetVideo instanceof HTMLVideoElement) {
+            const trackedMedia = await getTrackedMediaUrlsForBlob(targetVideo.currentSrc || targetVideo.src || '');
+            lines.push(`targetTrackedMediaSourceId=${trackedMedia.mediaSourceId || ''}`);
+            lines.push(`targetTrackedUrlCount=${trackedMedia.urls.length}`);
+            trackedMedia.urls.forEach((url, index) => {
+                lines.push(`targetTrackedUrl[${index}]=${url}`);
+            });
+        }
+
+        lines.push(`lockedBundleVideoUrl=${lockedSideBoxBundle && lockedSideBoxBundle.video ? lockedSideBoxBundle.video.url || '' : ''}`);
+        lines.push(`lockedBundleAudioUrl=${lockedSideBoxBundle && lockedSideBoxBundle.audio ? lockedSideBoxBundle.audio.url || '' : ''}`);
+        lines.push(`lockedBundleVideoAssetId=${lockedSideBoxBundle && lockedSideBoxBundle.video ? lockedSideBoxBundle.video.assetId || '' : ''}`);
+        lines.push(`lockedBundleVideoDuration=${lockedSideBoxBundle && lockedSideBoxBundle.video ? Number(lockedSideBoxBundle.video.duration || 0) : 0}`);
+
+        lines.push('--- page videos ---');
+        videoSnapshots.forEach(snapshot => {
+            lines.push(snapshot);
+        });
+
+        return lines;
+    }
+
+    function describeVideoDebug(video, index) {
+        if (!(video instanceof HTMLVideoElement)) {
+            return `[${index}] invalid-video`;
+        }
+
+        const rect = video.getBoundingClientRect();
+        const currentSrc = video.currentSrc || '';
+        const src = video.src || '';
+        const identity = getVideoIdentity(video);
+        const flags = [
+            video === activeVideo ? 'active' : '',
+            video === sideBoxVideo ? 'sidebox' : '',
+            isVisibleVideo(video) ? 'visible' : 'hidden',
+            video.paused ? 'paused' : 'playing'
+        ].filter(Boolean).join(',');
+
+        return [
+            `[${index}]`,
+            `flags=${flags}`,
+            `identity=${identity}`,
+            `duration=${Number(video.duration || 0).toFixed(3)}`,
+            `currentTime=${Number(video.currentTime || 0).toFixed(3)}`,
+            `size=${Math.round(rect.width)}x${Math.round(rect.height)}`,
+            `rect=${Math.round(rect.left)},${Math.round(rect.top)},${Math.round(rect.right)},${Math.round(rect.bottom)}`,
+            `currentSrc=${currentSrc}`,
+            `src=${src}`
+        ].join(' | ');
     }
 
     function ensurePageDownloadBridge() {
