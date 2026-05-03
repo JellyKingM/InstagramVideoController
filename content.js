@@ -1924,6 +1924,13 @@
     function stashMovedInfoForVideo(video, infoElement) {
         if (!(video instanceof HTMLVideoElement) || !(infoElement instanceof Element)) return false;
 
+        if (isWideReelsVideo(video)) {
+            const narrowedInfoElement = getWideReelsDisplayInfoElement(infoElement);
+            if (narrowedInfoElement instanceof Element) {
+                infoElement = narrowedInfoElement;
+            }
+        }
+
         prepareMovedInfoElement(infoElement);
         movedInfoByVideo.set(video, infoElement);
         installMovedInfoColorObserver(video, infoElement);
@@ -1933,6 +1940,22 @@
             info: describeElement(infoElement)
         });
         return true;
+    }
+
+    function getWideReelsDisplayInfoElement(infoElement) {
+        if (!(infoElement instanceof Element)) return infoElement;
+
+        const fourthChild = infoElement.children.length >= 4
+            ? infoElement.children[3]
+            : null;
+        if (!(fourthChild instanceof Element)) {
+            return infoElement;
+        }
+
+        const lastSibling = fourthChild.parentElement && fourthChild.parentElement.lastElementChild
+            ? fourthChild.parentElement.lastElementChild
+            : null;
+        return lastSibling instanceof Element ? lastSibling : fourthChild;
     }
 
     function preCaptureWideReelsInfo(video) {

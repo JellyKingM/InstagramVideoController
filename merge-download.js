@@ -77,7 +77,8 @@
         videoEl.playsInline = true;
         audioEl.playsInline = true;
         videoEl.muted = true;
-        audioEl.muted = true;
+        audioEl.muted = false;
+        audioEl.volume = 1;
         videoEl.src = videoBlobUrl;
         audioEl.src = audioBlobUrl;
         videoEl.style.display = 'none';
@@ -87,8 +88,8 @@
 
         setStatus('Loading video and audio...');
         await Promise.all([
-            waitForEvent(videoEl, 'loadeddata'),
-            waitForEvent(audioEl, 'loadeddata')
+            waitForEvent(videoEl, 'canplaythrough'),
+            waitForEvent(audioEl, 'canplaythrough')
         ]);
 
         const videoStream = videoEl.captureStream();
@@ -125,12 +126,12 @@
         });
 
         setStatus('Merging... This runs in real time.');
-        recorder.start(1000);
         await audioContext.resume();
         await Promise.allSettled([
             videoEl.play(),
             audioEl.play()
         ]);
+        recorder.start(1000);
 
         const finished = new Promise(resolve => {
             let done = 0;
