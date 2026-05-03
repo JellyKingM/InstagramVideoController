@@ -640,7 +640,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle, tolerance = 1.0) {
+    function isBundleDurationCompatible(video, bundle, tolerance = 0.35) {
         if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
             return false;
         }
@@ -678,7 +678,7 @@
         const existingDelta = videoDuration > 0 ? Math.abs(Number(existingBundle.video.duration || 0) - videoDuration) : 0;
         const nextDelta = videoDuration > 0 ? Math.abs(Number(nextBundle.video.duration || 0) - videoDuration) : 0;
 
-        if (existingDelta <= 0.75 && nextDelta > 0.75) {
+        if (existingDelta <= 0.35 && nextDelta > 0.35) {
             log('skipping bundle replacement due to worse duration match', {
                 video: describeVideo(video),
                 existing: existingBundle.video,
@@ -892,7 +892,7 @@
         const filtered = hintDuration > 0
             ? entries.filter(entry =>
                 entry.durationHint > 0 &&
-                Math.abs(entry.durationHint - hintDuration) <= 0.75
+                Math.abs(entry.durationHint - hintDuration) <= 0.35
             )
             : entries;
 
@@ -1070,8 +1070,17 @@
         const publisher = sanitizeFileNamePart(getPublisherNameForDownload()) || 'instagram';
         const snippet = sanitizeFileNamePart(getInfoSnippetForDownload());
         const shortcode = sanitizeFileNamePart(getCurrentShortcode());
-        const suffix = snippet || shortcode || 'video';
-        return `${publisher}_${suffix}.mp4`;
+        const parts = [publisher];
+        if (shortcode) {
+            parts.push(shortcode);
+        }
+        if (snippet && snippet !== publisher && snippet !== shortcode) {
+            parts.push(snippet);
+        }
+        if (parts.length === 1) {
+            parts.push('video');
+        }
+        return `${parts.join('_')}.mp4`;
     }
 
     function getPublisherNameForDownload() {

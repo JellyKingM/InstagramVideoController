@@ -382,7 +382,7 @@ function findMuxedMediaCandidateForBundle(tabId, bundle) {
     const candidates = list.filter(item =>
         !item.isAudio &&
         (!video.assetId || item.assetId === video.assetId) &&
-        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.75) &&
+        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.35) &&
         !/dash/i.test(String(item.tag || ''))
     );
 
@@ -399,7 +399,7 @@ function applyDurationHint(candidates, hint) {
     const exactish = candidates.filter(item =>
         Number.isFinite(item.duration) &&
         item.duration > 0 &&
-        Math.abs(item.duration - hint.duration) <= 0.75
+        Math.abs(item.duration - hint.duration) <= 0.35
     );
 
     if (exactish.length > 0) {
