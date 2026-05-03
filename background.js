@@ -81,7 +81,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         const muxedCandidate = shouldMerge ? null : findMuxedMediaCandidateForBundle(tabId, bundle);
         const targetVideo = muxedCandidate || bundle.video;
         const videoUrl = stripByteRangeParams(targetVideo.url);
-        const videoFilename = message.downloadMediaBundle.filename || buildCapturedMediaFilename(targetVideo);
+        const videoFilename = message.filename || buildCapturedMediaFilename(targetVideo);
         console.log('[InstagramVideoController]', 'download captured media', {
             tabId,
             bundle,
@@ -145,7 +145,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         const muxedCandidate = shouldMerge ? null : findMuxedMediaCandidateForBundle(tabId, bundle);
         const targetVideo = muxedCandidate || bundle.video;
         const videoUrl = stripByteRangeParams(targetVideo.url);
-        const videoFilename = buildCapturedMediaFilename(targetVideo);
+        const videoFilename = message.downloadMediaBundle.filename || buildCapturedMediaFilename(targetVideo);
         console.log('[InstagramVideoController]', 'download explicit media bundle', {
             bundle,
             muxedCandidate,
