@@ -317,12 +317,20 @@ function pickBestMediaRequestForTab(tabId, hint = null) {
     );
     const videoCandidates = applyDurationHint(recentList.filter(item => item.isVideo), hint);
     if (videoCandidates.length > 0) {
+        const groupedCandidates = pickPreferredAssetScopedCandidates(videoCandidates, hint);
+        if (groupedCandidates.length > 0) {
+            return groupedCandidates[0];
+        }
         sortMediaCandidates(videoCandidates, hint);
         return videoCandidates[0];
     }
 
     const fallbackVideoCandidates = applyDurationHint(applyTimeHint(list.filter(item => item.isVideo), hint), hint);
     if (fallbackVideoCandidates.length > 0) {
+        const groupedCandidates = pickPreferredAssetScopedCandidates(fallbackVideoCandidates, hint);
+        if (groupedCandidates.length > 0) {
+            return groupedCandidates[0];
+        }
         sortMediaCandidates(fallbackVideoCandidates, hint);
         return fallbackVideoCandidates[0];
     }
@@ -419,6 +427,56 @@ function applyTimeHint(candidates, hint) {
     }
 
     return filtered;
+}
+
+function pickPreferredAssetScopedCandidates(candidates, hint = null) {
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+        return [];
+    }
+    if (!hint || !Number.isFinite(hint.targetCapturedAt) || hint.targetCapturedAt <= 0) {
+        return [];
+    }
+
+    const groups = new Map();
+    for (const candidate of candidates) {
+        const key = String(candidate.assetId || candidate.url || '');
+        if (!groups.has(key)) {
+            groups.set(key, []);
+        }
+        groups.get(key).push(candidate);
+    }
+
+    const scoredGroups = Array.from(groups.values()).map(group => {
+        const sorted = [...group];
+        sortMediaCandidates(sorted, hint);
+        return {
+            candidates: sorted,
+            best: sorted[0],
+            size: sorted.length
+        };
+    });
+
+    scoredGroups.sort((a, b) => compareAssetGroups(a, b, hint));
+    return scoredGroups.length > 0 ? scoredGroups[0].candidates : [];
+}
+
+function compareAssetGroups(a, b, hint) {
+    const target = Number(hint.targetCapturedAt) || 0;
+    const preferBefore = !!hint.preferBefore;
+
+    if (preferBefore) {
+        const aBefore = a.best.capturedAt <= target ? 1 : 0;
+        const bBefore = b.best.capturedAt <= target ? 1 : 0;
+        if (aBefore !== bBefore) return bBefore - aBefore;
+    }
+
+    const aDelta = Math.abs(a.best.capturedAt - target);
+    const bDelta = Math.abs(b.best.capturedAt - target);
+    if (aDelta !== bDelta) return aDelta - bDelta;
+
+    if (b.size !== a.size) return b.size - a.size;
+
+    return compareMediaCandidates(a.best, b.best);
 }
 
 function sortMediaCandidates(candidates, hint = null) {

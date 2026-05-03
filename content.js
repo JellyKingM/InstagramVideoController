@@ -1049,6 +1049,7 @@
     }
 
     function getInfoSnippetForDownload() {
+        const publisher = normalizeText(getPublisherNameForDownload());
         const roots = [];
         if (sideBoxInfo && document.contains(sideBoxInfo)) {
             roots.push(sideBoxInfo);
@@ -1058,17 +1059,37 @@
         }
 
         for (const root of roots) {
-            const text = normalizeText(root.textContent)
-                .replace(/\b(Play|Pause|Mute|Unmute|Controls|Find|Donate|Download video|Save log|Show box|Hide box)\b/gi, '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            if (text) {
-                const compact = Array.from(text).slice(0, 12).join('');
+            const chunks = collectMeaningfulTextChunks(root);
+            for (const chunk of chunks) {
+                const normalized = normalizeText(chunk);
+                if (!normalized) continue;
+                if (publisher && normalized === publisher) continue;
+                if (publisher && normalized.startsWith(`${publisher} `)) continue;
+                const compact = Array.from(normalized).slice(0, 12).join('');
                 if (compact) return compact;
             }
         }
 
         return '';
+    }
+
+    function collectMeaningfulTextChunks(root) {
+        if (!(root instanceof Element)) return [];
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const chunks = [];
+
+        while (walker.nextNode()) {
+            const textNode = walker.currentNode;
+            const parent = textNode.parentElement;
+            if (!parent) continue;
+            if (parent.closest('button, svg, script, style')) continue;
+            if (parent.closest('#instagram-video-controller-panel, #instagram-video-controller-side-controls')) continue;
+            const text = normalizeText(textNode.textContent);
+            if (!text || text.length < 2) continue;
+            chunks.push(text);
+        }
+
+        return chunks;
     }
 
     function normalizeText(value) {
