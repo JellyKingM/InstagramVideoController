@@ -828,7 +828,8 @@
             .map(entry => ({
                 name: entry.name,
                 startTime: Number(entry.startTime) || 0,
-                durationHint: extractDurationHintFromUrl(entry.name)
+                durationHint: extractDurationHintFromUrl(entry.name),
+                meta: extractMediaMetaFromUrl(entry.name)
             }));
 
         const filtered = hintDuration > 0
@@ -838,10 +839,31 @@
             )
             : entries;
 
-        const candidate = (filtered.length > 0 ? filtered : entries)
-            .sort((a, b) => b.startTime - a.startTime)[0];
+        const pool = filtered.length > 0 ? filtered : entries;
+        const videoOnly = pool.filter(entry => !entry.meta.isAudio);
+        const candidate = (videoOnly.length > 0 ? videoOnly : pool)
+            .sort((a, b) => {
+                if (b.startTime !== a.startTime) return b.startTime - a.startTime;
+                return Number(b.meta.bitrate || 0) - Number(a.meta.bitrate || 0);
+            })[0];
 
         return candidate ? stripByteRangeFromUrl(candidate.name) : '';
+    }
+
+    function extractMediaMetaFromUrl(url) {
+        try {
+            const parsed = new URL(url);
+            const efg = parsed.searchParams.get('efg');
+            if (!efg) return { isAudio: false, bitrate: 0 };
+            const decoded = JSON.parse(atob(efg));
+            const tag = String(decoded.vencode_tag || '').toLowerCase();
+            return {
+                isAudio: /audio/.test(tag),
+                bitrate: Number(decoded.bitrate || 0)
+            };
+        } catch (error) {
+            return { isAudio: false, bitrate: 0 };
+        }
     }
 
     function extractDurationHintFromUrl(url) {
