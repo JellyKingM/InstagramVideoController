@@ -71,6 +71,7 @@
     let mediaIdentityByVideo = new WeakMap();
     let manualPauseByVideo = new WeakMap();
     let internalPlayRequestAtByVideo = new WeakMap();
+    let hiddenWideInfoWrapperByVideo = new WeakMap();
     const MAX_INTERNAL_LOGS = 600;
 
     function log(...args) {
@@ -1233,6 +1234,14 @@
     }
 
     function cleanupSideBox() {
+        if (sideBoxVideo) {
+            const hiddenWrapper = hiddenWideInfoWrapperByVideo.get(sideBoxVideo);
+            if (hiddenWrapper instanceof Element) {
+                hiddenWrapper.style.removeProperty('display');
+                hiddenWideInfoWrapperByVideo.delete(sideBoxVideo);
+            }
+        }
+
         if (sideBoxResizeObserver) {
             sideBoxResizeObserver.disconnect();
             sideBoxResizeObserver = null;
@@ -1925,9 +1934,14 @@
         if (!(video instanceof HTMLVideoElement) || !(infoElement instanceof Element)) return false;
 
         if (isWideReelsVideo(video)) {
+            const originalInfoElement = infoElement;
             const narrowedInfoElement = getWideReelsDisplayInfoElement(infoElement);
             if (narrowedInfoElement instanceof Element) {
                 infoElement = narrowedInfoElement;
+            }
+            if (originalInfoElement !== infoElement) {
+                originalInfoElement.style.setProperty('display', 'none', 'important');
+                hiddenWideInfoWrapperByVideo.set(video, originalInfoElement);
             }
         }
 

@@ -94,7 +94,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             const token = createMergeJob(bundle, videoFilename);
                 chrome.tabs.create({
                     url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                    active: true
+                    active: false
                 }, function (tab) {
                 sendResponse({
                     ok: true,
@@ -157,7 +157,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             const token = createMergeJob(bundle, videoFilename);
                 chrome.tabs.create({
                     url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                    active: true
+                    active: false
                 }, function (tab) {
                 sendResponse({
                     ok: true,

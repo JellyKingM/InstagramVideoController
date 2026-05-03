@@ -92,28 +92,35 @@
             waitForEvent(audioEl, 'canplaythrough')
         ]);
 
-        const videoStream = videoEl.captureStream();
-        const audioContext = new AudioContext();
-        const audioSource = audioContext.createMediaElementSource(audioEl);
-        const destination = audioContext.createMediaStreamDestination();
-        const silentGain = audioContext.createGain();
-        silentGain.gain.value = 0;
-        audioSource.connect(destination);
-        audioSource.connect(silentGain);
-        silentGain.connect(audioContext.destination);
-
-        const stream = new MediaStream();
-        videoStream.getVideoTracks().forEach(track => {
-            stream.addTrack(track);
-        });
-        destination.stream.getAudioTracks().forEach(track => {
-            stream.addTrack(track);
-        });
-
         const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
             ? 'video/webm;codecs=vp9,opus'
             : 'video/webm;codecs=vp8,opus';
         const chunks = [];
+
+        setStatus('Merging... This runs in real time.');
+        await Promise.allSettled([
+            videoEl.play(),
+            audioEl.play()
+        ]);
+        await wait(200);
+
+        const videoStream = videoEl.captureStream();
+        const audioStream = audioEl.captureStream();
+        const stream = new MediaStream();
+        videoStream.getVideoTracks().forEach(track => {
+            stream.addTrack(track);
+        });
+        audioStream.getAudioTracks().forEach(track => {
+            stream.addTrack(track);
+        });
+
+        if (stream.getVideoTracks().length === 0) {
+            throw new Error('No video track captured.');
+        }
+        if (stream.getAudioTracks().length === 0) {
+            throw new Error('No audio track captured.');
+        }
+
         const recorder = new MediaRecorder(stream, { mimeType });
         recorder.addEventListener('dataavailable', event => {
             if (event.data && event.data.size > 0) {
@@ -125,12 +132,6 @@
             recorder.addEventListener('stop', resolve, { once: true });
         });
 
-        setStatus('Merging... This runs in real time.');
-        await audioContext.resume();
-        await Promise.allSettled([
-            videoEl.play(),
-            audioEl.play()
-        ]);
         recorder.start(1000);
 
         const finished = new Promise(resolve => {
