@@ -850,9 +850,14 @@
 
                 const currentIdentity = getVideoIdentity(targetVideo);
                 const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
+                const sideboxIdentityMatches = targetVideo !== sideBoxVideo || (
+                    !!sideBoxVideoIdentity &&
+                    currentIdentity === sideBoxVideoIdentity &&
+                    lockedSideBoxIdentity === sideBoxVideoIdentity
+                );
                 const directBundle = targetVideo === sideBoxVideo &&
                     lockedSideBoxBundle &&
-                    lockedSideBoxIdentity === sideBoxVideoIdentity
+                    sideboxIdentityMatches
                     ? lockedSideBoxBundle
                     : capturedMediaBundleByVideo.get(targetVideo);
                 if (directBundle && directBundle.video && directBundle.video.url &&
@@ -877,8 +882,16 @@
                     log('explicit media bundle download failed', explicitResponse);
                 }
 
+                if (targetVideo === sideBoxVideo && !sideboxIdentityMatches) {
+                    log('skipping stale locked sidebox bundle', {
+                        currentIdentity,
+                        sideBoxVideoIdentity,
+                        lockedSideBoxIdentity
+                    });
+                }
+
                 const capturedResponse = targetVideo === sideBoxVideo && lockedSideBoxBundle
-                    ? { ok: false, error: 'locked sidebox bundle download failed' }
+                    ? { ok: false, error: sideboxIdentityMatches ? 'locked sidebox bundle download failed' : 'stale sidebox identity' }
                     : await downloadCapturedVideoWithRetry(targetVideo);
                 if (capturedResponse && capturedResponse.ok) {
                     log('captured media download started', capturedResponse);
@@ -1524,6 +1537,17 @@
     }
 
     function cleanupSideBox() {
+        if (sideBoxVideo && sideBoxInfo) {
+            const movedInfo = movedInfoByVideo.get(sideBoxVideo);
+            if (movedInfo instanceof Element && sideBoxInfo.contains(movedInfo)) {
+                ensureMovedInfoStash().appendChild(movedInfo);
+                log('preserved moved info before sidebox cleanup', {
+                    video: describeVideo(sideBoxVideo),
+                    info: describeElement(movedInfo)
+                });
+            }
+        }
+
         if (sideBoxVideo) {
             const hiddenWrapper = hiddenWideInfoWrapperByVideo.get(sideBoxVideo);
             if (hiddenWrapper instanceof Element) {
