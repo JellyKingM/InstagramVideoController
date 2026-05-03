@@ -6,6 +6,7 @@ const mergeJobs = new Map();
 const MEDIA_REQUEST_LIMIT = 80;
 const MEDIA_REQUEST_TTL_MS = 10 * 60 * 1000;
 const RECENT_MEDIA_WINDOW_MS = 20 * 1000;
+const SUBSTANTIAL_VIDEO_RANGE_BYTES = 64 * 1024;
 
 chrome.runtime.onInstalled.addListener(function () {
     chrome.contextMenus.create({
@@ -448,11 +449,17 @@ function pickPreferredAssetScopedCandidates(candidates, hint = null) {
 
     const scoredGroups = Array.from(groups.values()).map(group => {
         const sorted = [...group];
-        sortMediaCandidates(sorted, hint);
+        sortMediaCandidatesByRange(sorted, hint);
+        const videoCandidates = sorted.filter(item => item.isVideo);
         return {
             candidates: sorted,
             best: sorted[0],
-            size: sorted.length
+            size: sorted.length,
+            videoCount: videoCandidates.length,
+            videoTotalRange: videoCandidates.reduce((sum, item) => sum + getRangeLength(item), 0),
+            videoMaxRange: videoCandidates.reduce((max, item) => Math.max(max, getRangeLength(item)), 0),
+            totalRange: sorted.reduce((sum, item) => sum + getRangeLength(item), 0),
+            maxRange: sorted.reduce((max, item) => Math.max(max, getRangeLength(item)), 0)
         };
     });
 
@@ -461,6 +468,13 @@ function pickPreferredAssetScopedCandidates(candidates, hint = null) {
 }
 
 function compareAssetGroups(a, b, hint) {
+    const aSubstantial = a.videoMaxRange >= SUBSTANTIAL_VIDEO_RANGE_BYTES ? 1 : 0;
+    const bSubstantial = b.videoMaxRange >= SUBSTANTIAL_VIDEO_RANGE_BYTES ? 1 : 0;
+    if (aSubstantial !== bSubstantial) return bSubstantial - aSubstantial;
+
+    if (b.videoMaxRange !== a.videoMaxRange) return b.videoMaxRange - a.videoMaxRange;
+    if (b.videoTotalRange !== a.videoTotalRange) return b.videoTotalRange - a.videoTotalRange;
+
     const target = Number(hint.targetCapturedAt) || 0;
     const preferBefore = !!hint.preferBefore;
 
@@ -474,9 +488,26 @@ function compareAssetGroups(a, b, hint) {
     const bDelta = Math.abs(b.best.capturedAt - target);
     if (aDelta !== bDelta) return aDelta - bDelta;
 
+    if (b.totalRange !== a.totalRange) return b.totalRange - a.totalRange;
+    if (b.maxRange !== a.maxRange) return b.maxRange - a.maxRange;
     if (b.size !== a.size) return b.size - a.size;
 
     return compareMediaCandidates(a.best, b.best);
+}
+
+function sortMediaCandidatesByRange(candidates, hint = null) {
+    if (!Array.isArray(candidates)) return candidates;
+    candidates.sort((a, b) => compareMediaCandidatesByRange(a, b, hint));
+    return candidates;
+}
+
+function compareMediaCandidatesByRange(a, b, hint = null) {
+    const rangeA = getRangeLength(a);
+    const rangeB = getRangeLength(b);
+    if (rangeB !== rangeA) return rangeB - rangeA;
+    return hint && Number.isFinite(hint.targetCapturedAt) && hint.targetCapturedAt > 0
+        ? compareMediaCandidatesByTargetTime(a, b, hint)
+        : compareMediaCandidates(a, b);
 }
 
 function sortMediaCandidates(candidates, hint = null) {
