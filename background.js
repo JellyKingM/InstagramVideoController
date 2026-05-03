@@ -2,6 +2,7 @@ importScripts('shared.js');
 
 const mediaRequestsByTab = new Map();
 const pinnedMediaByTab = new Map();
+const mergeJobs = new Map();
 const MEDIA_REQUEST_LIMIT = 80;
 const MEDIA_REQUEST_TTL_MS = 10 * 60 * 1000;
 const RECENT_MEDIA_WINDOW_MS = 20 * 1000;
@@ -54,6 +55,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return;
     }
 
+    if (message.getMergeJob && message.token) {
+        sendResponse(mergeJobs.get(message.token) || null);
+        return;
+    }
+
+    if (message.clearMergeJob && message.token) {
+        mergeJobs.delete(message.token);
+        sendResponse({ ok: true });
+        return;
+    }
+
     if (message.downloadCapturedVideo) {
         const tabId = sender && sender.tab ? sender.tab.id : -1;
         const bundle = pinnedMediaByTab.get(tabId) || pickBestMediaBundleForTab(tabId);
@@ -92,16 +104,15 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             }
 
             if (!muxedCandidate && bundle.audio) {
-                chrome.downloads.download({
-                    url: stripByteRangeParams(bundle.audio.url),
-                    filename: buildCapturedMediaFilename(bundle.audio),
-                    saveAs: false
-                }, function (audioDownloadId) {
+                const token = createMergeJob(bundle, videoFilename);
+                chrome.tabs.create({
+                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                    active: false
+                }, function (tab) {
                     sendResponse({
                         ok: true,
-                        videoDownloadId,
-                        audioDownloadId: chrome.runtime.lastError ? null : audioDownloadId,
-                        separateAudio: true,
+                        mergeStarted: true,
+                        tabId: tab && tab.id ? tab.id : null,
                         bundle
                     });
                 });
@@ -155,16 +166,15 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             }
 
             if (!muxedCandidate && bundle.audio && bundle.audio.url) {
-                chrome.downloads.download({
-                    url: stripByteRangeParams(bundle.audio.url),
-                    filename: buildCapturedMediaFilename(bundle.audio),
-                    saveAs: false
-                }, function (audioDownloadId) {
+                const token = createMergeJob(bundle, videoFilename);
+                chrome.tabs.create({
+                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                    active: false
+                }, function (tab) {
                     sendResponse({
                         ok: true,
-                        videoDownloadId,
-                        audioDownloadId: chrome.runtime.lastError ? null : audioDownloadId,
-                        separateAudio: true,
+                        mergeStarted: true,
+                        tabId: tab && tab.id ? tab.id : null,
                         bundle
                     });
                 });
@@ -249,6 +259,25 @@ function buildMediaRequestCandidate(url) {
         isAudio: /audio/.test(tag),
         isVideo: /vp9|avc|h264|basic|dash/.test(tag) && !/audio/.test(tag)
     };
+}
+
+function createMergeJob(bundle, filename) {
+    const token = `merge-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    mergeJobs.set(token, {
+        bundle: {
+            video: {
+                ...bundle.video,
+                url: stripByteRangeParams(bundle.video.url)
+            },
+            audio: bundle.audio ? {
+                ...bundle.audio,
+                url: stripByteRangeParams(bundle.audio.url)
+            } : null
+        },
+        filename: filename.replace(/\.mp4$/i, '.webm'),
+        createdAt: Date.now()
+    });
+    return token;
 }
 
 function parseEfgPayload(rawValue) {

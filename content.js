@@ -689,8 +689,13 @@
                     });
                     if (explicitResponse && explicitResponse.ok) {
                         log('explicit media bundle download started', explicitResponse);
-                        setDownloadButtonState('Started', true, 'Download started');
-                        scheduleDownloadButtonReset(1800);
+                        if (explicitResponse.mergeStarted) {
+                            setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
+                            scheduleDownloadButtonReset(5000);
+                        } else {
+                            setDownloadButtonState('Started', true, 'Download started');
+                            scheduleDownloadButtonReset(1800);
+                        }
                         return;
                     }
                     log('explicit media bundle download failed', explicitResponse);
@@ -699,8 +704,13 @@
                 const capturedResponse = await downloadCapturedVideoWithRetry(targetVideo);
                 if (capturedResponse && capturedResponse.ok) {
                     log('captured media download started', capturedResponse);
-                    setDownloadButtonState('Started', true, 'Download started');
-                    scheduleDownloadButtonReset(1800);
+                    if (capturedResponse.mergeStarted) {
+                        setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
+                        scheduleDownloadButtonReset(5000);
+                    } else {
+                        setDownloadButtonState('Started', true, 'Download started');
+                        scheduleDownloadButtonReset(1800);
+                    }
                     return;
                 }
 
@@ -1668,29 +1678,29 @@
             sibling = sibling.firstElementChild;
         }
 
-        const fifthChild = sibling.children.length >= 5
-            ? sibling.children[4]
+        const targetChild = sibling.children.length >= 4
+            ? sibling.children[3]
             : null;
-        if (!(fifthChild instanceof Element)) {
+        if (!(targetChild instanceof Element)) {
             const subtreeCandidate = findWideReelsInfoInSiblingSubtree(sibling);
             if (subtreeCandidate) {
                 log('wide reels subtree fallback candidate', describeElement(subtreeCandidate));
                 return subtreeCandidate;
             }
-            log('wide reels path missing fifth child', {
+            log('wide reels path missing fourth child', {
                 sibling: describeElement(sibling),
                 childCount: sibling.children.length
             });
             return null;
         }
 
-        const lastChild = fifthChild.lastElementChild
-            ? fifthChild.lastElementChild
+        const lastChild = targetChild.lastElementChild
+            ? targetChild.lastElementChild
             : null;
         if (!(lastChild instanceof Element)) {
             log('wide reels path missing last child', {
-                fifthChild: describeElement(fifthChild),
-                childCount: fifthChild.children.length
+                targetChild: describeElement(targetChild),
+                childCount: targetChild.children.length
             });
             return null;
         }
