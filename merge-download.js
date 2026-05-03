@@ -27,11 +27,30 @@
         }
     }
 
-    function ensureMp4Box() {
+    async function ensureMp4Box() {
         if (typeof createFile === 'function') {
             return;
         }
-        throw new Error('MP4Box library not loaded.');
+
+        await new Promise((resolve, reject) => {
+            const existing = document.querySelector('script[data-instagram-video-controller-mp4box="true"]');
+            if (existing) {
+                existing.addEventListener('load', resolve, { once: true });
+                existing.addEventListener('error', () => reject(new Error('MP4Box script load failed.')), { once: true });
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = chrome.runtime.getURL('vendor/mp4box.all.js');
+            script.dataset.instagramVideoControllerMp4box = 'true';
+            script.addEventListener('load', resolve, { once: true });
+            script.addEventListener('error', () => reject(new Error('MP4Box script load failed.')), { once: true });
+            document.head.appendChild(script);
+        });
+
+        if (typeof createFile !== 'function') {
+            throw new Error('MP4Box library not loaded.');
+        }
     }
 
     async function fetchArrayBuffer(url, statusText) {
@@ -238,7 +257,7 @@
     }
 
     async function run() {
-        ensureMp4Box();
+        await ensureMp4Box();
 
         const token = getToken();
         if (!token) {
