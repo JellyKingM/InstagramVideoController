@@ -71,6 +71,7 @@
     let mediaIdentityByVideo = new WeakMap();
     let lockedSideBoxBundle = null;
     let lockedSideBoxIdentity = '';
+    let sideBoxVideoIdentity = '';
     let manualPauseByVideo = new WeakMap();
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
@@ -618,6 +619,13 @@
         return `${video.currentSrc || video.src || ''}::${Number(video.duration || 0).toFixed(3)}`;
     }
 
+    function isCurrentSideBoxVideoIdentity(video) {
+        return video instanceof HTMLVideoElement &&
+            video === sideBoxVideo &&
+            !!sideBoxVideoIdentity &&
+            getVideoIdentity(video) === sideBoxVideoIdentity;
+    }
+
     function shouldReplaceCapturedBundle(video, nextBundle) {
         if (!(video instanceof HTMLVideoElement)) return true;
         if (!nextBundle || !nextBundle.video) return false;
@@ -662,9 +670,9 @@
                     if (response && response.ok && response.bundle && shouldReplaceCapturedBundle(video, response.bundle)) {
                         capturedMediaBundleByVideo.set(video, response.bundle);
                         mediaIdentityByVideo.set(video, getVideoIdentity(video));
-                        if (video === sideBoxVideo) {
+                        if (isCurrentSideBoxVideoIdentity(video) && !lockedSideBoxBundle) {
                             lockedSideBoxBundle = response.bundle;
-                            lockedSideBoxIdentity = getVideoIdentity(video);
+                            lockedSideBoxIdentity = sideBoxVideoIdentity;
                         }
                     }
                     log('pinned captured media', response);
@@ -716,10 +724,11 @@
                 const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
                 const directBundle = targetVideo === sideBoxVideo &&
                     lockedSideBoxBundle &&
-                    lockedSideBoxIdentity === currentIdentity
+                    lockedSideBoxIdentity === sideBoxVideoIdentity
                     ? lockedSideBoxBundle
                     : capturedMediaBundleByVideo.get(targetVideo);
-                if (directBundle && directBundle.video && directBundle.video.url && currentIdentity === cachedIdentity) {
+                if (directBundle && directBundle.video && directBundle.video.url &&
+                    (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
                     const explicitResponse = await chrome.runtime.sendMessage({
                         downloadMediaBundle: {
                             bundle: directBundle
@@ -739,7 +748,9 @@
                     log('explicit media bundle download failed', explicitResponse);
                 }
 
-                const capturedResponse = await downloadCapturedVideoWithRetry(targetVideo);
+                const capturedResponse = targetVideo === sideBoxVideo && lockedSideBoxBundle
+                    ? { ok: false, error: 'locked sidebox bundle download failed' }
+                    : await downloadCapturedVideoWithRetry(targetVideo);
                 if (capturedResponse && capturedResponse.ok) {
                     log('captured media download started', capturedResponse);
                     if (capturedResponse.mergeStarted) {
@@ -1273,6 +1284,7 @@
 
         lockedSideBoxBundle = null;
         lockedSideBoxIdentity = '';
+        sideBoxVideoIdentity = '';
 
         donatePrompt = null;
     }
@@ -1443,6 +1455,7 @@
         sideBox.appendChild(sideBoxControls);
         sideBoxControls.appendChild(createPanel());
         sideBoxVideo = video;
+        sideBoxVideoIdentity = getVideoIdentity(video);
         lockedSideBoxBundle = null;
         lockedSideBoxIdentity = '';
         return sideBox;
@@ -2407,6 +2420,15 @@
         if (!anchor || !anchor.parentElement) {
             cleanupSideBox();
             return;
+        }
+
+        if (sideBox && sideBoxVideo === activeVideo && sideBoxVideoIdentity && sideBoxVideoIdentity !== getVideoIdentity(activeVideo)) {
+            log('sidebox target identity changed; rebuilding sidebox', {
+                previousIdentity: sideBoxVideoIdentity,
+                currentIdentity: getVideoIdentity(activeVideo),
+                video: describeVideo(activeVideo)
+            });
+            cleanupSideBox();
         }
 
         if (!sideBox || sideBoxVideo !== activeVideo) {
