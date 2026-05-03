@@ -276,7 +276,7 @@ function createMergeJob(bundle, filename) {
                 url: stripByteRangeParams(bundle.audio.url)
             } : null
         },
-        filename: filename.replace(/\.mp4$/i, '.webm'),
+        filename: filename.replace(/\.webm$/i, '.mp4'),
         createdAt: Date.now()
     });
     return token;

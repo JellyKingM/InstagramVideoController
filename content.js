@@ -1981,18 +1981,35 @@
 
     function getWideReelsDisplayInfoElement(infoElement) {
         if (!(infoElement instanceof Element)) return infoElement;
+        let narrowedElement = null;
+        const stack = [infoElement];
 
-        const fourthChild = infoElement.children.length >= 4
-            ? infoElement.children[3]
-            : null;
-        if (!(fourthChild instanceof Element)) {
-            return infoElement;
+        while (stack.length > 0) {
+            const current = stack.pop();
+            if (!(current instanceof Element)) continue;
+
+            if (current.children.length >= 4) {
+                const candidate = current.lastElementChild;
+                if (candidate instanceof Element && !candidate.querySelector('video')) {
+                    narrowedElement = candidate;
+                }
+            }
+
+            for (let index = current.children.length - 1; index >= 0; index -= 1) {
+                stack.push(current.children[index]);
+            }
         }
 
-        const lastSibling = fourthChild.parentElement && fourthChild.parentElement.lastElementChild
-            ? fourthChild.parentElement.lastElementChild
-            : null;
-        return lastSibling instanceof Element ? lastSibling : fourthChild;
+        return narrowedElement || infoElement;
+    }
+
+    function sanitizeWideReelsInfoElement(infoElement) {
+        if (!(infoElement instanceof Element)) return;
+
+        Array.from(infoElement.querySelectorAll('[aria-label="Video player"]')).forEach(element => {
+            element.style.setProperty('display', 'none', 'important');
+            element.style.setProperty('pointer-events', 'none', 'important');
+        });
     }
 
     function preCaptureWideReelsInfo(video) {
@@ -2134,6 +2151,7 @@
                 installMovedInfoColorObserver(video, infoElement);
                 applyWhiteTextToInfoElement(infoElement);
             }
+            sanitizeWideReelsInfoElement(infoElement);
         }
 
         return true;
