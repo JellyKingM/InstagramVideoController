@@ -53,6 +53,8 @@
     let debugAnchor = null;
     let debugOverlay = null;
     let debugInfoElement = null;
+    let downloadButtonEl = null;
+    let downloadButtonResetTimer = null;
     let donatePromptSeenCount = 0;
     let donatePromptNextAt = 30;
     let donatePromptDismissed = false;
@@ -420,7 +422,9 @@
 
         video.dataset.instagramVideoControllerProcessed = 'true';
         video.addEventListener('play', () => {
-            activeVideo = video;
+            if (isVisibleVideo(video) || video === sideBoxVideo) {
+                activeVideo = video;
+            }
             mediaHintStartedAt = Date.now();
             mediaHintStartedAtByVideo.set(video, mediaHintStartedAt);
             applySettingsToVideo(video);
@@ -521,6 +525,29 @@
             updatePanel();
         });
         return button;
+    }
+
+    function setDownloadButtonState(label, disabled, title = '') {
+        if (!downloadButtonEl) return;
+        downloadButtonEl.textContent = label;
+        downloadButtonEl.disabled = disabled;
+        downloadButtonEl.title = title || downloadButtonEl.title;
+        downloadButtonEl.style.opacity = disabled ? '0.72' : '1';
+        downloadButtonEl.style.cursor = disabled ? 'default' : 'pointer';
+    }
+
+    function scheduleDownloadButtonReset(delay = 2200) {
+        if (downloadButtonResetTimer) {
+            clearTimeout(downloadButtonResetTimer);
+        }
+        downloadButtonResetTimer = window.setTimeout(() => {
+            downloadButtonResetTimer = null;
+            setDownloadButtonState(
+                t('buttonDownloadVideo', 'Download video'),
+                false,
+                t('tooltipDownloadVideo', 'Download the active video')
+            );
+        }, delay);
     }
 
     function ensureMovedInfoStash() {
@@ -641,6 +668,7 @@
         if (!targetVideo) return;
 
         activeVideo = targetVideo;
+        setDownloadButtonState('Downloading...', true, 'Downloading current video');
 
         const diagnostics = getVideoDownloadDiagnostics(targetVideo);
         log('video download diagnostics', diagnostics);
@@ -661,6 +689,8 @@
                     });
                     if (explicitResponse && explicitResponse.ok) {
                         log('explicit media bundle download started', explicitResponse);
+                        setDownloadButtonState('Started', true, 'Download started');
+                        scheduleDownloadButtonReset(1800);
                         return;
                     }
                     log('explicit media bundle download failed', explicitResponse);
@@ -669,6 +699,8 @@
                 const capturedResponse = await downloadCapturedVideoWithRetry(targetVideo);
                 if (capturedResponse && capturedResponse.ok) {
                     log('captured media download started', capturedResponse);
+                    setDownloadButtonState('Started', true, 'Download started');
+                    scheduleDownloadButtonReset(1800);
                     return;
                 }
 
@@ -685,6 +717,8 @@
                             url: performanceUrl,
                             downloadId: response.downloadId
                         });
+                        setDownloadButtonState('Started', true, 'Download started');
+                        scheduleDownloadButtonReset(1800);
                         return;
                     }
                 }
@@ -705,8 +739,12 @@
                 url: sourceUrl,
                 downloadId: response.downloadId
             });
+            setDownloadButtonState('Started', true, 'Download started');
+            scheduleDownloadButtonReset(1800);
         } catch (error) {
             log('video download fallback', error);
+            setDownloadButtonState('Failed', true, String(error && error.message || error));
+            scheduleDownloadButtonReset(2800);
             if (diagnostics.guessedType !== 'blob') {
                 window.open(sourceUrl, '_blank', 'noopener,noreferrer');
             }
@@ -935,6 +973,7 @@
             t('tooltipDownloadVideo', 'Download the active video'),
             downloadActiveVideo
         );
+        downloadButtonEl = downloadButton;
 
         const saveLogButton = createButton(
             t('buttonSaveLog', 'Save log'),
@@ -2148,7 +2187,35 @@
             if (!preCaptureWideReelsInfo(activeVideo)) {
                 waitForWideReelsInfo(activeVideo);
                 log('wide reels sidebox blocked until info captured', describeVideo(activeVideo));
-                cleanupSideBox();
+                if (!options.sideBoxVisibleV) {
+                    cleanupSideBox();
+                    return;
+                }
+
+                hideSideBoxRestoreButton();
+
+                const waitingAnchor = findSideBoxAnchor(activeVideo);
+                if (!waitingAnchor || !waitingAnchor.parentElement) {
+                    cleanupSideBox();
+                    return;
+                }
+
+                if (!sideBox || sideBoxVideo !== activeVideo) {
+                    const box = createSideBox(activeVideo);
+                    waitingAnchor.parentElement.insertBefore(box, waitingAnchor);
+                    sideBoxInfo.replaceChildren();
+                    sideBoxInfo.dataset.instagramVideoControllerEmptyInfo = 'true';
+                    sideBoxInfo.textContent = 'Waiting for video info...';
+                    recordSideBoxShown();
+                    schedulePinCapturedMedia(activeVideo, 1200);
+                } else {
+                    waitingAnchor.parentElement.insertBefore(sideBox, waitingAnchor);
+                    sideBoxInfo.dataset.instagramVideoControllerEmptyInfo = 'true';
+                    sideBoxInfo.textContent = 'Waiting for video info...';
+                }
+
+                sizeSideBoxToVideo(activeVideo);
+                updateDonatePromptVisibility();
                 return;
             }
             clearWideReelsInfoObserver();
