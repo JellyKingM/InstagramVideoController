@@ -1755,6 +1755,11 @@
     function findWideReelsInfoInSiblingSubtree(sibling) {
         if (!(sibling instanceof Element)) return null;
 
+        const exactInfoRoot = sibling.querySelector('div.x78zum5.xdt5ytf.xr1yuqi.x6ikm8r.x10wlt62.xgpatz3');
+        if (exactInfoRoot instanceof Element) {
+            return exactInfoRoot;
+        }
+
         const candidates = Array.from(sibling.querySelectorAll('div'))
             .filter(candidate =>
                 !candidate.querySelector('video') &&
@@ -1981,6 +1986,11 @@
 
     function getWideReelsDisplayInfoElement(infoElement) {
         if (!(infoElement instanceof Element)) return infoElement;
+
+        if (infoElement.matches('div.x78zum5.xdt5ytf.xr1yuqi.x6ikm8r.x10wlt62.xgpatz3')) {
+            return infoElement;
+        }
+
         let narrowedElement = null;
         const stack = [infoElement];
 
