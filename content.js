@@ -72,6 +72,7 @@
     let lockedSideBoxBundle = null;
     let lockedSideBoxIdentity = '';
     let sideBoxVideoIdentity = '';
+    let sideBoxCreatedAt = 0;
     let manualPauseByVideo = new WeakMap();
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
@@ -607,11 +608,18 @@
 
     function buildVideoMediaHint(video) {
         const startedAt = mediaHintStartedAtByVideo.get(video) || mediaHintStartedAt || 0;
-        return {
+        const hint = {
             duration: Number(video && video.duration) || 0,
             currentTime: Number(video && video.currentTime) || 0,
             capturedAfter: startedAt > 0 ? Math.max(0, startedAt - 2500) : 0
         };
+
+        if (isCurrentSideBoxVideoIdentity(video) && sideBoxCreatedAt > 0) {
+            hint.capturedAfter = Math.max(hint.capturedAfter || 0, sideBoxCreatedAt - 4000);
+            hint.capturedBefore = sideBoxCreatedAt + 1200;
+        }
+
+        return hint;
     }
 
     function getVideoIdentity(video) {
@@ -1307,6 +1315,7 @@
         lockedSideBoxBundle = null;
         lockedSideBoxIdentity = '';
         sideBoxVideoIdentity = '';
+        sideBoxCreatedAt = 0;
 
         donatePrompt = null;
     }
@@ -1478,6 +1487,7 @@
         sideBoxControls.appendChild(createPanel());
         sideBoxVideo = video;
         sideBoxVideoIdentity = getVideoIdentity(video);
+        sideBoxCreatedAt = Date.now();
         lockedSideBoxBundle = null;
         lockedSideBoxIdentity = '';
         return sideBox;

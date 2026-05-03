@@ -400,12 +400,23 @@ function applyDurationHint(candidates, hint) {
 }
 
 function applyTimeHint(candidates, hint) {
-    if (!hint || !Number.isFinite(hint.capturedAfter) || hint.capturedAfter <= 0) {
-        return candidates;
+    let filtered = candidates;
+
+    if (hint && Number.isFinite(hint.capturedAfter) && hint.capturedAfter > 0) {
+        const afterFiltered = filtered.filter(item => item.capturedAt >= hint.capturedAfter);
+        if (afterFiltered.length > 0) {
+            filtered = afterFiltered;
+        }
     }
 
-    const filtered = candidates.filter(item => item.capturedAt >= hint.capturedAfter);
-    return filtered.length > 0 ? filtered : candidates;
+    if (hint && Number.isFinite(hint.capturedBefore) && hint.capturedBefore > 0) {
+        const beforeFiltered = filtered.filter(item => item.capturedAt <= hint.capturedBefore);
+        if (beforeFiltered.length > 0) {
+            filtered = beforeFiltered;
+        }
+    }
+
+    return filtered;
 }
 
 function compareMediaCandidates(a, b) {
