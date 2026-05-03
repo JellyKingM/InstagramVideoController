@@ -781,7 +781,13 @@
             scheduleDownloadButtonReset(1800);
         } catch (error) {
             log('video download fallback', error);
-            setDownloadButtonState('Failed', true, String(error && error.message || error));
+            const errorMessage = String(error && error.message || error);
+            if (errorMessage.includes('Extension context invalidated')) {
+                setDownloadButtonState('Reload page', true, 'Extension was updated. Reload the Instagram page and try again.');
+                scheduleDownloadButtonReset(5000);
+                return;
+            }
+            setDownloadButtonState('Failed', true, errorMessage);
             scheduleDownloadButtonReset(2800);
             if (diagnostics.guessedType !== 'blob') {
                 window.open(sourceUrl, '_blank', 'noopener,noreferrer');
@@ -2095,12 +2101,24 @@
     function attachMovedInfoToSideBox(video) {
         if (!sideBoxInfo || !hasMovedInfoForVideo(video)) return false;
 
-        const infoElement = movedInfoByVideo.get(video);
+        let infoElement = movedInfoByVideo.get(video);
         delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
         if (infoElement.parentElement !== sideBoxInfo) {
             sideBoxInfo.replaceChildren();
             sideBoxInfo.appendChild(infoElement);
         }
+
+        if (isWideReelsVideo(video)) {
+            const narrowedInfoElement = getWideReelsDisplayInfoElement(infoElement);
+            if (narrowedInfoElement instanceof Element && narrowedInfoElement !== infoElement) {
+                sideBoxInfo.replaceChildren(narrowedInfoElement);
+                infoElement = narrowedInfoElement;
+                movedInfoByVideo.set(video, infoElement);
+                installMovedInfoColorObserver(video, infoElement);
+                applyWhiteTextToInfoElement(infoElement);
+            }
+        }
+
         return true;
     }
 
