@@ -1,5 +1,6 @@
 (async function () {
     const statusEl = document.getElementById('status');
+    let mp4boxModule = null;
 
     function setStatus(text) {
         statusEl.textContent = text;
@@ -28,29 +29,22 @@
     }
 
     async function ensureMp4Box() {
-        if (typeof createFile === 'function') {
+        if (mp4boxModule && typeof mp4boxModule.createFile === 'function') {
             return;
         }
 
-        await new Promise((resolve, reject) => {
-            const existing = document.querySelector('script[data-instagram-video-controller-mp4box="true"]');
-            if (existing) {
-                existing.addEventListener('load', resolve, { once: true });
-                existing.addEventListener('error', () => reject(new Error('MP4Box script load failed.')), { once: true });
-                return;
-            }
+        mp4boxModule = await import(chrome.runtime.getURL('vendor/mp4box.all.js'));
 
-            const script = document.createElement('script');
-            script.src = chrome.runtime.getURL('vendor/mp4box.all.js');
-            script.dataset.instagramVideoControllerMp4box = 'true';
-            script.addEventListener('load', resolve, { once: true });
-            script.addEventListener('error', () => reject(new Error('MP4Box script load failed.')), { once: true });
-            document.head.appendChild(script);
-        });
-
-        if (typeof createFile !== 'function') {
+        if (!mp4boxModule || typeof mp4boxModule.createFile !== 'function') {
             throw new Error('MP4Box library not loaded.');
         }
+    }
+
+    function getCreateFile() {
+        if (!mp4boxModule || typeof mp4boxModule.createFile !== 'function') {
+            throw new Error('MP4Box library not loaded.');
+        }
+        return mp4boxModule.createFile;
     }
 
     async function fetchArrayBuffer(url, statusText) {
@@ -92,7 +86,7 @@
 
     function parseMp4ForSamples(arrayBuffer, kind) {
         return new Promise((resolve, reject) => {
-            const mp4boxFile = createFile();
+            const mp4boxFile = getCreateFile()();
             let trackInfo = null;
             let expectedSamples = 0;
             const allSamples = [];
@@ -236,7 +230,7 @@
     }
 
     function remuxToMp4(videoParsed, audioParsed) {
-        const output = createFile();
+        const output = getCreateFile()();
         const videoTrackId = output.addTrack(buildTrackOptions(videoParsed, 1));
         const audioTrackId = output.addTrack(buildTrackOptions(audioParsed, 2));
         const orderedSamples = mergeSamplesByDts(videoParsed.samples, audioParsed.samples);
