@@ -69,6 +69,8 @@
     let capturedMediaBundleByVideo = new WeakMap();
     let mediaHintStartedAtByVideo = new WeakMap();
     let mediaIdentityByVideo = new WeakMap();
+    let lockedSideBoxBundle = null;
+    let lockedSideBoxIdentity = '';
     let manualPauseByVideo = new WeakMap();
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
@@ -660,6 +662,10 @@
                     if (response && response.ok && response.bundle && shouldReplaceCapturedBundle(video, response.bundle)) {
                         capturedMediaBundleByVideo.set(video, response.bundle);
                         mediaIdentityByVideo.set(video, getVideoIdentity(video));
+                        if (video === sideBoxVideo) {
+                            lockedSideBoxBundle = response.bundle;
+                            lockedSideBoxIdentity = getVideoIdentity(video);
+                        }
                     }
                     log('pinned captured media', response);
                     resolve(response || { ok: false, error: 'empty pin response' });
@@ -708,7 +714,11 @@
             if (diagnostics.guessedType === 'blob') {
                 const currentIdentity = getVideoIdentity(targetVideo);
                 const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
-                const directBundle = capturedMediaBundleByVideo.get(targetVideo);
+                const directBundle = targetVideo === sideBoxVideo &&
+                    lockedSideBoxBundle &&
+                    lockedSideBoxIdentity === currentIdentity
+                    ? lockedSideBoxBundle
+                    : capturedMediaBundleByVideo.get(targetVideo);
                 if (directBundle && directBundle.video && directBundle.video.url && currentIdentity === cachedIdentity) {
                     const explicitResponse = await chrome.runtime.sendMessage({
                         downloadMediaBundle: {
@@ -1261,6 +1271,9 @@
             sideBoxControls = null;
         }
 
+        lockedSideBoxBundle = null;
+        lockedSideBoxIdentity = '';
+
         donatePrompt = null;
     }
 
@@ -1430,6 +1443,8 @@
         sideBox.appendChild(sideBoxControls);
         sideBoxControls.appendChild(createPanel());
         sideBoxVideo = video;
+        lockedSideBoxBundle = null;
+        lockedSideBoxIdentity = '';
         return sideBox;
     }
 
