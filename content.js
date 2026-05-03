@@ -1694,18 +1694,18 @@
             return null;
         }
 
-        const lastChild = targetChild.lastElementChild
-            ? targetChild.lastElementChild
+        const lastSibling = targetChild.parentElement && targetChild.parentElement.lastElementChild
+            ? targetChild.parentElement.lastElementChild
             : null;
-        if (!(lastChild instanceof Element)) {
-            log('wide reels path missing last child', {
+        if (!(lastSibling instanceof Element)) {
+            log('wide reels path missing last sibling', {
                 targetChild: describeElement(targetChild),
-                childCount: targetChild.children.length
+                siblingCount: targetChild.parentElement ? targetChild.parentElement.children.length : 0
             });
             return null;
         }
 
-        return lastChild;
+        return lastSibling;
     }
 
     function findWideReelsInfoInSiblingSubtree(sibling) {

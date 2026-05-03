@@ -44,6 +44,16 @@
         window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
     }
 
+    async function fetchAsObjectUrl(url, statusText) {
+        setStatus(statusText);
+        const response = await fetch(url, { credentials: 'include' });
+        if (!response.ok) {
+            throw new Error(`Fetch failed: ${response.status}`);
+        }
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    }
+
     async function run() {
         const token = getToken();
         if (!token) {
@@ -57,6 +67,9 @@
             return;
         }
 
+        const videoBlobUrl = await fetchAsObjectUrl(job.bundle.video.url, 'Fetching video track...');
+        const audioBlobUrl = await fetchAsObjectUrl(job.bundle.audio.url, 'Fetching audio track...');
+
         const videoEl = document.createElement('video');
         const audioEl = document.createElement('audio');
         videoEl.crossOrigin = 'anonymous';
@@ -65,8 +78,8 @@
         audioEl.playsInline = true;
         videoEl.muted = true;
         audioEl.muted = true;
-        videoEl.src = job.bundle.video.url;
-        audioEl.src = job.bundle.audio.url;
+        videoEl.src = videoBlobUrl;
+        audioEl.src = audioBlobUrl;
         videoEl.style.display = 'none';
         audioEl.style.display = 'none';
         document.body.appendChild(videoEl);
@@ -74,16 +87,24 @@
 
         setStatus('Loading video and audio...');
         await Promise.all([
-            waitForEvent(videoEl, 'loadedmetadata'),
-            waitForEvent(audioEl, 'loadedmetadata')
+            waitForEvent(videoEl, 'loadeddata'),
+            waitForEvent(audioEl, 'loadeddata')
         ]);
 
-        const stream = videoEl.captureStream();
+        const videoStream = videoEl.captureStream();
         const audioContext = new AudioContext();
         const audioSource = audioContext.createMediaElementSource(audioEl);
         const destination = audioContext.createMediaStreamDestination();
+        const silentGain = audioContext.createGain();
+        silentGain.gain.value = 0;
         audioSource.connect(destination);
+        audioSource.connect(silentGain);
+        silentGain.connect(audioContext.destination);
 
+        const stream = new MediaStream();
+        videoStream.getVideoTracks().forEach(track => {
+            stream.addTrack(track);
+        });
         destination.stream.getAudioTracks().forEach(track => {
             stream.addTrack(track);
         });
@@ -129,6 +150,8 @@
         setStatus('Saving merged file...');
         await downloadBlob(blob, job.filename || 'instagram-video.webm');
         await clearJob(token);
+        URL.revokeObjectURL(videoBlobUrl);
+        URL.revokeObjectURL(audioBlobUrl);
         setStatus('Done. This tab will close.');
         await wait(1200);
         window.close();
