@@ -92,10 +92,10 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         if (shouldMerge) {
             const token = createMergeJob(bundle, videoFilename);
-            chrome.tabs.create({
-                url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                active: false
-            }, function (tab) {
+                chrome.tabs.create({
+                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                    active: true
+                }, function (tab) {
                 sendResponse({
                     ok: true,
                     mergeStarted: true,
@@ -155,10 +155,10 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         if (shouldMerge) {
             const token = createMergeJob(bundle, videoFilename);
-            chrome.tabs.create({
-                url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                active: false
-            }, function (tab) {
+                chrome.tabs.create({
+                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                    active: true
+                }, function (tab) {
                 sendResponse({
                     ok: true,
                     mergeStarted: true,

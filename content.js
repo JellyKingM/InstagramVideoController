@@ -63,11 +63,14 @@
     let movedInfoStash = null;
     let pendingSideBoxVideo = null;
     let mediaHintStartedAt = 0;
+    let userInteractionAt = 0;
     let fullscreenVideo = null;
     let internalLogs = [];
     let capturedMediaBundleByVideo = new WeakMap();
     let mediaHintStartedAtByVideo = new WeakMap();
     let mediaIdentityByVideo = new WeakMap();
+    let manualPauseByVideo = new WeakMap();
+    let internalPlayRequestAtByVideo = new WeakMap();
     const MAX_INTERNAL_LOGS = 600;
 
     function log(...args) {
@@ -422,6 +425,18 @@
 
         video.dataset.instagramVideoControllerProcessed = 'true';
         video.addEventListener('play', () => {
+            const lastInternalPlayAt = Number(internalPlayRequestAtByVideo.get(video) || '0');
+            const recentUserInteraction = Date.now() - userInteractionAt < 1200;
+            if (manualPauseByVideo.get(video) && Date.now() - lastInternalPlayAt > 1200 && !recentUserInteraction) {
+                log('blocking forced resume after manual pause', describeVideo(video));
+                window.setTimeout(() => {
+                    if (!video.paused) {
+                        video.pause();
+                    }
+                }, 0);
+                return;
+            }
+            manualPauseByVideo.set(video, false);
             if (isVisibleVideo(video) || video === sideBoxVideo) {
                 activeVideo = video;
             }
@@ -441,16 +456,28 @@
         });
 
         video.addEventListener('click', () => {
+            userInteractionAt = Date.now();
             scheduleRestoreInfoAfterInteraction(video);
         }, true);
 
         video.addEventListener('dblclick', () => {
+            userInteractionAt = Date.now();
             scheduleRestoreInfoAfterInteraction(video);
         }, true);
 
         video.addEventListener('pointerup', () => {
+            userInteractionAt = Date.now();
             scheduleRestoreInfoAfterInteraction(video);
         }, true);
+
+        video.addEventListener('pause', () => {
+            const lastInternalPlayAt = Number(internalPlayRequestAtByVideo.get(video) || '0');
+            const recentUserInteraction = Date.now() - userInteractionAt < 1200;
+            if (recentUserInteraction || Date.now() - lastInternalPlayAt > 1200) {
+                manualPauseByVideo.set(video, true);
+                log('manual pause remembered', describeVideo(video));
+            }
+        });
 
         video.addEventListener('volumechange', () => {
             if (applyingVolume || applyingMute) return;
@@ -1703,7 +1730,11 @@
         }
 
         const subtreeCandidate = findWideReelsInfoInSiblingSubtree(lastSibling);
-        return subtreeCandidate || lastSibling;
+        if (subtreeCandidate) {
+            return subtreeCandidate;
+        }
+
+        return findWideReelsInfoInSiblingSubtree(sibling);
     }
 
     function findWideReelsInfoInSiblingSubtree(sibling) {
@@ -1713,8 +1744,12 @@
             .filter(candidate =>
                 !candidate.querySelector('video') &&
                 candidate.querySelector('a[role="link"]') &&
-                candidate.querySelector('[role="button"]') &&
-                candidate.querySelector('[role="presentation"]')
+                candidate.querySelector('[role="presentation"]') &&
+                (
+                    candidate.querySelector('[role="button"]') ||
+                    findCollapsedMoreButton(candidate) ||
+                    candidate.querySelector('.x1xmf6yo')
+                )
             );
 
         candidates.sort((a, b) => getElementDepth(b) - getElementDepth(a));
@@ -2307,8 +2342,11 @@
     function togglePlay() {
         withActiveVideo(video => {
             if (video.paused) {
+                manualPauseByVideo.set(video, false);
+                internalPlayRequestAtByVideo.set(video, Date.now());
                 video.play().catch(error => log('play failed', error));
             } else {
+                userInteractionAt = Date.now();
                 video.pause();
             }
         });
