@@ -615,8 +615,10 @@
         };
 
         if (isCurrentSideBoxVideoIdentity(video) && sideBoxCreatedAt > 0) {
-            hint.capturedAfter = Math.max(hint.capturedAfter || 0, sideBoxCreatedAt - 4000);
-            hint.capturedBefore = sideBoxCreatedAt + 1200;
+            hint.capturedAfter = Math.max(hint.capturedAfter || 0, sideBoxCreatedAt - 12000);
+            hint.capturedBefore = sideBoxCreatedAt + 600;
+            hint.targetCapturedAt = sideBoxCreatedAt;
+            hint.preferBefore = true;
         }
 
         return hint;

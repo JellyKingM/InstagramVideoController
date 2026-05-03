@@ -317,29 +317,31 @@ function pickBestMediaRequestForTab(tabId, hint = null) {
     );
     const videoCandidates = applyDurationHint(recentList.filter(item => item.isVideo), hint);
     if (videoCandidates.length > 0) {
-        videoCandidates.sort(compareMediaCandidates);
+        sortMediaCandidates(videoCandidates, hint);
         return videoCandidates[0];
     }
 
     const fallbackVideoCandidates = applyDurationHint(applyTimeHint(list.filter(item => item.isVideo), hint), hint);
     if (fallbackVideoCandidates.length > 0) {
-        fallbackVideoCandidates.sort(compareMediaCandidates);
+        sortMediaCandidates(fallbackVideoCandidates, hint);
         return fallbackVideoCandidates[0];
     }
 
     const nonAudioCandidates = recentList.filter(item => !item.isAudio);
     if (nonAudioCandidates.length > 0) {
-        nonAudioCandidates.sort(compareMediaCandidates);
+        sortMediaCandidates(nonAudioCandidates, hint);
         return nonAudioCandidates[0];
     }
 
     const fallbackNonAudio = list.filter(item => !item.isAudio);
     if (fallbackNonAudio.length > 0) {
-        fallbackNonAudio.sort(compareMediaCandidates);
+        sortMediaCandidates(fallbackNonAudio, hint);
         return fallbackNonAudio[0];
     }
 
-    return [...list].sort(compareMediaCandidates)[0];
+    const allCandidates = [...list];
+    sortMediaCandidates(allCandidates, hint);
+    return allCandidates[0];
 }
 
 function pickBestMediaBundleForTab(tabId, hint = null) {
@@ -355,7 +357,7 @@ function pickBestMediaBundleForTab(tabId, hint = null) {
         (!video.assetId || item.assetId === video.assetId)
     ), hint);
 
-    audioCandidates.sort(compareMediaCandidates);
+    sortMediaCandidates(audioCandidates, hint);
 
     return {
         video,
@@ -417,6 +419,35 @@ function applyTimeHint(candidates, hint) {
     }
 
     return filtered;
+}
+
+function sortMediaCandidates(candidates, hint = null) {
+    if (!Array.isArray(candidates)) return candidates;
+
+    if (hint && Number.isFinite(hint.targetCapturedAt) && hint.targetCapturedAt > 0) {
+        candidates.sort((a, b) => compareMediaCandidatesByTargetTime(a, b, hint));
+        return candidates;
+    }
+
+    candidates.sort(compareMediaCandidates);
+    return candidates;
+}
+
+function compareMediaCandidatesByTargetTime(a, b, hint) {
+    const target = Number(hint.targetCapturedAt) || 0;
+    const preferBefore = !!hint.preferBefore;
+
+    if (preferBefore) {
+        const aBefore = a.capturedAt <= target ? 1 : 0;
+        const bBefore = b.capturedAt <= target ? 1 : 0;
+        if (aBefore !== bBefore) return bBefore - aBefore;
+    }
+
+    const aDelta = Math.abs(a.capturedAt - target);
+    const bDelta = Math.abs(b.capturedAt - target);
+    if (aDelta !== bDelta) return aDelta - bDelta;
+
+    return compareMediaCandidates(a, b);
 }
 
 function compareMediaCandidates(a, b) {
