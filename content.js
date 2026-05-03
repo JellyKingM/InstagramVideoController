@@ -1845,12 +1845,29 @@
         infoElement.dataset.instagramVideoControllerMovedInfo = 'true';
         infoElement.style.maxHeight = 'none';
         infoElement.style.height = 'auto';
+        infoElement.style.width = 'auto';
+        infoElement.style.maxWidth = 'none';
+        infoElement.style.minWidth = '0';
         infoElement.style.overflow = 'visible';
         infoElement.style.pointerEvents = 'auto';
+        infoElement.style.position = 'static';
+        infoElement.style.inset = 'auto';
+        infoElement.style.left = 'auto';
+        infoElement.style.top = 'auto';
+        infoElement.style.right = 'auto';
+        infoElement.style.bottom = 'auto';
+        infoElement.style.transform = 'none';
         infoElement.style.setProperty('color', '#fff', 'important');
 
         Array.from(infoElement.querySelectorAll('*')).forEach(child => {
             child.style.pointerEvents = 'auto';
+            child.style.position = 'static';
+            child.style.inset = 'auto';
+            child.style.left = 'auto';
+            child.style.top = 'auto';
+            child.style.right = 'auto';
+            child.style.bottom = 'auto';
+            child.style.transform = 'none';
             child.style.setProperty('color', '#fff', 'important');
         });
     }
