@@ -73,6 +73,7 @@
     let lockedSideBoxIdentity = '';
     let sideBoxVideoIdentity = '';
     let sideBoxCreatedAt = 0;
+    let lastRejectedBundleInfo = null;
     let manualPauseByVideo = new WeakMap();
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
@@ -148,6 +149,7 @@
             `sideBoxCreatedAt=${sideBoxCreatedAt || 0}`,
             `lockedSideBoxIdentity=${lockedSideBoxIdentity || ''}`,
             `lockedSideBoxBundle=${renderLogValue(lockedSideBoxBundle)}`,
+            `lastRejectedBundleInfo=${renderLogValue(lastRejectedBundleInfo)}`,
             `currentDownloadFileName=${currentDownloadFileName}`,
             '',
             ...internalLogs
@@ -716,6 +718,12 @@
                             actualDuration: Number(response.bundle.video && response.bundle.video.duration || 0),
                             bundle: response.bundle
                         };
+                        lastRejectedBundleInfo = {
+                            expectedDuration: failure.expectedDuration,
+                            actualDuration: failure.actualDuration,
+                            assetId: response.bundle.video && response.bundle.video.assetId || '',
+                            tag: response.bundle.video && response.bundle.video.tag || ''
+                        };
                         log('rejecting pinned media due to duration mismatch', {
                             video: describeVideo(video),
                             failure
@@ -820,7 +828,7 @@
                     return;
                 }
 
-                const performanceUrl = findPerformanceVideoUrl(targetVideo);
+                const performanceUrl = targetVideo === sideBoxVideo ? '' : findPerformanceVideoUrl(targetVideo);
                 if (performanceUrl) {
                     const response = await chrome.runtime.sendMessage({
                         downloadVideo: {
@@ -839,7 +847,9 @@
                     }
                 }
 
-                throw new Error(capturedResponse && capturedResponse.error ? capturedResponse.error : 'captured media download failed');
+                throw new Error(capturedResponse && capturedResponse.error
+                    ? capturedResponse.error
+                    : 'no matching media request for current sidebox video');
             }
 
             const response = await chrome.runtime.sendMessage({
@@ -1058,11 +1068,11 @@
         }
 
         try {
-            const url = new URL(sourceUrl, location.href);
-            const pathName = url.pathname.split('/').filter(Boolean).pop() || 'instagram-video.mp4';
-            return pathName.includes('.') ? pathName : `${pathName}.mp4`;
+            const shortcode = sanitizeFileNamePart(getCurrentShortcode()) || 'instagram';
+            return `${shortcode}.mp4`;
         } catch (error) {
-            return 'instagram-video.mp4';
+            const shortcode = sanitizeFileNamePart(getCurrentShortcode()) || 'instagram-video';
+            return `${shortcode}.mp4`;
         }
     }
 
@@ -1475,6 +1485,7 @@
         lockedSideBoxIdentity = '';
         sideBoxVideoIdentity = '';
         sideBoxCreatedAt = 0;
+        lastRejectedBundleInfo = null;
 
         donatePrompt = null;
     }
