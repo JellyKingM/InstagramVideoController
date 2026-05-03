@@ -194,6 +194,68 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return true;
     }
 
+    if (message.downloadTrackedBlobUrls && Array.isArray(message.downloadTrackedBlobUrls.urls)) {
+        const explicitBundle = pickBestMediaBundleFromUrls(
+            message.downloadTrackedBlobUrls.urls,
+            message.downloadTrackedBlobUrls.hint || null
+        );
+        if (!explicitBundle || !explicitBundle.video || !explicitBundle.video.url) {
+            sendResponse({
+                ok: false,
+                error: 'no tracked media bundle for blob video'
+            });
+            return;
+        }
+
+        const shouldMerge = !!(explicitBundle.audio && explicitBundle.audio.url);
+        const muxedCandidate = shouldMerge ? null : findMuxedMediaCandidateInCandidates(
+            message.downloadTrackedBlobUrls.urls,
+            explicitBundle
+        );
+        const targetVideo = muxedCandidate || explicitBundle.video;
+        const videoUrl = stripByteRangeParams(targetVideo.url);
+        const videoFilename = message.downloadTrackedBlobUrls.filename || buildCapturedMediaFilename(targetVideo);
+
+        if (shouldMerge) {
+            const token = createMergeJob(explicitBundle, videoFilename);
+            chrome.tabs.create({
+                url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                active: false
+            }, function (tab) {
+                sendResponse({
+                    ok: true,
+                    mergeStarted: true,
+                    tabId: tab && tab.id ? tab.id : null,
+                    bundle: explicitBundle
+                });
+            });
+            return true;
+        }
+
+        chrome.downloads.download({
+            url: videoUrl,
+            filename: videoFilename,
+            saveAs: false
+        }, function (videoDownloadId) {
+            if (chrome.runtime.lastError) {
+                sendResponse({
+                    ok: false,
+                    error: chrome.runtime.lastError.message,
+                    bundle: explicitBundle
+                });
+                return;
+            }
+
+            sendResponse({
+                ok: true,
+                videoDownloadId,
+                separateAudio: false,
+                bundle: explicitBundle
+            });
+        });
+        return true;
+    }
+
     if (message.pinCapturedVideo) {
         const tabId = sender && sender.tab ? sender.tab.id : -1;
         const bundle = pickBestMediaBundleForTab(tabId, message.hint || null);
@@ -374,6 +436,51 @@ function pickBestMediaBundleForTab(tabId, hint = null) {
     };
 }
 
+function pickBestMediaBundleFromUrls(urls, hint = null) {
+    const candidates = (urls || [])
+        .map(url => buildMediaRequestCandidate(url))
+        .filter(Boolean);
+    if (candidates.length === 0) return null;
+
+    const video = pickBestMediaRequestFromCandidates(candidates, hint);
+    if (!video) return null;
+
+    const audioCandidates = applyTimeHint(candidates.filter(item =>
+        item.isAudio &&
+        (!video.assetId || item.assetId === video.assetId)
+    ), hint);
+    sortMediaCandidates(audioCandidates, hint);
+
+    return {
+        video,
+        audio: audioCandidates[0] || null
+    };
+}
+
+function pickBestMediaRequestFromCandidates(candidates, hint = null) {
+    if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+    const videoCandidates = applyDurationHint(applyTimeHint(candidates.filter(item => item.isVideo), hint), hint);
+    if (videoCandidates.length > 0) {
+        const groupedCandidates = pickPreferredAssetScopedCandidates(videoCandidates, hint);
+        if (groupedCandidates.length > 0) {
+            return groupedCandidates[0];
+        }
+        sortMediaCandidates(videoCandidates, hint);
+        return videoCandidates[0];
+    }
+
+    const nonAudioCandidates = applyTimeHint(candidates.filter(item => !item.isAudio), hint);
+    if (nonAudioCandidates.length > 0) {
+        sortMediaCandidates(nonAudioCandidates, hint);
+        return nonAudioCandidates[0];
+    }
+
+    const allCandidates = [...candidates];
+    sortMediaCandidates(allCandidates, hint);
+    return allCandidates[0];
+}
+
 function findMuxedMediaCandidateForBundle(tabId, bundle) {
     const list = mediaRequestsByTab.get(tabId) || [];
     pruneMediaRequests(list);
@@ -390,6 +497,25 @@ function findMuxedMediaCandidateForBundle(tabId, bundle) {
     if (candidates.length === 0) return null;
     candidates.sort(compareMediaCandidates);
     return candidates[0];
+}
+
+function findMuxedMediaCandidateInCandidates(urls, bundle) {
+    const candidates = (urls || [])
+        .map(url => buildMediaRequestCandidate(url))
+        .filter(Boolean);
+    if (!bundle || !bundle.video) return null;
+
+    const video = bundle.video;
+    const matches = candidates.filter(item =>
+        !item.isAudio &&
+        (!video.assetId || item.assetId === video.assetId) &&
+        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.35) &&
+        !/dash/i.test(String(item.tag || ''))
+    );
+
+    if (matches.length === 0) return null;
+    matches.sort(compareMediaCandidates);
+    return matches[0];
 }
 
 function applyDurationHint(candidates, hint) {

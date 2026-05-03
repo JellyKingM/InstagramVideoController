@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "2.4.17",
+  "version": "2.5.1",
   "default_locale": "en",
   "icons": {
     "128": "Icon.png",
@@ -33,6 +33,13 @@
   },
   "content_scripts": [
     {
+      "js": ["page-media-tracker-loader.js"],
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "run_at": "document_start"
+    },
+    {
       "js": ["shared.js", "content.js"],
       "matches": [
         "https://www.instagram.com/*"
@@ -41,7 +48,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["muted.png", "unmuted.png", "page-download-bridge.js"],
+      "resources": ["muted.png", "unmuted.png", "page-download-bridge.js", "page-media-tracker.js"],
       "matches": ["https://www.instagram.com/*"]
     }
   ],

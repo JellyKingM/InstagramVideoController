@@ -16,6 +16,8 @@
     };
     const PAGE_DOWNLOAD_REQUEST_EVENT = 'instagram-video-controller-download-request';
     const PAGE_DOWNLOAD_RESULT_EVENT = 'instagram-video-controller-download-result';
+    const MEDIA_TRACKER_REQUEST_EVENT = 'instagram-video-controller-media-map-request';
+    const MEDIA_TRACKER_RESPONSE_EVENT = 'instagram-video-controller-media-map-response';
 
     const options = {
         videoControllerV: true,
@@ -173,6 +175,38 @@
         script.id = 'instagram-video-controller-download-bridge';
         script.src = chrome.runtime.getURL('page-download-bridge.js');
         document.documentElement.appendChild(script);
+    }
+
+    function getTrackedMediaUrlsForBlob(blobUrl) {
+        return new Promise(resolve => {
+            if (!blobUrl || !blobUrl.startsWith('blob:')) {
+                resolve({ blobUrl, urls: [], mediaSourceId: '' });
+                return;
+            }
+
+            const requestId = `media-map-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            let settled = false;
+
+            const finish = detail => {
+                if (settled) return;
+                settled = true;
+                document.removeEventListener(MEDIA_TRACKER_RESPONSE_EVENT, onResponse, true);
+                resolve(detail || { blobUrl, urls: [], mediaSourceId: '' });
+            };
+
+            const onResponse = event => {
+                const detail = event && event.detail ? event.detail : {};
+                if (detail.requestId !== requestId) return;
+                finish(detail);
+            };
+
+            document.addEventListener(MEDIA_TRACKER_RESPONSE_EVENT, onResponse, true);
+            document.dispatchEvent(new CustomEvent(MEDIA_TRACKER_REQUEST_EVENT, {
+                detail: { requestId, blobUrl }
+            }));
+
+            window.setTimeout(() => finish({ blobUrl, urls: [], mediaSourceId: '' }), 1500);
+        });
     }
 
     function t(key, fallback) {
@@ -784,6 +818,36 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
+                const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
+                log('tracked blob media urls', {
+                    blobUrl: sourceUrl,
+                    mediaSourceId: trackedMedia.mediaSourceId,
+                    urlCount: trackedMedia.urls.length,
+                    urls: trackedMedia.urls
+                });
+
+                if (trackedMedia.urls.length > 0) {
+                    const trackedResponse = await chrome.runtime.sendMessage({
+                        downloadTrackedBlobUrls: {
+                            urls: trackedMedia.urls,
+                            hint: buildVideoMediaHint(targetVideo),
+                            filename: getDownloadFileName(sourceUrl)
+                        }
+                    });
+                    if (trackedResponse && trackedResponse.ok) {
+                        log('tracked blob media download started', trackedResponse);
+                        if (trackedResponse.mergeStarted) {
+                            setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
+                            scheduleDownloadButtonReset(5000);
+                        } else {
+                            setDownloadButtonState('Started', true, 'Download started');
+                            scheduleDownloadButtonReset(1800);
+                        }
+                        return;
+                    }
+                    log('tracked blob media download failed', trackedResponse);
+                }
+
                 const currentIdentity = getVideoIdentity(targetVideo);
                 const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
                 const directBundle = targetVideo === sideBoxVideo &&
