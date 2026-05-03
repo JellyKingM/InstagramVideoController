@@ -1673,10 +1673,7 @@
             return null;
         }
 
-        let sibling = rawSibling;
-        while (sibling.children.length === 1 && sibling.firstElementChild instanceof Element) {
-            sibling = sibling.firstElementChild;
-        }
+        const sibling = rawSibling;
 
         const targetChild = sibling.children.length >= 4
             ? sibling.children[3]
@@ -1705,7 +1702,8 @@
             return null;
         }
 
-        return lastSibling;
+        const subtreeCandidate = findWideReelsInfoInSiblingSubtree(lastSibling);
+        return subtreeCandidate || lastSibling;
     }
 
     function findWideReelsInfoInSiblingSubtree(sibling) {
@@ -1915,6 +1913,13 @@
                     collapsedButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
                     log('wide reels pre-capture clicking collapsed button', describeElement(collapsedButton));
                     collapsedButton.click();
+                    window.setTimeout(() => {
+                        if (!document.contains(video) || hasMovedInfoForVideo(video)) return;
+                        if (preCaptureWideReelsInfo(video)) {
+                            activeVideo = video;
+                            updateSideBox();
+                        }
+                    }, 350);
                 }
                 return false;
             }
@@ -1987,7 +1992,8 @@
         clearWideReelsInfoObserver();
         pendingSideBoxVideo = video;
 
-        const root = getWideReelsInfoElement(video)?.parentElement || getAncestor(video, 10) || video.parentElement;
+        const seventhParent = getAncestor(video, 7);
+        const root = (seventhParent && seventhParent.nextElementSibling) || getAncestor(video, 10) || video.parentElement;
         if (!root) return;
 
         log('waiting for wide reels info', {

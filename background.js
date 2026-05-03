@@ -77,7 +77,8 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             return;
         }
 
-        const muxedCandidate = findMuxedMediaCandidateForBundle(tabId, bundle);
+        const shouldMerge = !!(bundle.audio && bundle.audio.url);
+        const muxedCandidate = shouldMerge ? null : findMuxedMediaCandidateForBundle(tabId, bundle);
         const targetVideo = muxedCandidate || bundle.video;
         const videoUrl = stripByteRangeParams(targetVideo.url);
         const videoFilename = buildCapturedMediaFilename(targetVideo);
@@ -89,6 +90,22 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             videoFilename
         });
 
+        if (shouldMerge) {
+            const token = createMergeJob(bundle, videoFilename);
+            chrome.tabs.create({
+                url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                active: false
+            }, function (tab) {
+                sendResponse({
+                    ok: true,
+                    mergeStarted: true,
+                    tabId: tab && tab.id ? tab.id : null,
+                    bundle
+                });
+            });
+            return true;
+        }
+
         chrome.downloads.download({
             url: videoUrl,
             filename: videoFilename,
@@ -99,22 +116,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                     ok: false,
                     error: chrome.runtime.lastError.message,
                     bundle
-                });
-                return;
-            }
-
-            if (!muxedCandidate && bundle.audio) {
-                const token = createMergeJob(bundle, videoFilename);
-                chrome.tabs.create({
-                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                    active: false
-                }, function (tab) {
-                    sendResponse({
-                        ok: true,
-                        mergeStarted: true,
-                        tabId: tab && tab.id ? tab.id : null,
-                        bundle
-                    });
                 });
                 return;
             }
@@ -140,7 +141,8 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             return;
         }
 
-        const muxedCandidate = findMuxedMediaCandidateForBundle(tabId, bundle);
+        const shouldMerge = !!(bundle.audio && bundle.audio.url);
+        const muxedCandidate = shouldMerge ? null : findMuxedMediaCandidateForBundle(tabId, bundle);
         const targetVideo = muxedCandidate || bundle.video;
         const videoUrl = stripByteRangeParams(targetVideo.url);
         const videoFilename = buildCapturedMediaFilename(targetVideo);
@@ -150,6 +152,22 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             videoUrl,
             videoFilename
         });
+
+        if (shouldMerge) {
+            const token = createMergeJob(bundle, videoFilename);
+            chrome.tabs.create({
+                url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
+                active: false
+            }, function (tab) {
+                sendResponse({
+                    ok: true,
+                    mergeStarted: true,
+                    tabId: tab && tab.id ? tab.id : null,
+                    bundle
+                });
+            });
+            return true;
+        }
 
         chrome.downloads.download({
             url: videoUrl,
@@ -161,22 +179,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                     ok: false,
                     error: chrome.runtime.lastError.message,
                     bundle
-                });
-                return;
-            }
-
-            if (!muxedCandidate && bundle.audio && bundle.audio.url) {
-                const token = createMergeJob(bundle, videoFilename);
-                chrome.tabs.create({
-                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                    active: false
-                }, function (tab) {
-                    sendResponse({
-                        ok: true,
-                        mergeStarted: true,
-                        tabId: tab && tab.id ? tab.id : null,
-                        bundle
-                    });
                 });
                 return;
             }
