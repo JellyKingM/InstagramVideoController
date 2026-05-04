@@ -189,6 +189,9 @@
             const trackedMedia = await getTrackedMediaUrlsForBlob(targetVideo.currentSrc || targetVideo.src || '');
             lines.push(`targetTrackedMediaSourceId=${trackedMedia.mediaSourceId || ''}`);
             lines.push(`targetTrackedUrlCount=${trackedMedia.urls.length}`);
+            lines.push(`targetTrackedAppendCount=${trackedMedia.debug && trackedMedia.debug.appendCount || 0}`);
+            lines.push(`targetTrackedMatchCount=${trackedMedia.debug && trackedMedia.debug.trackedCount || 0}`);
+            lines.push(`targetTrackedLastUrl=${trackedMedia.debug && trackedMedia.debug.lastUrl || ''}`);
             trackedMedia.urls.forEach((url, index) => {
                 lines.push(`targetTrackedUrl[${index}]=${url}`);
             });
@@ -891,6 +894,7 @@
                     blobUrl: sourceUrl,
                     mediaSourceId: trackedMedia.mediaSourceId,
                     urlCount: trackedMedia.urls.length,
+                    debug: trackedMedia.debug || {},
                     urls: trackedMedia.urls
                 });
 

@@ -8,8 +8,10 @@
     const mediaSourceIds = new WeakMap();
     const sourceBufferToMediaSourceId = new WeakMap();
     const arrayBufferToUrl = new WeakMap();
+    const viewToUrl = new WeakMap();
     const blobUrlToMediaSourceId = new Map();
     const mediaSourceEntries = new Map();
+    const mediaSourceDebug = new Map();
 
     let mediaSourceCounter = 0;
 
@@ -32,9 +34,23 @@
         return mediaSourceEntries.get(id);
     }
 
+    function getMediaDebugEntry(id) {
+        if (!mediaSourceDebug.has(id)) {
+            mediaSourceDebug.set(id, {
+                appendCount: 0,
+                trackedCount: 0,
+                lastUrl: ''
+            });
+        }
+        return mediaSourceDebug.get(id);
+    }
+
     function trackUrlForMediaSource(id, url) {
         if (!id || !isMediaRequestUrl(url)) return;
         const list = getMediaEntry(id);
+        const debug = getMediaDebugEntry(id);
+        debug.trackedCount += 1;
+        debug.lastUrl = url;
         const existingIndex = list.indexOf(url);
         if (existingIndex >= 0) {
             list.splice(existingIndex, 1);
@@ -86,7 +102,15 @@
     SourceBuffer.prototype.appendBuffer = function patchedAppendBuffer(buffer) {
         try {
             const mediaSourceId = sourceBufferToMediaSourceId.get(this);
-            const url = arrayBufferToUrl.get(buffer);
+            if (mediaSourceId) {
+                getMediaDebugEntry(mediaSourceId).appendCount += 1;
+            }
+            const rawBuffer = buffer instanceof ArrayBuffer
+                ? buffer
+                : (ArrayBuffer.isView(buffer) ? buffer.buffer : null);
+            const url = viewToUrl.get(buffer) ||
+                arrayBufferToUrl.get(buffer) ||
+                (rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '');
             if (mediaSourceId && url) {
                 trackUrlForMediaSource(mediaSourceId, url);
             }
@@ -95,18 +119,40 @@
         return originalAppendBuffer.apply(this, arguments);
     };
 
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = function patchedFetch() {
+        return originalFetch.apply(this, arguments).then(response => {
+            try {
+                if (response && isMediaRequestUrl(response.url)) {
+                    const clonedResponse = response.clone();
+                    clonedResponse.arrayBuffer().then(buffer => {
+                        try {
+                            arrayBufferToUrl.set(buffer, response.url);
+                            viewToUrl.set(new Uint8Array(buffer), response.url);
+                        } catch (_error) {
+                        }
+                    }).catch(() => {});
+                }
+            } catch (_error) {
+            }
+            return response;
+        });
+    };
+
     document.addEventListener(REQUEST_EVENT, event => {
         const detail = event && event.detail ? event.detail : {};
         const requestId = detail.requestId;
         const blobUrl = detail.blobUrl;
         const mediaSourceId = blobUrlToMediaSourceId.get(blobUrl) || '';
         const urls = mediaSourceId ? [...(mediaSourceEntries.get(mediaSourceId) || [])] : [];
+        const debug = mediaSourceId ? { ...(mediaSourceDebug.get(mediaSourceId) || {}) } : {};
         document.dispatchEvent(new CustomEvent(RESPONSE_EVENT, {
             detail: {
                 requestId,
                 blobUrl,
                 mediaSourceId,
-                urls
+                urls,
+                debug
             }
         }));
     }, true);
