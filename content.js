@@ -236,11 +236,12 @@
             const trackedMedia = await getTrackedMediaUrlsForBlob(targetVideo.currentSrc || targetVideo.src || '');
             lines.push(`targetTrackedMediaSourceId=${trackedMedia.mediaSourceId || ''}`);
             lines.push(`targetTrackedUrlCount=${trackedMedia.urls.length}`);
+            lines.push(`targetTrackedEntryCount=${Array.isArray(trackedMedia.entries) ? trackedMedia.entries.length : 0}`);
             lines.push(`targetTrackedAppendCount=${trackedMedia.debug && trackedMedia.debug.appendCount || 0}`);
             lines.push(`targetTrackedMatchCount=${trackedMedia.debug && trackedMedia.debug.trackedCount || 0}`);
             lines.push(`targetTrackedHeuristicCount=${trackedMedia.debug && trackedMedia.debug.heuristicCount || 0}`);
             lines.push(`targetTrackedLastUrl=${shortenUrlForLog(trackedMedia.debug && trackedMedia.debug.lastUrl || '')}`);
-            summarizeTrackedMediaGroups(trackedMedia.urls).slice(0, 6).forEach((summary, index) => {
+            summarizeTrackedMediaGroups(trackedMedia.entries || trackedMedia.urls).slice(0, 6).forEach((summary, index) => {
                 lines.push(`targetTrackedGroup[${index}]=${summary}`);
             });
             trackedMedia.urls.slice(0, 5).forEach((url, index) => {
@@ -290,11 +291,11 @@
         ].join(' | ');
     }
 
-    function summarizeTrackedMediaGroups(urls) {
+    function summarizeTrackedMediaGroups(items) {
         const groups = new Map();
 
-        for (const url of urls || []) {
-            const candidate = buildDebugMediaCandidate(url);
+        for (const item of items || []) {
+            const candidate = buildDebugMediaCandidate(item);
             if (!candidate) continue;
             const key = candidate.assetId || candidate.url;
             if (!groups.has(key)) {
@@ -323,7 +324,8 @@
         );
     }
 
-    function buildDebugMediaCandidate(url) {
+    function buildDebugMediaCandidate(item) {
+        const url = typeof item === 'string' ? item : item && item.url;
         if (!url || !/\.mp4($|\?)/i.test(url)) return null;
         try {
             const parsed = new URL(url);
@@ -338,7 +340,8 @@
                 duration,
                 isAudio: /audio/.test(tag),
                 isVideo: /vp9|avc|h264|basic|dash/.test(tag) && !/audio/.test(tag),
-                rangeLength: byteStart >= 0 && byteEnd >= byteStart ? byteEnd - byteStart : 0
+                rangeLength: byteStart >= 0 && byteEnd >= byteStart ? byteEnd - byteStart : 0,
+                capturedAt: item && typeof item === 'object' && Number.isFinite(item.at) ? Number(item.at) : 0
             };
         } catch (_error) {
             return null;
@@ -395,7 +398,7 @@
                 detail: { requestId, blobUrl }
             }));
 
-            window.setTimeout(() => finish({ blobUrl, urls: [], mediaSourceId: '' }), 1500);
+            window.setTimeout(() => finish({ blobUrl, urls: [], entries: [], mediaSourceId: '' }), 1500);
         });
     }
 
@@ -1030,6 +1033,7 @@
                 if (trackedMedia.urls.length > 0) {
                     const trackedResponse = await chrome.runtime.sendMessage({
                         downloadTrackedBlobUrls: {
+                            entries: trackedMedia.entries || [],
                             urls: trackedMedia.urls,
                             hint: buildVideoMediaHint(targetVideo),
                             filename: getDownloadFileName(sourceUrl)

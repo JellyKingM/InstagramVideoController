@@ -136,11 +136,17 @@
         const debug = getMediaDebugEntry(id);
         debug.trackedCount += 1;
         debug.lastUrl = url;
-        const existingIndex = list.indexOf(url);
+        const existingIndex = list.findIndex(entry => entry && entry.url === url);
+        const metadata = {
+            url,
+            at: Date.now(),
+            assetKey: getAssetKeyForUrl(url),
+            rangeLength: getRangeLengthFromUrl(url)
+        };
         if (existingIndex >= 0) {
             list.splice(existingIndex, 1);
         }
-        list.push(url);
+        list.push(metadata);
         if (list.length > MAX_URLS_PER_SOURCE) {
             list.splice(0, list.length - MAX_URLS_PER_SOURCE);
         }
@@ -302,13 +308,15 @@
         const requestId = detail.requestId;
         const blobUrl = detail.blobUrl;
         const mediaSourceId = blobUrlToMediaSourceId.get(blobUrl) || '';
-        const urls = mediaSourceId ? [...(mediaSourceEntries.get(mediaSourceId) || [])] : [];
+        const entries = mediaSourceId ? [...(mediaSourceEntries.get(mediaSourceId) || [])] : [];
+        const urls = entries.map(entry => entry.url);
         const debug = mediaSourceId ? { ...(mediaSourceDebug.get(mediaSourceId) || {}) } : {};
         document.dispatchEvent(new CustomEvent(RESPONSE_EVENT, {
             detail: {
                 requestId,
                 blobUrl,
                 mediaSourceId,
+                entries,
                 urls,
                 debug
             }

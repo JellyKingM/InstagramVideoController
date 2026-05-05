@@ -195,8 +195,10 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
     }
 
     if (message.downloadTrackedBlobUrls && Array.isArray(message.downloadTrackedBlobUrls.urls)) {
-        const explicitBundle = pickBestMediaBundleFromUrls(
-            message.downloadTrackedBlobUrls.urls,
+        const explicitBundle = pickBestMediaBundleFromTrackedItems(
+            Array.isArray(message.downloadTrackedBlobUrls.entries) && message.downloadTrackedBlobUrls.entries.length > 0
+                ? message.downloadTrackedBlobUrls.entries
+                : message.downloadTrackedBlobUrls.urls,
             message.downloadTrackedBlobUrls.hint || null
         );
         if (!explicitBundle || !explicitBundle.video || !explicitBundle.video.url) {
@@ -326,6 +328,25 @@ function buildMediaRequestCandidate(url) {
     };
 }
 
+function buildTrackedMediaRequestCandidate(item) {
+    if (!item) return null;
+    if (typeof item === 'string') {
+        return buildMediaRequestCandidate(item);
+    }
+
+    const candidate = buildMediaRequestCandidate(item.url);
+    if (!candidate) return null;
+
+    if (Number.isFinite(item.at) && item.at > 0) {
+        candidate.capturedAt = Number(item.at);
+    }
+    if (Number.isFinite(item.rangeLength) && item.rangeLength >= 0 && (!Number.isFinite(candidate.byteStart) || !Number.isFinite(candidate.byteEnd) || candidate.byteEnd < candidate.byteStart)) {
+        candidate.byteStart = 0;
+        candidate.byteEnd = Number(item.rangeLength);
+    }
+    return candidate;
+}
+
 function createMergeJob(bundle, filename) {
     const token = `merge-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     mergeJobs.set(token, {
@@ -442,6 +463,36 @@ function pickBestMediaBundleFromUrls(urls, hint = null) {
         .filter(Boolean);
     if (candidates.length === 0) return null;
 
+    const groupedBundle = pickBestMediaBundleGroupFromCandidates(candidates, hint);
+    if (groupedBundle && groupedBundle.video) {
+        return groupedBundle;
+    }
+
+    const video = pickBestMediaRequestFromCandidates(candidates, hint);
+    if (!video) return null;
+
+    const audioCandidates = applyTimeHint(candidates.filter(item =>
+        item.isAudio &&
+        (!video.assetId || item.assetId === video.assetId)
+    ), hint);
+    sortMediaCandidates(audioCandidates, hint);
+
+    return {
+        video,
+        audio: audioCandidates[0] || null
+    };
+}
+
+function pickBestMediaBundleFromTrackedItems(items, hint = null) {
+    const candidates = (items || [])
+        .map(item => buildTrackedMediaRequestCandidate(item))
+        .filter(Boolean);
+    if (candidates.length === 0) return null;
+
+    return pickBestMediaBundleFromCandidates(candidates, hint);
+}
+
+function pickBestMediaBundleFromCandidates(candidates, hint = null) {
     const groupedBundle = pickBestMediaBundleGroupFromCandidates(candidates, hint);
     if (groupedBundle && groupedBundle.video) {
         return groupedBundle;
