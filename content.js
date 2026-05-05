@@ -233,6 +233,9 @@
             lines.push(`targetTrackedMatchCount=${trackedMedia.debug && trackedMedia.debug.trackedCount || 0}`);
             lines.push(`targetTrackedHeuristicCount=${trackedMedia.debug && trackedMedia.debug.heuristicCount || 0}`);
             lines.push(`targetTrackedLastUrl=${shortenUrlForLog(trackedMedia.debug && trackedMedia.debug.lastUrl || '')}`);
+            summarizeTrackedMediaGroups(trackedMedia.urls).slice(0, 6).forEach((summary, index) => {
+                lines.push(`targetTrackedGroup[${index}]=${summary}`);
+            });
             trackedMedia.urls.slice(0, 5).forEach((url, index) => {
                 lines.push(`targetTrackedUrl[${index}]=${shortenUrlForLog(url)}`);
             });
@@ -278,6 +281,74 @@
             `currentSrc=${shortenUrlForLog(currentSrc)}`,
             `src=${shortenUrlForLog(src)}`
         ].join(' | ');
+    }
+
+    function summarizeTrackedMediaGroups(urls) {
+        const groups = new Map();
+
+        for (const url of urls || []) {
+            const candidate = buildDebugMediaCandidate(url);
+            if (!candidate) continue;
+            const key = candidate.assetId || candidate.url;
+            if (!groups.has(key)) {
+                groups.set(key, {
+                    assetId: candidate.assetId || 'no-asset',
+                    durations: new Set(),
+                    videoCount: 0,
+                    audioCount: 0,
+                    maxRange: 0
+                });
+            }
+            const group = groups.get(key);
+            if (candidate.duration > 0) {
+                group.durations.add(candidate.duration.toFixed(3));
+            }
+            if (candidate.isAudio) {
+                group.audioCount += 1;
+            } else if (candidate.isVideo) {
+                group.videoCount += 1;
+            }
+            group.maxRange = Math.max(group.maxRange, candidate.rangeLength);
+        }
+
+        return Array.from(groups.values()).map(group =>
+            `asset=${group.assetId} durations=${Array.from(group.durations).join('/')} video=${group.videoCount} audio=${group.audioCount} maxRange=${group.maxRange}`
+        );
+    }
+
+    function buildDebugMediaCandidate(url) {
+        if (!url || !/\.mp4($|\?)/i.test(url)) return null;
+        try {
+            const parsed = new URL(url);
+            const meta = parseDebugEfgPayload(parsed.searchParams.get('efg'));
+            const tag = String(meta.vencode_tag || '').toLowerCase();
+            const duration = Number(meta.duration_s || 0);
+            const byteStart = Number(parsed.searchParams.get('bytestart') || -1);
+            const byteEnd = Number(parsed.searchParams.get('byteend') || -1);
+            return {
+                url,
+                assetId: meta.xpv_asset_id || '',
+                duration,
+                isAudio: /audio/.test(tag),
+                isVideo: /vp9|avc|h264|basic|dash/.test(tag) && !/audio/.test(tag),
+                rangeLength: byteStart >= 0 && byteEnd >= byteStart ? byteEnd - byteStart : 0
+            };
+        } catch (_error) {
+            return null;
+        }
+    }
+
+    function parseDebugEfgPayload(rawValue) {
+        if (!rawValue) return {};
+        try {
+            return JSON.parse(atob(rawValue));
+        } catch (_error) {
+            try {
+                return JSON.parse(atob(decodeURIComponent(rawValue)));
+            } catch (_nestedError) {
+                return {};
+            }
+        }
     }
 
     function ensurePageDownloadBridge() {

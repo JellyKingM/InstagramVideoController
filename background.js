@@ -442,6 +442,11 @@ function pickBestMediaBundleFromUrls(urls, hint = null) {
         .filter(Boolean);
     if (candidates.length === 0) return null;
 
+    const groupedBundle = pickBestMediaBundleGroupFromCandidates(candidates, hint);
+    if (groupedBundle && groupedBundle.video) {
+        return groupedBundle;
+    }
+
     const video = pickBestMediaRequestFromCandidates(candidates, hint);
     if (!video) return null;
 
@@ -455,6 +460,75 @@ function pickBestMediaBundleFromUrls(urls, hint = null) {
         video,
         audio: audioCandidates[0] || null
     };
+}
+
+function pickBestMediaBundleGroupFromCandidates(candidates, hint = null) {
+    if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+    const groups = new Map();
+    for (const candidate of candidates) {
+        const key = String(candidate.assetId || candidate.url || '');
+        if (!groups.has(key)) {
+            groups.set(key, []);
+        }
+        groups.get(key).push(candidate);
+    }
+
+    const scoredGroups = Array.from(groups.entries()).map(([assetId, groupCandidates]) => {
+        const videoCandidates = applyDurationHint(applyTimeHint(groupCandidates.filter(item => item.isVideo), hint), hint);
+        const audioCandidates = applyDurationHint(applyTimeHint(groupCandidates.filter(item => item.isAudio), hint), hint);
+        const allVideoCandidates = groupCandidates.filter(item => item.isVideo);
+        const allAudioCandidates = groupCandidates.filter(item => item.isAudio);
+
+        if (videoCandidates.length === 0 && allVideoCandidates.length === 0) {
+            return null;
+        }
+
+        sortMediaCandidatesByRange(videoCandidates.length > 0 ? videoCandidates : allVideoCandidates, hint);
+        sortMediaCandidates(audioCandidates.length > 0 ? audioCandidates : allAudioCandidates, hint);
+
+        const effectiveVideoCandidates = videoCandidates.length > 0 ? videoCandidates : allVideoCandidates;
+        const effectiveAudioCandidates = audioCandidates.length > 0 ? audioCandidates : allAudioCandidates;
+        const durationStats = getGroupDurationStats(effectiveVideoCandidates, hint);
+        const videoMaxRange = effectiveVideoCandidates.reduce((max, item) => Math.max(max, getRangeLength(item)), 0);
+        const videoTotalRange = effectiveVideoCandidates.reduce((sum, item) => sum + getRangeLength(item), 0);
+        const substantialVideoCount = effectiveVideoCandidates.filter(item => getRangeLength(item) >= SUBSTANTIAL_VIDEO_RANGE_BYTES).length;
+
+        return {
+            assetId,
+            video: effectiveVideoCandidates[0] || null,
+            audio: effectiveAudioCandidates[0] || null,
+            hasAudio: effectiveAudioCandidates.length > 0,
+            videoCount: effectiveVideoCandidates.length,
+            audioCount: effectiveAudioCandidates.length,
+            substantialVideoCount,
+            videoMaxRange,
+            videoTotalRange,
+            durationBucket: durationStats.bucket,
+            durationDelta: durationStats.delta,
+            matchingVideoCount: durationStats.matchingCount
+        };
+    }).filter(Boolean);
+
+    if (scoredGroups.length === 0) return null;
+
+    scoredGroups.sort(compareBundleGroups);
+    return {
+        video: scoredGroups[0].video,
+        audio: scoredGroups[0].audio || null
+    };
+}
+
+function compareBundleGroups(a, b) {
+    if (a.durationBucket !== b.durationBucket) return a.durationBucket - b.durationBucket;
+    if (a.durationDelta !== b.durationDelta) return a.durationDelta - b.durationDelta;
+    if (b.matchingVideoCount !== a.matchingVideoCount) return b.matchingVideoCount - a.matchingVideoCount;
+    if (b.hasAudio !== a.hasAudio) return Number(b.hasAudio) - Number(a.hasAudio);
+    if (b.substantialVideoCount !== a.substantialVideoCount) return b.substantialVideoCount - a.substantialVideoCount;
+    if (b.videoMaxRange !== a.videoMaxRange) return b.videoMaxRange - a.videoMaxRange;
+    if (b.videoTotalRange !== a.videoTotalRange) return b.videoTotalRange - a.videoTotalRange;
+    if (b.videoCount !== a.videoCount) return b.videoCount - a.videoCount;
+    return compareMediaCandidates(a.video, b.video);
 }
 
 function pickBestMediaRequestFromCandidates(candidates, hint = null) {
