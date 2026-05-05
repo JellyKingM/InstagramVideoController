@@ -196,6 +196,16 @@
         return /NotAllowedError|The play\(\) request was interrupted|user didn'?t interact|user interaction|autoplay|unmute|muting|muted/i.test(message);
     }
 
+    function canSafelyUnmute() {
+        try {
+            if (navigator.userActivation && navigator.userActivation.hasBeenActive) {
+                return true;
+            }
+        } catch (_error) {
+        }
+        return userInteractionAt > 0;
+    }
+
     async function exportInternalLogs() {
         try {
             const currentDownloadFileName = (() => {
@@ -770,7 +780,12 @@
 
         video.volume = options.volumeSliderV;
         applyingMute = true;
-        video.muted = options.volumeMute;
+        const desiredMute = !!options.volumeMute;
+        if (desiredMute) {
+            video.muted = true;
+        } else if (canSafelyUnmute()) {
+            video.muted = false;
+        }
         window.setTimeout(() => {
             applyingMute = false;
         }, 0);
@@ -3171,10 +3186,15 @@
         options.volumeMute = !options.volumeMute;
         localStorage.setItem(STORAGE_KEYS.muted, String(options.volumeMute));
         localStorage.setItem(STORAGE_KEYS.mutedExplicit, 'true');
+        userInteractionAt = Date.now();
 
         applyingMute = true;
         getVideos().forEach(video => {
-            video.muted = options.volumeMute;
+            if (options.volumeMute) {
+                video.muted = true;
+            } else if (canSafelyUnmute()) {
+                video.muted = false;
+            }
         });
         window.setTimeout(() => {
             applyingMute = false;
