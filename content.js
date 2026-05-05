@@ -169,49 +169,56 @@
     }
 
     async function exportInternalLogs() {
-        const currentDownloadFileName = (() => {
-            try {
-                const targetVideo = getDownloadTargetVideo();
-                if (targetVideo instanceof HTMLVideoElement) {
-                    return getDownloadFileName(targetVideo.currentSrc || targetVideo.src || location.href);
+        try {
+            const currentDownloadFileName = (() => {
+                try {
+                    const targetVideo = getDownloadTargetVideo();
+                    if (targetVideo instanceof HTMLVideoElement) {
+                        return getDownloadFileName(targetVideo.currentSrc || targetVideo.src || location.href);
+                    }
+                } catch (error) {
+                    return '';
                 }
-            } catch (error) {
                 return '';
-            }
-            return '';
-        })();
+            })();
 
-        const downloadDebugLines = await buildDownloadDebugLines();
-        const conciseInternalLogs = internalLogs.slice(-60);
-        const lines = [
-            'Instagram Video Controller internal log',
-            `time=${new Date().toISOString()}`,
-            `url=${location.href}`,
-            `activeVideo=${renderLogValue(activeVideo)}`,
-            `sideBoxVideo=${renderLogValue(sideBoxVideo)}`,
-            `sideBoxVideoIdentity=${sideBoxVideoIdentity || ''}`,
-            `sideBoxCreatedAt=${sideBoxCreatedAt || 0}`,
-            `lockedSideBoxIdentity=${lockedSideBoxIdentity || ''}`,
-            `lockedSideBoxBundle=${summarizeBundleForLog(lockedSideBoxBundle)}`,
-            `lastRejectedBundleInfo=${renderLogValue(lastRejectedBundleInfo)}`,
-            `currentDownloadFileName=${currentDownloadFileName}`,
-            '',
-            '=== download debug ===',
-            ...downloadDebugLines,
-            '',
-            '=== internal logs ===',
-            ...conciseInternalLogs
-        ];
-        const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `instagram-video-controller-log-${Date.now()}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-        log('exported internal logs', { count: internalLogs.length });
+            const downloadDebugLines = await buildDownloadDebugLines();
+            const conciseInternalLogs = internalLogs.slice(-60);
+            const lines = [
+                'Instagram Video Controller internal log',
+                `time=${new Date().toISOString()}`,
+                `url=${location.href}`,
+                `activeVideo=${renderLogValue(activeVideo)}`,
+                `sideBoxVideo=${renderLogValue(sideBoxVideo)}`,
+                `sideBoxVideoIdentity=${sideBoxVideoIdentity || ''}`,
+                `sideBoxCreatedAt=${sideBoxCreatedAt || 0}`,
+                `lockedSideBoxIdentity=${lockedSideBoxIdentity || ''}`,
+                `lockedSideBoxBundle=${summarizeBundleForLog(lockedSideBoxBundle)}`,
+                `lastRejectedBundleInfo=${renderLogValue(lastRejectedBundleInfo)}`,
+                `currentDownloadFileName=${currentDownloadFileName}`,
+                '',
+                '=== download debug ===',
+                ...downloadDebugLines,
+                '',
+                '=== internal logs ===',
+                ...conciseInternalLogs
+            ];
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `instagram-video-controller-log-${Date.now()}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => {
+                try {
+                    URL.revokeObjectURL(blobUrl);
+                } catch (_error) {
+                }
+            }, 30000);
+        } catch (_error) {
+        }
     }
 
     async function buildDownloadDebugLines() {
