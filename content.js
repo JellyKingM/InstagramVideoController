@@ -196,15 +196,6 @@
         return /NotAllowedError|The play\(\) request was interrupted|user didn'?t interact|user interaction|autoplay|unmute|muting|muted/i.test(message);
     }
 
-    function blobToDataUrl(blob) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(reader.error || new Error('Failed to read blob.'));
-            reader.readAsDataURL(blob);
-        });
-    }
-
     async function exportInternalLogs() {
         try {
             const currentDownloadFileName = (() => {
@@ -241,17 +232,23 @@
                 ...(conciseInternalLogs.length > 0 ? conciseInternalLogs : ['(no download-relevant internal logs)'])
             ];
             const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-            const dataUrl = await blobToDataUrl(blob);
-            if (!dataUrl) {
-                return;
-            }
-            await chrome.runtime.sendMessage({
-                downloadVideo: {
-                    url: dataUrl,
-                    filename: `instagram-video-controller-log-${Date.now()}.txt`,
-                    silent: true
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `instagram-video-controller-log-${Date.now()}.txt`;
+            link.style.display = 'none';
+            document.documentElement.appendChild(link);
+            link.click();
+            window.setTimeout(() => {
+                try {
+                    URL.revokeObjectURL(blobUrl);
+                } catch (_error) {
                 }
-            });
+                try {
+                    link.remove();
+                } catch (_error) {
+                }
+            }, 30000);
         } catch (_error) {
         }
     }
