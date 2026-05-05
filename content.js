@@ -256,10 +256,14 @@
         lines.push(`targetVideoHint=${targetVideo instanceof HTMLVideoElement ? JSON.stringify(buildVideoMediaHint(targetVideo)) : '{}'}`);
 
         if (targetVideo instanceof HTMLVideoElement) {
+            const hint = buildVideoMediaHint(targetVideo);
             const trackedMedia = await getTrackedMediaUrlsForBlob(targetVideo.currentSrc || targetVideo.src || '');
+            const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
             lines.push(`targetTrackedMediaSourceId=${trackedMedia.mediaSourceId || ''}`);
             lines.push(`targetTrackedUrlCount=${trackedMedia.urls.length}`);
             lines.push(`targetTrackedEntryCount=${Array.isArray(trackedMedia.entries) ? trackedMedia.entries.length : 0}`);
+            lines.push(`targetFocusedEntryCount=${focusedEntries.length}`);
+            lines.push(`targetFocusedAssetKey=${focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : ''}`);
             lines.push(`targetTrackedAppendCount=${trackedMedia.debug && trackedMedia.debug.appendCount || 0}`);
             lines.push(`targetTrackedMatchCount=${trackedMedia.debug && trackedMedia.debug.trackedCount || 0}`);
             lines.push(`targetTrackedHeuristicCount=${trackedMedia.debug && trackedMedia.debug.heuristicCount || 0}`);
@@ -267,8 +271,8 @@
             summarizeTrackedMediaGroups(trackedMedia.entries || trackedMedia.urls).slice(0, 6).forEach((summary, index) => {
                 lines.push(`targetTrackedGroup[${index}]=${summary}`);
             });
-            trackedMedia.urls.slice(0, 5).forEach((url, index) => {
-                lines.push(`targetTrackedUrl[${index}]=${shortenUrlForLog(url)}`);
+            summarizeTrackedMediaGroups(focusedEntries).slice(0, 3).forEach((summary, index) => {
+                lines.push(`targetFocusedGroup[${index}]=${summary}`);
             });
         }
 
@@ -369,6 +373,80 @@
         } catch (_error) {
             return null;
         }
+    }
+
+    function focusTrackedMediaEntries(entries, hint) {
+        if (!Array.isArray(entries) || entries.length === 0) {
+            return [];
+        }
+
+        const targetCapturedAt = Number(hint && hint.targetCapturedAt) || 0;
+        const targetDuration = Number(hint && hint.duration) || 0;
+        const decorated = entries
+            .map((entry, index) => ({
+                entry,
+                index,
+                candidate: buildDebugMediaCandidate(entry)
+            }))
+            .filter(item => item.candidate);
+
+        if (decorated.length === 0) {
+            return [];
+        }
+
+        const tail = decorated.slice(-16);
+        const tailVideos = tail.filter(item => item.candidate.isVideo);
+        const orderedVideos = tailVideos.sort((left, right) =>
+            compareFocusedTrackedCandidates(left, right, targetDuration, targetCapturedAt)
+        );
+        const anchor = orderedVideos[0] || tail[tail.length - 1];
+
+        if (!anchor) {
+            return [];
+        }
+
+        const assetKey = anchor.candidate.assetId || anchor.entry.assetKey || '';
+        if (!assetKey) {
+            return [anchor.entry];
+        }
+
+        return decorated
+            .filter(item => (item.candidate.assetId || item.entry.assetKey || '') === assetKey)
+            .map(item => item.entry);
+    }
+
+    function compareFocusedTrackedCandidates(left, right, targetDuration, targetCapturedAt) {
+        const leftDurationDelta = targetDuration > 0 ? Math.abs(Number(left.candidate.duration || 0) - targetDuration) : Number.POSITIVE_INFINITY;
+        const rightDurationDelta = targetDuration > 0 ? Math.abs(Number(right.candidate.duration || 0) - targetDuration) : Number.POSITIVE_INFINITY;
+        const leftDurationBucket = leftDurationDelta <= 0.35 ? 0 : leftDurationDelta <= 1 ? 1 : 2;
+        const rightDurationBucket = rightDurationDelta <= 0.35 ? 0 : rightDurationDelta <= 1 ? 1 : 2;
+        if (leftDurationBucket !== rightDurationBucket) {
+            return leftDurationBucket - rightDurationBucket;
+        }
+        if (leftDurationDelta !== rightDurationDelta) {
+            return leftDurationDelta - rightDurationDelta;
+        }
+
+        if (targetCapturedAt > 0) {
+            const leftBefore = Number(left.entry && left.entry.at) <= targetCapturedAt ? 1 : 0;
+            const rightBefore = Number(right.entry && right.entry.at) <= targetCapturedAt ? 1 : 0;
+            if (leftBefore !== rightBefore) {
+                return rightBefore - leftBefore;
+            }
+            const leftTimeDelta = Math.abs(Number(left.entry && left.entry.at) - targetCapturedAt);
+            const rightTimeDelta = Math.abs(Number(right.entry && right.entry.at) - targetCapturedAt);
+            if (leftTimeDelta !== rightTimeDelta) {
+                return leftTimeDelta - rightTimeDelta;
+            }
+        }
+
+        const leftRange = Number(left.entry && left.entry.rangeLength) || 0;
+        const rightRange = Number(right.entry && right.entry.rangeLength) || 0;
+        if (leftRange !== rightRange) {
+            return rightRange - leftRange;
+        }
+
+        return right.index - left.index;
     }
 
     function parseDebugEfgPayload(rawValue) {
@@ -1045,20 +1123,30 @@
         try {
             if (diagnostics.guessedType === 'blob') {
                 const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
+                const hint = buildVideoMediaHint(targetVideo);
+                const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
+                const downloadEntries = focusedEntries.length > 0
+                    ? focusedEntries
+                    : (trackedMedia.entries || []);
+                const downloadUrls = downloadEntries
+                    .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
+                    .filter(Boolean);
                 log('tracked blob media urls', {
                     blobUrl: sourceUrl,
                     mediaSourceId: trackedMedia.mediaSourceId,
                     urlCount: trackedMedia.urls.length,
+                    focusedUrlCount: downloadUrls.length,
+                    focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : '',
                     debug: trackedMedia.debug || {},
-                    urls: trackedMedia.urls
+                    urls: downloadUrls
                 });
 
-                if (trackedMedia.urls.length > 0) {
+                if (downloadUrls.length > 0) {
                     const trackedResponse = await chrome.runtime.sendMessage({
                         downloadTrackedBlobUrls: {
-                            entries: trackedMedia.entries || [],
-                            urls: trackedMedia.urls,
-                            hint: buildVideoMediaHint(targetVideo),
+                            entries: downloadEntries,
+                            urls: downloadUrls,
+                            hint,
                             filename: getDownloadFileName(sourceUrl)
                         }
                     });
