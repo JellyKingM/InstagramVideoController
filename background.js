@@ -577,11 +577,15 @@ function pickPreferredAssetScopedCandidates(candidates, hint = null) {
         const sorted = [...group];
         sortMediaCandidatesByRange(sorted, hint);
         const videoCandidates = sorted.filter(item => item.isVideo);
+        const durationStats = getGroupDurationStats(videoCandidates, hint);
         return {
             candidates: sorted,
             best: sorted[0],
             size: sorted.length,
             videoCount: videoCandidates.length,
+            durationBucket: durationStats.bucket,
+            durationDelta: durationStats.delta,
+            matchingVideoCount: durationStats.matchingCount,
             videoTotalRange: videoCandidates.reduce((sum, item) => sum + getRangeLength(item), 0),
             videoMaxRange: videoCandidates.reduce((max, item) => Math.max(max, getRangeLength(item)), 0),
             totalRange: sorted.reduce((sum, item) => sum + getRangeLength(item), 0),
@@ -594,6 +598,10 @@ function pickPreferredAssetScopedCandidates(candidates, hint = null) {
 }
 
 function compareAssetGroups(a, b, hint) {
+    if (a.durationBucket !== b.durationBucket) return a.durationBucket - b.durationBucket;
+    if (a.durationDelta !== b.durationDelta) return a.durationDelta - b.durationDelta;
+    if (b.matchingVideoCount !== a.matchingVideoCount) return b.matchingVideoCount - a.matchingVideoCount;
+
     const aSubstantial = a.videoMaxRange >= SUBSTANTIAL_VIDEO_RANGE_BYTES ? 1 : 0;
     const bSubstantial = b.videoMaxRange >= SUBSTANTIAL_VIDEO_RANGE_BYTES ? 1 : 0;
     if (aSubstantial !== bSubstantial) return bSubstantial - aSubstantial;
@@ -619,6 +627,54 @@ function compareAssetGroups(a, b, hint) {
     if (b.size !== a.size) return b.size - a.size;
 
     return compareMediaCandidates(a.best, b.best);
+}
+
+function getGroupDurationStats(videoCandidates, hint) {
+    if (!hint || !Number.isFinite(hint.duration) || hint.duration <= 0 || !Array.isArray(videoCandidates) || videoCandidates.length === 0) {
+        return {
+            bucket: 2,
+            delta: Number.POSITIVE_INFINITY,
+            matchingCount: 0
+        };
+    }
+
+    const finiteDurations = videoCandidates
+        .map(item => Number(item.duration || 0))
+        .filter(duration => Number.isFinite(duration) && duration > 0);
+
+    if (finiteDurations.length === 0) {
+        return {
+            bucket: 2,
+            delta: Number.POSITIVE_INFINITY,
+            matchingCount: 0
+        };
+    }
+
+    const deltas = finiteDurations.map(duration => Math.abs(duration - hint.duration));
+    const minDelta = Math.min(...deltas);
+    const matchingCount = deltas.filter(delta => delta <= 0.35).length;
+
+    if (matchingCount > 0) {
+        return {
+            bucket: 0,
+            delta: minDelta,
+            matchingCount
+        };
+    }
+
+    if (minDelta <= 1.0) {
+        return {
+            bucket: 1,
+            delta: minDelta,
+            matchingCount: 0
+        };
+    }
+
+    return {
+        bucket: 3,
+        delta: minDelta,
+        matchingCount: 0
+    };
 }
 
 function sortMediaCandidatesByRange(candidates, hint = null) {

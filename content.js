@@ -79,7 +79,8 @@
     let manualPauseByVideo = new WeakMap();
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
-    const MAX_INTERNAL_LOGS = 600;
+    let lastReexpandLogAtByVideo = new WeakMap();
+    const MAX_INTERNAL_LOGS = 180;
 
     function log(...args) {
         try {
@@ -105,13 +106,51 @@
             return `${value.name}: ${value.message}`;
         }
         if (typeof value === 'string') {
-            return value;
+            return truncateForLog(value, 220);
         }
         try {
-            return JSON.stringify(value);
+            return truncateForLog(JSON.stringify(value), 320);
         } catch (error) {
-            return String(value);
+            return truncateForLog(String(value), 220);
         }
+    }
+
+    function truncateForLog(text, maxLength = 220) {
+        const stringValue = String(text || '');
+        if (stringValue.length <= maxLength) {
+            return stringValue;
+        }
+        return `${stringValue.slice(0, maxLength)}...(+${stringValue.length - maxLength})`;
+    }
+
+    function shortenUrlForLog(url) {
+        if (!url) return '';
+        if (url.startsWith('blob:')) {
+            const blobId = url.split('/').pop() || url;
+            return `blob:${blobId}`;
+        }
+        try {
+            const parsed = new URL(url);
+            const pathTail = parsed.pathname.split('/').filter(Boolean).pop() || '';
+            const assetId = parsed.searchParams.get('xpv_asset_id') || '';
+            const duration = parsed.searchParams.get('bytestart') || '';
+            const tag = parsed.searchParams.get('efg') ? 'efg' : '';
+            return `${parsed.hostname}/${pathTail}${assetId ? `?asset=${assetId}` : ''}${duration ? `&start=${duration}` : ''}${tag ? '&efg=1' : ''}`;
+        } catch (error) {
+            return truncateForLog(url, 120);
+        }
+    }
+
+    function summarizeBundleForLog(bundle) {
+        if (!bundle || !bundle.video) return 'null';
+        return JSON.stringify({
+            videoAssetId: bundle.video.assetId || '',
+            videoDuration: Number(bundle.video.duration || 0),
+            videoUrl: shortenUrlForLog(bundle.video.url || ''),
+            audioAssetId: bundle.audio && bundle.audio.assetId || '',
+            audioDuration: bundle.audio ? Number(bundle.audio.duration || 0) : 0,
+            audioUrl: bundle.audio ? shortenUrlForLog(bundle.audio.url || '') : ''
+        });
     }
 
     function describeElement(element) {
@@ -143,6 +182,7 @@
         })();
 
         const downloadDebugLines = await buildDownloadDebugLines();
+        const conciseInternalLogs = internalLogs.slice(-60);
         const lines = [
             'Instagram Video Controller internal log',
             `time=${new Date().toISOString()}`,
@@ -152,7 +192,7 @@
             `sideBoxVideoIdentity=${sideBoxVideoIdentity || ''}`,
             `sideBoxCreatedAt=${sideBoxCreatedAt || 0}`,
             `lockedSideBoxIdentity=${lockedSideBoxIdentity || ''}`,
-            `lockedSideBoxBundle=${renderLogValue(lockedSideBoxBundle)}`,
+            `lockedSideBoxBundle=${summarizeBundleForLog(lockedSideBoxBundle)}`,
             `lastRejectedBundleInfo=${renderLogValue(lastRejectedBundleInfo)}`,
             `currentDownloadFileName=${currentDownloadFileName}`,
             '',
@@ -160,7 +200,7 @@
             ...downloadDebugLines,
             '',
             '=== internal logs ===',
-            ...internalLogs
+            ...conciseInternalLogs
         ];
         const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
         const blobUrl = URL.createObjectURL(blob);
@@ -191,14 +231,15 @@
             lines.push(`targetTrackedUrlCount=${trackedMedia.urls.length}`);
             lines.push(`targetTrackedAppendCount=${trackedMedia.debug && trackedMedia.debug.appendCount || 0}`);
             lines.push(`targetTrackedMatchCount=${trackedMedia.debug && trackedMedia.debug.trackedCount || 0}`);
-            lines.push(`targetTrackedLastUrl=${trackedMedia.debug && trackedMedia.debug.lastUrl || ''}`);
-            trackedMedia.urls.forEach((url, index) => {
-                lines.push(`targetTrackedUrl[${index}]=${url}`);
+            lines.push(`targetTrackedHeuristicCount=${trackedMedia.debug && trackedMedia.debug.heuristicCount || 0}`);
+            lines.push(`targetTrackedLastUrl=${shortenUrlForLog(trackedMedia.debug && trackedMedia.debug.lastUrl || '')}`);
+            trackedMedia.urls.slice(0, 5).forEach((url, index) => {
+                lines.push(`targetTrackedUrl[${index}]=${shortenUrlForLog(url)}`);
             });
         }
 
-        lines.push(`lockedBundleVideoUrl=${lockedSideBoxBundle && lockedSideBoxBundle.video ? lockedSideBoxBundle.video.url || '' : ''}`);
-        lines.push(`lockedBundleAudioUrl=${lockedSideBoxBundle && lockedSideBoxBundle.audio ? lockedSideBoxBundle.audio.url || '' : ''}`);
+        lines.push(`lockedBundleVideoUrl=${lockedSideBoxBundle && lockedSideBoxBundle.video ? shortenUrlForLog(lockedSideBoxBundle.video.url || '') : ''}`);
+        lines.push(`lockedBundleAudioUrl=${lockedSideBoxBundle && lockedSideBoxBundle.audio ? shortenUrlForLog(lockedSideBoxBundle.audio.url || '') : ''}`);
         lines.push(`lockedBundleVideoAssetId=${lockedSideBoxBundle && lockedSideBoxBundle.video ? lockedSideBoxBundle.video.assetId || '' : ''}`);
         lines.push(`lockedBundleVideoDuration=${lockedSideBoxBundle && lockedSideBoxBundle.video ? Number(lockedSideBoxBundle.video.duration || 0) : 0}`);
 
@@ -234,8 +275,8 @@
             `currentTime=${Number(video.currentTime || 0).toFixed(3)}`,
             `size=${Math.round(rect.width)}x${Math.round(rect.height)}`,
             `rect=${Math.round(rect.left)},${Math.round(rect.top)},${Math.round(rect.right)},${Math.round(rect.bottom)}`,
-            `currentSrc=${currentSrc}`,
-            `src=${src}`
+            `currentSrc=${shortenUrlForLog(currentSrc)}`,
+            `src=${shortenUrlForLog(src)}`
         ].join(' | ');
     }
 
@@ -731,17 +772,27 @@
 
     function buildVideoMediaHint(video) {
         const startedAt = mediaHintStartedAtByVideo.get(video) || mediaHintStartedAt || 0;
+        const sideboxTime = isCurrentSideBoxVideoIdentity(video) && sideBoxCreatedAt > 0 ? sideBoxCreatedAt : 0;
+        let targetTime = startedAt > 0 ? startedAt : sideboxTime;
+
+        if (startedAt > 0 && sideboxTime > 0 && Math.abs(startedAt - sideboxTime) <= 3000) {
+            targetTime = sideboxTime;
+        }
+
         const hint = {
             duration: Number(video && video.duration) || 0,
             currentTime: Number(video && video.currentTime) || 0,
-            capturedAfter: startedAt > 0 ? Math.max(0, startedAt - 2500) : 0
+            capturedAfter: targetTime > 0 ? Math.max(0, targetTime - 4000) : 0
         };
 
-        if (isCurrentSideBoxVideoIdentity(video) && sideBoxCreatedAt > 0) {
-            hint.capturedAfter = Math.max(hint.capturedAfter || 0, sideBoxCreatedAt - 12000);
-            hint.capturedBefore = sideBoxCreatedAt + 600;
-            hint.targetCapturedAt = sideBoxCreatedAt;
+        if (targetTime > 0) {
+            hint.capturedBefore = targetTime + 1200;
+            hint.targetCapturedAt = targetTime;
             hint.preferBefore = true;
+        }
+
+        if (hint.capturedBefore > 0 && hint.capturedAfter > hint.capturedBefore) {
+            hint.capturedAfter = Math.max(0, hint.capturedBefore - 4000);
         }
 
         return hint;
@@ -1624,6 +1675,8 @@
             const hiddenWrapper = hiddenWideInfoWrapperByVideo.get(sideBoxVideo);
             if (hiddenWrapper instanceof Element) {
                 hiddenWrapper.style.removeProperty('display');
+                hiddenWrapper.style.removeProperty('visibility');
+                hiddenWrapper.style.removeProperty('pointer-events');
                 hiddenWideInfoWrapperByVideo.delete(sideBoxVideo);
             }
         }
@@ -2359,6 +2412,8 @@
             }
             if (originalInfoElement !== infoElement) {
                 originalInfoElement.style.setProperty('display', 'none', 'important');
+                originalInfoElement.style.setProperty('visibility', 'hidden', 'important');
+                originalInfoElement.style.setProperty('pointer-events', 'none', 'important');
                 hiddenWideInfoWrapperByVideo.set(video, originalInfoElement);
             }
         }
@@ -2377,8 +2432,19 @@
     function getWideReelsDisplayInfoElement(infoElement) {
         if (!(infoElement instanceof Element)) return infoElement;
 
-        if (infoElement.matches('div.x78zum5.xdt5ytf.xr1yuqi.x6ikm8r.x10wlt62.xgpatz3')) {
-            return infoElement;
+        const exactRoot = infoElement.matches('div.x78zum5.xdt5ytf.xr1yuqi.x6ikm8r.x10wlt62.xgpatz3')
+            ? infoElement
+            : infoElement.querySelector('div.x78zum5.xdt5ytf.xr1yuqi.x6ikm8r.x10wlt62.xgpatz3');
+
+        if (exactRoot instanceof Element) {
+            const fourthChild = exactRoot.children.length >= 4 ? exactRoot.children[3] : null;
+            const lastSibling = fourthChild instanceof Element && fourthChild.parentElement
+                ? fourthChild.parentElement.lastElementChild
+                : null;
+            if (lastSibling instanceof Element && !lastSibling.querySelector('video')) {
+                return lastSibling;
+            }
+            return exactRoot;
         }
 
         let narrowedElement = null;
@@ -2452,7 +2518,14 @@
         if (Date.now() - lastClickAt < 400) return;
 
         moreButton.dataset.instagramVideoControllerClickedMoreAt = String(Date.now());
-        log('re-expanding collapsed info', describeElement(moreButton));
+        const ownerVideo = sideBoxVideo && hasMovedInfoForVideo(sideBoxVideo) ? sideBoxVideo : null;
+        const lastReexpandLogAt = ownerVideo ? Number(lastReexpandLogAtByVideo.get(ownerVideo) || 0) : 0;
+        if (!ownerVideo || Date.now() - lastReexpandLogAt >= 5000) {
+            log('re-expanding collapsed info', describeElement(moreButton));
+            if (ownerVideo) {
+                lastReexpandLogAtByVideo.set(ownerVideo, Date.now());
+            }
+        }
         moreButton.click();
     }
 
