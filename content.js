@@ -80,7 +80,7 @@
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
     let lastReexpandLogAtByVideo = new WeakMap();
-    const MAX_INTERNAL_LOGS = 180;
+    const MAX_INTERNAL_LOGS = 120;
 
     function log(...args) {
         try {
@@ -93,6 +93,29 @@
             console.log(LOG_PREFIX, 'failed to record internal log', error);
         }
         console.log(LOG_PREFIX, ...args);
+    }
+
+    function buildConciseInternalLogLines() {
+        const importantPatterns = [
+            'video download diagnostics',
+            'tracked blob media urls',
+            'tracked blob media download started',
+            'tracked blob media download failed',
+            'explicit media bundle download started',
+            'explicit media bundle download failed',
+            'captured media download started',
+            'pin captured media failed',
+            'pin captured media before download',
+            'pinned captured media',
+            'rejecting pinned media due to duration mismatch',
+            'performance video download started',
+            'video download fallback',
+            'skipping stale locked sidebox bundle'
+        ];
+
+        return internalLogs
+            .filter(line => importantPatterns.some(pattern => line.includes(pattern)))
+            .slice(-20);
     }
 
     function renderLogValue(value) {
@@ -183,7 +206,7 @@
             })();
 
             const downloadDebugLines = await buildDownloadDebugLines();
-            const conciseInternalLogs = internalLogs.slice(-60);
+            const conciseInternalLogs = buildConciseInternalLogLines();
             const lines = [
                 'Instagram Video Controller internal log',
                 `time=${new Date().toISOString()}`,
@@ -201,7 +224,7 @@
                 ...downloadDebugLines,
                 '',
                 '=== internal logs ===',
-                ...conciseInternalLogs
+                ...(conciseInternalLogs.length > 0 ? conciseInternalLogs : ['(no download-relevant internal logs)'])
             ];
             const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
             const blobUrl = URL.createObjectURL(blob);
