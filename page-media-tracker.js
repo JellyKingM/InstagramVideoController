@@ -12,6 +12,10 @@
     const blobUrlToMediaSourceId = new Map();
     const mediaSourceEntries = new Map();
     const mediaSourceDebug = new Map();
+    const mediaSourceMeta = new Map();
+    const recentMediaFetches = [];
+    const MAX_RECENT_FETCHES = 400;
+    const RECENT_FETCH_TTL_MS = 15000;
 
     let mediaSourceCounter = 0;
 
@@ -22,7 +26,15 @@
     function getMediaSourceId(mediaSource) {
         if (!mediaSourceIds.has(mediaSource)) {
             mediaSourceCounter += 1;
-            mediaSourceIds.set(mediaSource, `ms-${Date.now()}-${mediaSourceCounter}`);
+            const createdAt = Date.now();
+            const id = `ms-${createdAt}-${mediaSourceCounter}`;
+            mediaSourceIds.set(mediaSource, id);
+            mediaSourceMeta.set(id, {
+                createdAt,
+                lastClaimAt: createdAt,
+                preferredAssetKey: '',
+                claimedCount: 0
+            });
         }
         return mediaSourceIds.get(mediaSource);
     }
@@ -39,10 +51,75 @@
             mediaSourceDebug.set(id, {
                 appendCount: 0,
                 trackedCount: 0,
+                heuristicCount: 0,
                 lastUrl: ''
             });
         }
         return mediaSourceDebug.get(id);
+    }
+
+    function pushRecentFetchUrl(url) {
+        if (!isMediaRequestUrl(url)) return;
+        recentMediaFetches.push({
+            url,
+            at: Date.now(),
+            used: false,
+            assetKey: getAssetKeyForUrl(url),
+            rangeLength: getRangeLengthFromUrl(url)
+        });
+        pruneRecentFetches();
+    }
+
+    function pruneRecentFetches() {
+        const minTime = Date.now() - RECENT_FETCH_TTL_MS;
+        for (let i = recentMediaFetches.length - 1; i >= 0; i -= 1) {
+            if (recentMediaFetches[i].at < minTime) {
+                recentMediaFetches.splice(i, 1);
+            }
+        }
+        if (recentMediaFetches.length > MAX_RECENT_FETCHES) {
+            recentMediaFetches.splice(0, recentMediaFetches.length - MAX_RECENT_FETCHES);
+        }
+    }
+
+    function claimRecentFetchUrl(mediaSourceId) {
+        pruneRecentFetches();
+        const meta = mediaSourceId ? mediaSourceMeta.get(mediaSourceId) : null;
+        const createdAt = meta ? meta.createdAt : 0;
+        const lastClaimAt = meta ? meta.lastClaimAt : 0;
+
+        const candidates = recentMediaFetches.filter(item =>
+            !item.used &&
+            item.at >= Math.max(0, createdAt - 800) &&
+            item.at >= Math.max(0, lastClaimAt - 120)
+        );
+
+        if (candidates.length === 0) {
+            return '';
+        }
+
+        const preferredAssetKey = meta && meta.preferredAssetKey ? meta.preferredAssetKey : '';
+        let scopedCandidates = candidates;
+        if (preferredAssetKey) {
+            const sameAssetCandidates = candidates.filter(item => item.assetKey === preferredAssetKey);
+            if (sameAssetCandidates.length > 0) {
+                scopedCandidates = sameAssetCandidates;
+            }
+        }
+
+        scopedCandidates.sort((a, b) => compareRecentFetches(a, b, meta));
+        const item = scopedCandidates[0];
+        item.used = true;
+
+        if (meta) {
+            meta.lastClaimAt = item.at;
+            if (!meta.preferredAssetKey && item.assetKey) {
+                meta.preferredAssetKey = item.assetKey;
+            }
+            meta.claimedCount += 1;
+        }
+
+        return item.url;
     }
 
     function trackUrlForMediaSource(id, url) {
@@ -58,6 +135,67 @@
         list.push(url);
         if (list.length > MAX_URLS_PER_SOURCE) {
             list.splice(0, list.length - MAX_URLS_PER_SOURCE);
+        }
+    }
+
+    function getAssetKeyForUrl(url) {
+        if (!isMediaRequestUrl(url)) return '';
+        try {
+            const parsed = new URL(url);
+            const efg = parsed.searchParams.get('efg');
+            const meta = parseEfgPayload(efg);
+            if (meta.xpv_asset_id) {
+                return String(meta.xpv_asset_id);
+            }
+            return parsed.pathname.split('/').filter(Boolean).pop() || '';
+        } catch (_error) {
+            return '';
+        }
+    }
+
+    function getRangeLengthFromUrl(url) {
+        try {
+            const parsed = new URL(url);
+            const start = Number(parsed.searchParams.get('bytestart') || -1);
+            const end = Number(parsed.searchParams.get('byteend') || -1);
+            if (start < 0 || end < start) return 0;
+            return end - start;
+        } catch (_error) {
+            return 0;
+        }
+    }
+
+    function compareRecentFetches(a, b, meta) {
+        const preferredBeforeCount = meta ? meta.claimedCount : 0;
+        const aSubstantial = a.rangeLength >= 65536 ? 1 : 0;
+        const bSubstantial = b.rangeLength >= 65536 ? 1 : 0;
+        if (aSubstantial !== bSubstantial) {
+            return bSubstantial - aSubstantial;
+        }
+
+        if (preferredBeforeCount === 0) {
+            if (a.at !== b.at) {
+                return a.at - b.at;
+            }
+            return b.rangeLength - a.rangeLength;
+        }
+
+        if (a.at !== b.at) {
+            return a.at - b.at;
+        }
+        return b.rangeLength - a.rangeLength;
+    }
+
+    function parseEfgPayload(rawValue) {
+        if (!rawValue) return {};
+        try {
+            return JSON.parse(atob(rawValue));
+        } catch (_error) {
+            try {
+                return JSON.parse(atob(decodeURIComponent(rawValue)));
+            } catch (_nestedError) {
+                return {};
+            }
         }
     }
 
@@ -91,6 +229,7 @@
             try {
                 if (buffer && isMediaRequestUrl(response.url)) {
                     arrayBufferToUrl.set(buffer, response.url);
+                    pushRecentFetchUrl(response.url);
                 }
             } catch (_error) {
             }
@@ -110,8 +249,12 @@
                 : (ArrayBuffer.isView(buffer) ? buffer.buffer : null);
             const url = viewToUrl.get(buffer) ||
                 arrayBufferToUrl.get(buffer) ||
-                (rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '');
+                (rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '') ||
+                claimRecentFetchUrl(mediaSourceId);
             if (mediaSourceId && url) {
+                if (!viewToUrl.get(buffer) && !arrayBufferToUrl.get(buffer) && !(rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '')) {
+                    getMediaDebugEntry(mediaSourceId).heuristicCount += 1;
+                }
                 trackUrlForMediaSource(mediaSourceId, url);
             }
         } catch (_error) {
@@ -129,6 +272,7 @@
                         try {
                             arrayBufferToUrl.set(buffer, response.url);
                             viewToUrl.set(new Uint8Array(buffer), response.url);
+                            pushRecentFetchUrl(response.url);
                         } catch (_error) {
                         }
                     }).catch(() => {});
