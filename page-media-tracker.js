@@ -65,7 +65,8 @@
             at: Date.now(),
             used: false,
             assetKey: getAssetKeyForUrl(url),
-            rangeLength: getRangeLengthFromUrl(url)
+            rangeLength: getRangeLengthFromUrl(url),
+            byteLength: 0
         });
         pruneRecentFetches();
     }
@@ -82,7 +83,7 @@
         }
     }
 
-    function claimRecentFetchUrl(mediaSourceId) {
+    function claimRecentFetchUrl(mediaSourceId, expectedByteLength = 0) {
         pruneRecentFetches();
         const meta = mediaSourceId ? mediaSourceMeta.get(mediaSourceId) : null;
         const createdAt = meta ? meta.createdAt : 0;
@@ -104,6 +105,13 @@
             const sameAssetCandidates = candidates.filter(item => item.assetKey === preferredAssetKey);
             if (sameAssetCandidates.length > 0) {
                 scopedCandidates = sameAssetCandidates;
+            }
+        }
+
+        if (Number.isFinite(expectedByteLength) && expectedByteLength > 0) {
+            const sameLengthCandidates = scopedCandidates.filter(item => item.byteLength === expectedByteLength);
+            if (sameLengthCandidates.length > 0) {
+                scopedCandidates = sameLengthCandidates;
             }
         }
 
@@ -230,6 +238,9 @@
                 if (buffer && isMediaRequestUrl(response.url)) {
                     arrayBufferToUrl.set(buffer, response.url);
                     pushRecentFetchUrl(response.url);
+                    if (recentMediaFetches.length > 0) {
+                        recentMediaFetches[recentMediaFetches.length - 1].byteLength = Number(buffer.byteLength || 0);
+                    }
                 }
             } catch (_error) {
             }
@@ -250,7 +261,7 @@
             const url = viewToUrl.get(buffer) ||
                 arrayBufferToUrl.get(buffer) ||
                 (rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '') ||
-                claimRecentFetchUrl(mediaSourceId);
+                claimRecentFetchUrl(mediaSourceId, Number((rawBuffer && rawBuffer.byteLength) || (buffer && buffer.byteLength) || 0));
             if (mediaSourceId && url) {
                 if (!viewToUrl.get(buffer) && !arrayBufferToUrl.get(buffer) && !(rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '')) {
                     getMediaDebugEntry(mediaSourceId).heuristicCount += 1;
@@ -273,6 +284,9 @@
                             arrayBufferToUrl.set(buffer, response.url);
                             viewToUrl.set(new Uint8Array(buffer), response.url);
                             pushRecentFetchUrl(response.url);
+                            if (recentMediaFetches.length > 0) {
+                                recentMediaFetches[recentMediaFetches.length - 1].byteLength = Number(buffer.byteLength || 0);
+                            }
                         } catch (_error) {
                         }
                     }).catch(() => {});

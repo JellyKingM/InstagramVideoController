@@ -2442,7 +2442,8 @@
                 ? fourthChild.parentElement.lastElementChild
                 : null;
             if (lastSibling instanceof Element && !lastSibling.querySelector('video')) {
-                return lastSibling;
+                const focusedCandidate = findWideReelsFocusedInfoCandidate(lastSibling);
+                return focusedCandidate || lastSibling;
             }
             return exactRoot;
         }
@@ -2467,6 +2468,42 @@
         }
 
         return narrowedElement || infoElement;
+    }
+
+    function findWideReelsFocusedInfoCandidate(root) {
+        if (!(root instanceof Element)) return null;
+
+        const candidates = [root, ...Array.from(root.querySelectorAll('div'))]
+            .filter(candidate =>
+                candidate instanceof Element &&
+                !candidate.querySelector('video') &&
+                !candidate.querySelector('[aria-label="Video player"]') &&
+                (
+                    candidate.querySelector('a[role="link"]') ||
+                    candidate.querySelector('a[href^="/"]')
+                ) &&
+                (
+                    candidate.querySelector('[role="presentation"]') ||
+                    candidate.querySelector('.x1xmf6yo')
+                )
+            );
+
+        candidates.sort((a, b) => {
+            const aArea = getElementArea(a);
+            const bArea = getElementArea(b);
+            if (aArea !== bArea) return aArea - bArea;
+            return getElementDepth(b) - getElementDepth(a);
+        });
+
+        return candidates[0] || null;
+    }
+
+    function getElementArea(element) {
+        if (!(element instanceof Element)) return Number.POSITIVE_INFINITY;
+        const rect = element.getBoundingClientRect();
+        const width = Math.max(0, rect.width || element.offsetWidth || 0);
+        const height = Math.max(0, rect.height || element.offsetHeight || 0);
+        return width * height;
     }
 
     function sanitizeWideReelsInfoElement(infoElement) {
