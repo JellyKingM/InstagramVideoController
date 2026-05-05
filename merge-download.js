@@ -4,7 +4,6 @@
 
     function setStatus(text) {
         statusEl.textContent = text;
-        console.log('[InstagramVideoController remux]', text);
     }
 
     function wait(ms) {
@@ -23,8 +22,7 @@
     async function clearJob(token) {
         try {
             await chrome.runtime.sendMessage({ clearMergeJob: true, token });
-        } catch (error) {
-            console.log('[InstagramVideoController remux]', 'failed to clear job', error);
+        } catch (_error) {
         }
     }
 
@@ -292,7 +290,6 @@
     try {
         await run();
     } catch (error) {
-        console.error('[InstagramVideoController remux]', error);
         setStatus(`Merge failed: ${error && error.message ? error.message : error}`);
     }
 })();
