@@ -17,6 +17,8 @@
     const MAX_RECENT_FETCHES = 400;
     const RECENT_FETCH_TTL_MS = 15000;
 
+    const blobUrlToVideoElement = new Map();
+
     let mediaSourceCounter = 0;
 
     function isMediaRequestUrl(url) {
@@ -234,6 +236,23 @@
         }
     }
 
+    const originalSrcDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'src');
+    if (originalSrcDescriptor && originalSrcDescriptor.set) {
+        const originalSet = originalSrcDescriptor.set;
+        Object.defineProperty(HTMLMediaElement.prototype, 'src', {
+            ...originalSrcDescriptor,
+            set: function (val) {
+                try {
+                    if (this instanceof HTMLVideoElement && typeof val === 'string' && val.startsWith('blob:')) {
+                        blobUrlToVideoElement.set(val, this);
+                    }
+                } catch (_error) {
+                }
+                return originalSet.apply(this, arguments);
+            }
+        });
+    }
+
     const originalCreateObjectURL = URL.createObjectURL.bind(URL);
     URL.createObjectURL = function patchedCreateObjectURL(object) {
         const result = originalCreateObjectURL(object);
@@ -279,7 +298,18 @@
         try {
             const mediaSourceId = sourceBufferToMediaSourceId.get(this);
             const ms = this.__parentMediaSource;
-            const durationHint = ms ? Number(ms.duration || 0) : 0;
+            
+            let durationHint = ms ? Number(ms.duration || 0) : 0;
+            
+            if (!Number.isFinite(durationHint) || durationHint <= 0) {
+                const blobUrl = [...blobUrlToMediaSourceId.entries()].find(([_, id]) => id === mediaSourceId)?.[0];
+                if (blobUrl) {
+                    const video = blobUrlToVideoElement.get(blobUrl);
+                    if (video && Number.isFinite(video.duration) && video.duration > 0) {
+                        durationHint = video.duration;
+                    }
+                }
+            }
 
             if (mediaSourceId) {
                 getMediaDebugEntry(mediaSourceId).appendCount += 1;
