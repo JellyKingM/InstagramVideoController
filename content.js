@@ -1017,21 +1017,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle) {
-        if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
-            return false;
-        }
-
-        const videoDuration = Number(video.duration || 0);
-        const bundleDuration = Number(bundle.video.duration || 0);
-
-        if (!(videoDuration > 0) || !(bundleDuration > 0)) {
-            return true;
-        }
-
-        // 허용 오차 기능 삭제: 소수점 2자리까지 완벽히 일치해야 함
-        return videoDuration.toFixed(2) === bundleDuration.toFixed(2);
-    }
+    // 재생 시간 비교 로직 완전 삭제 (사용자 요청: ID 기반 직결 구조)
 
     function getVideoIdentity(video) {
         if (!(video instanceof HTMLVideoElement)) return '';
@@ -1262,21 +1248,20 @@
                         }
                     }
 
-                    // 2. 직접 번들이 없거나 실패한 경우, 블롭 URL을 통한 추적 로직 시도
+                    // 2. 블롭 URL을 통한 추적 로직 (ID 기반 직결)
                     const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
-                    const hint = buildVideoMediaHint(targetVideo);
-                    const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
-                    const downloadEntries = focusedEntries.length > 0 ? focusedEntries : (trackedMedia.entries || []);
+                    
+                    // 사용자 요청: 재생 시간 기반의 필터링을 삭제하고 해당 블롭 ID에 할당된 모든 URL을 신뢰함
+                    const downloadEntries = trackedMedia.entries || [];
                     const downloadUrls = downloadEntries
                         .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
                         .filter(Boolean);
                     
-                    log('tracked blob media urls', {
+                    log('tracked blob media identity mapping', {
                         blobUrl: sourceUrl,
                         mediaSourceId: trackedMedia.mediaSourceId,
-                        urlCount: trackedMedia.urls.length,
-                        focusedUrlCount: downloadUrls.length,
-                        focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : ''
+                        urlCount: downloadUrls.length,
+                        found: downloadUrls.length > 0
                     });
 
                     if (downloadUrls.length > 0) {
@@ -1284,7 +1269,6 @@
                             downloadTrackedBlobUrls: {
                                 entries: downloadEntries,
                                 urls: downloadUrls,
-                                hint,
                                 filename: getDownloadFileName(sourceUrl)
                             }
                         });
