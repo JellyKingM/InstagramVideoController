@@ -77,6 +77,9 @@
         const meta = mediaSourceId ? mediaSourceMeta.get(mediaSourceId) : null;
         const createdAt = meta ? meta.createdAt : 0;
         const lastClaimAt = meta ? meta.lastClaimAt : 0;
+        
+        // 고정된 duration이 있으면 그것을 우선 사용
+        const effectiveDurationHint = (meta && meta.stickyDuration) || durationHint || 0;
 
         const candidates = recentMediaFetches.filter(item =>
             !item.used &&
@@ -98,13 +101,13 @@
             }
         }
 
-        if (durationHint > 0) {
+        if (effectiveDurationHint > 0) {
             // 재생 시간이 명시된 후보 중 힌트와 맞는 것만 남김
             // 재생 시간이 없는 후보는 일단 유지 (나중에 byteLength 등으로 확인 가능하므로)
             scopedCandidates = scopedCandidates.filter(item => {
                 const itemDuration = Number(item.duration || 0);
                 if (itemDuration <= 0) return true;
-                return Math.abs(itemDuration - durationHint) <= 0.8;
+                return Math.abs(itemDuration - effectiveDurationHint) <= 0.8;
             });
         }
 
@@ -328,6 +331,18 @@
                 if (!viewToUrl.get(buffer) && !arrayBufferToUrl.get(buffer) && !(rawBuffer ? arrayBufferToUrl.get(rawBuffer) : '')) {
                     getMediaDebugEntry(mediaSourceId).heuristicCount += 1;
                 }
+                
+                // 클레임된 URL의 duration을 MS 메타데이터에 고정 (비디오 요소의 duration이 아직 없을 때를 대비)
+                const meta = mediaSourceMeta.get(mediaSourceId);
+                if (meta && !meta.stickyDuration) {
+                    const efg = url.includes('efg=') ? new URL(url).searchParams.get('efg') : '';
+                    const urlMeta = parseEfgPayload(efg);
+                    const urlDur = Number(urlMeta.duration_s || 0);
+                    if (urlDur > 0) {
+                        meta.stickyDuration = urlDur;
+                    }
+                }
+                
                 trackUrlForMediaSource(mediaSourceId, url);
             }
         } catch (_error) {

@@ -1,62 +1,56 @@
 Instagram Video Controller internal log
-time=2026-05-06T15:08:37.501Z
-url=https://www.instagram.com/reels/DVBTg-EksXU/
-activeVideo=video{currentTime=0.01,duration=6.64,paused=true,muted=false,visibility=24.9%,size=497x885}
-sideBoxVideo=video{currentTime=0.01,duration=6.64,paused=true,muted=false,visibility=24.9%,size=497x885}
-sideBoxVideoIdentity=blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf::6.641
-sideBoxCreatedAt=1778080105571
+time=2026-05-06T15:12:29.889Z
+url=https://www.instagram.com/reels/DX_Hhx3gFXq/
+activeVideo=video{currentTime=4.28,duration=22.99,paused=false,muted=false,visibility=24.9%,size=497x885}
+sideBoxVideo=video{currentTime=4.28,duration=22.99,paused=false,muted=false,visibility=24.9%,size=497x885}
+sideBoxVideoIdentity=blob:https://www.instagram.com/59b2d5c7-3dc5-435f-99a2-5bef8b0bd3c1::22.988
+sideBoxCreatedAt=1778080345939
 lockedSideBoxIdentity=
 lockedSideBoxBundle=null
-lastRejectedBundleInfo={"expectedDuration":6.640906,"actualDuration":24,"assetId":935766122633192,"tag":"ig-xpvds.clips.c2-c2.dash_r2evevp9-r1gen2vp9_q90"}
-currentDownloadFileName=instagram_DVBTg-EksXU_omamori_dahy.mp4
+lastRejectedBundleInfo={"expectedDuration":22.987755,"actualDuration":16,"assetId":17896617936428312,"tag":"ig-xpvds.clips.c2-c2.dash_r2evevp9-r1gen2vp9_q90"}
+currentDownloadFileName=instagram_DX_Hhx3gFXq_지금 구매하기.mp4
 
 === download debug ===
-pageVideoCount=11
-targetVideoIndex=3
-targetVideoIdentity=blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf::6.641
-targetVideoHint={"duration":6.640906,"currentTime":0.014627,"capturedAfter":1778080112469,"capturedBefore":1778080117669,"targetCapturedAt":1778080116469,"preferBefore":true}
-targetTrackedMediaSourceId=ms-1778080070080-4
-targetTrackedUrlCount=9
-targetTrackedEntryCount=9
-targetFocusedEntryCount=9
-targetFocusedAssetKey=935766122633192
+pageVideoCount=9
+targetVideoIndex=4
+targetVideoIdentity=blob:https://www.instagram.com/59b2d5c7-3dc5-435f-99a2-5bef8b0bd3c1::22.988
+targetVideoHint={"duration":22.987755,"currentTime":4.280031,"capturedAfter":1778080344946,"capturedBefore":1778080350146,"targetCapturedAt":1778080348946,"preferBefore":true}
+targetTrackedMediaSourceId=ms-1778080295007-5
+targetTrackedUrlCount=0
+targetTrackedEntryCount=0
+targetFocusedEntryCount=0
+targetFocusedAssetKey=
 targetTrackedAppendCount=13
-targetTrackedMatchCount=13
-targetTrackedHeuristicCount=13
-targetTrackedLastUrl=scontent-icn2-1.cdninstagram.com/AQOLZjFRr0sr-HOCJnOSlhIsCTxkYCyiRgtdNUK-o7tPv2-e93dwnXNiAsPz86ljX0F1veeBu6ncUxhTWxmza9KZnOZVf-JTHiQdWsE.mp4&start=4086319&efg=1
-targetTrackedGroup[0]=asset=935766122633192 durations=24.000 video=6 audio=3 maxRange=2306534
-targetFocusedGroup[0]=asset=935766122633192 durations=24.000 video=6 audio=3 maxRange=2306534
+targetTrackedMatchCount=0
+targetTrackedHeuristicCount=0
+targetTrackedLastUrl=
 lockedBundleVideoUrl=
 lockedBundleAudioUrl=
 lockedBundleVideoAssetId=
 lockedBundleVideoDuration=0
 --- page videos ---
-[0] | flags=hidden,paused | identity=blob:https://www.instagram.com/ca34040a-a951-4592-a42a-575b70024660::8.567 | duration=8.567 | currentTime=0.021 | size=497x885 | rect=703,-2740,1200,-1855 | currentSrc=blob:ca34040a-a951-4592-a42a-575b70024660 | src=blob:ca34040a-a951-4592-a42a-575b70024660
-[1] | flags=hidden,paused | identity=blob:https://www.instagram.com/3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a::13.568 | duration=13.568 | currentTime=8.651 | size=497x885 | rect=703,-1821,1200,-936 | currentSrc=blob:3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a | src=blob:3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a
-[2] | flags=hidden,paused | identity=blob:https://www.instagram.com/33e71fca-cce4-4cdd-b939-424670d80ecb::24.845 | duration=24.845 | currentTime=24.655 | size=497x885 | rect=703,-902,1200,-17 | currentSrc=blob:33e71fca-cce4-4cdd-b939-424670d80ecb | src=blob:33e71fca-cce4-4cdd-b939-424670d80ecb
-[3] | flags=active,sidebox,visible,paused | identity=blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf::6.641 | duration=6.641 | currentTime=0.015 | size=497x885 | rect=952,17,1448,902 | currentSrc=blob:066325d7-bd5f-4ca4-8d0b-4dc4781822bf | src=blob:066325d7-bd5f-4ca4-8d0b-4dc4781822bf
-[4] | flags=hidden,paused | identity=blob:https://www.instagram.com/7256370b-bbcb-4ddc-bc1d-8d6faf38bcde::11.000 | duration=11.000 | currentTime=0.000 | size=497x885 | rect=703,936,1200,1821 | currentSrc=blob:7256370b-bbcb-4ddc-bc1d-8d6faf38bcde | src=blob:7256370b-bbcb-4ddc-bc1d-8d6faf38bcde
-[5] | flags=hidden,paused | identity=blob:https://www.instagram.com/05515f2f-4f2c-4cfc-9701-99365ca16529::8.522 | duration=8.522 | currentTime=0.000 | size=497x885 | rect=703,1855,1200,2740 | currentSrc=blob:05515f2f-4f2c-4cfc-9701-99365ca16529 | src=blob:05515f2f-4f2c-4cfc-9701-99365ca16529
-[6] | flags=hidden,paused | identity=blob:https://www.instagram.com/c24414af-0196-45df-b5c8-548504e6c1fa::9.800 | duration=9.800 | currentTime=0.000 | size=497x885 | rect=703,2774,1200,3659 | currentSrc=blob:c24414af-0196-45df-b5c8-548504e6c1fa | src=blob:c24414af-0196-45df-b5c8-548504e6c1fa
-[7] | flags=hidden,paused | identity=blob:https://www.instagram.com/b9d2d9b6-a065-4ce9-909d-8904cfee1b64::6.153 | duration=6.153 | currentTime=0.000 | size=497x885 | rect=703,3693,1200,4578 | currentSrc=blob:b9d2d9b6-a065-4ce9-909d-8904cfee1b64 | src=blob:b9d2d9b6-a065-4ce9-909d-8904cfee1b64
-[8] | flags=hidden,paused | identity=blob:https://www.instagram.com/2f7850e5-7e3f-4f10-8cc2-f61b214e0792::9.967 | duration=9.967 | currentTime=0.000 | size=497x885 | rect=703,4612,1200,5497 | currentSrc=blob:2f7850e5-7e3f-4f10-8cc2-f61b214e0792 | src=blob:2f7850e5-7e3f-4f10-8cc2-f61b214e0792
-[9] | flags=hidden,paused | identity=blob:https://www.instagram.com/36712271-b4b8-4c12-a7ae-0aec87d1a7ae::5.642 | duration=5.642 | currentTime=0.000 | size=497x885 | rect=703,5531,1200,6416 | currentSrc=blob:36712271-b4b8-4c12-a7ae-0aec87d1a7ae | src=blob:36712271-b4b8-4c12-a7ae-0aec87d1a7ae
-[10] | flags=hidden,paused | identity=blob:https://www.instagram.com/872dcdb9-5e03-49ec-bf4b-bdb7c9d6f28c::9.333 | duration=9.333 | currentTime=0.000 | size=497x885 | rect=703,6450,1200,7335 | currentSrc=blob:872dcdb9-5e03-49ec-bf4b-bdb7c9d6f28c | src=blob:872dcdb9-5e03-49ec-bf4b-bdb7c9d6f28c
+[0] | flags=hidden,paused | identity=blob:https://www.instagram.com/c46a5f72-e7cd-4c1c-87e6-72fb7fbfaa81::8.567 | duration=8.567 | currentTime=8.451 | size=497x885 | rect=703,-3659,1200,-2774 | currentSrc=blob:c46a5f72-e7cd-4c1c-87e6-72fb7fbfaa81 | src=blob:c46a5f72-e7cd-4c1c-87e6-72fb7fbfaa81
+[1] | flags=hidden,paused | identity=blob:https://www.instagram.com/ee8a8105-9e3a-4188-a8c3-c16963a3b9e1::5.248 | duration=5.248 | currentTime=0.015 | size=497x885 | rect=703,-2740,1200,-1855 | currentSrc=blob:ee8a8105-9e3a-4188-a8c3-c16963a3b9e1 | src=blob:ee8a8105-9e3a-4188-a8c3-c16963a3b9e1
+[2] | flags=hidden,paused | identity=blob:https://www.instagram.com/70500bb9-af5f-4943-981b-feeadf3d599a::6.107 | duration=6.107 | currentTime=0.013 | size=497x885 | rect=703,-1821,1200,-936 | currentSrc=blob:70500bb9-af5f-4943-981b-feeadf3d599a | src=blob:70500bb9-af5f-4943-981b-feeadf3d599a
+[3] | flags=hidden,paused | identity=blob:https://www.instagram.com/2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc::16.100 | duration=16.100 | currentTime=3.998 | size=497x885 | rect=703,-902,1200,-17 | currentSrc=blob:2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc | src=blob:2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc
+[4] | flags=active,sidebox,visible,playing | identity=blob:https://www.instagram.com/59b2d5c7-3dc5-435f-99a2-5bef8b0bd3c1::22.988 | duration=22.988 | currentTime=4.280 | size=497x885 | rect=952,17,1448,902 | currentSrc=blob:59b2d5c7-3dc5-435f-99a2-5bef8b0bd3c1 | src=blob:59b2d5c7-3dc5-435f-99a2-5bef8b0bd3c1
+[5] | flags=hidden,paused | identity=blob:https://www.instagram.com/c98cb90a-ff57-42b4-b600-f9fae57991e7::6.593 | duration=6.593 | currentTime=0.000 | size=497x885 | rect=703,936,1200,1821 | currentSrc=blob:c98cb90a-ff57-42b4-b600-f9fae57991e7 | src=blob:c98cb90a-ff57-42b4-b600-f9fae57991e7
+[6] | flags=hidden,paused | identity=blob:https://www.instagram.com/91cf73f0-ba6f-4a3e-be60-d56b9a3dd1ac::15.557 | duration=15.557 | currentTime=0.000 | size=497x885 | rect=703,1855,1200,2740 | currentSrc=blob:91cf73f0-ba6f-4a3e-be60-d56b9a3dd1ac | src=blob:91cf73f0-ba6f-4a3e-be60-d56b9a3dd1ac
+[7] | flags=hidden,paused | identity=blob:https://www.instagram.com/10b49670-c933-44a9-b027-5328c946f473::5.224 | duration=5.224 | currentTime=0.000 | size=497x885 | rect=703,2774,1200,3659 | currentSrc=blob:10b49670-c933-44a9-b027-5328c946f473 | src=blob:10b49670-c933-44a9-b027-5328c946f473
+[8] | flags=hidden,paused | identity=blob:https://www.instagram.com/34ae74e5-52c8-4648-bc4e-a8eaf4364c20::6.900 | duration=6.900 | currentTime=0.000 | size=497x885 | rect=703,3693,1200,4578 | currentSrc=blob:34ae74e5-52c8-4648-bc4e-a8eaf4364c20 | src=blob:34ae74e5-52c8-4648-bc4e-a8eaf4364c20
 
 === internal logs ===
-[2026-05-06T15:07:46.377Z] pinned captured media {"ok":true,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m366/AQPCFzORKrkbowTi93yw1Pzopa_F5vsJMOuhc3NXZTYc3BYZa23JMvNzfMUryqGEP7BC2iM5XOT3C3gKJcvaf2n0u2NnA2UkJ8UgV20.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=a2DkwRqgCJYQ7kNvwF8zgSs&efg=eyJ2ZW5jb2RlX3R...(+1714)
-[2026-05-06T15:07:47.981Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/ca34040a-a951-4592-a42a-575b70024660","currentSrc":"blob:https://www.instagram.com/ca34040a-a951-4592-a42a-575b70024660","src":"blob:https://www.instagram.com/ca34040a-a951-4592-a42a-575b70024660","currentTime":2.361019,"duration":8.566711,"paused":false,"readyState":4,"sou...(+33)
-[2026-05-06T15:07:48.025Z] explicit media bundle download started {"ok":true,"mergeStarted":true,"tabId":1305503211,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m366/AQPCFzORKrkbowTi93yw1Pzopa_F5vsJMOuhc3NXZTYc3BYZa23JMvNzfMUryqGEP7BC2iM5XOT3C3gKJcvaf2n0u2NnA2UkJ8UgV20.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=a2Dk...(+1753)
-[2026-05-06T15:07:58.544Z] rejecting pinned media due to duration mismatch {"video":"video{currentTime=1.16,duration=13.57,paused=false,muted=false,visibility=24.9%,size=497x885}","failure":{"ok":false,"error":"bundle duration mismatch","expectedDuration":13.567999,"actualDuration":8,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m366/AQPQBmz1fNKq8r-YlR4Y_CF_KCw...(+1922)
-[2026-05-06T15:07:58.667Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a","currentSrc":"blob:https://www.instagram.com/3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a","src":"blob:https://www.instagram.com/3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a","currentTime":1.283916,"duration":13.567999,"paused":false,"readyState":4,"so...(+34)
-[2026-05-06T15:07:58.669Z] tracked blob media urls {"blobUrl":"blob:https://www.instagram.com/3fa7b93d-2ae6-4a7b-89d7-570b6ed9450a","mediaSourceId":"ms-1778080065054-2","urlCount":4,"focusedUrlCount":4,"focusedAssetKey":"17890829787453888"}
-[2026-05-06T15:07:58.691Z] tracked blob media download started {"ok":true,"mergeStarted":true,"tabId":1305503215,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m366/AQPQBmz1fNKq8r-YlR4Y_CF_KCw-f6i8-5ZOySl2S1NB9wEAempHcW0ehlns_WSGjmcUykN01I6vgXl6E6aG4alakMZBLCMWCnQ5TCU.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=ppDV...(+1753)
-[2026-05-06T15:08:07.309Z] rejecting pinned media due to duration mismatch {"video":"video{currentTime=1.20,duration=24.85,paused=false,muted=false,visibility=24.9%,size=497x885}","failure":{"ok":false,"error":"bundle duration mismatch","expectedDuration":24.845351,"actualDuration":24,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOLZjFRr0sr-HOCJnOSlhIsCT...(+1923)
-[2026-05-06T15:08:08.347Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/33e71fca-cce4-4cdd-b939-424670d80ecb","currentSrc":"blob:https://www.instagram.com/33e71fca-cce4-4cdd-b939-424670d80ecb","src":"blob:https://www.instagram.com/33e71fca-cce4-4cdd-b939-424670d80ecb","currentTime":2.241003,"duration":24.845351,"paused":false,"readyState":4,"so...(+34)
-[2026-05-06T15:08:08.349Z] tracked blob media urls {"blobUrl":"blob:https://www.instagram.com/33e71fca-cce4-4cdd-b939-424670d80ecb","mediaSourceId":"ms-1778080070073-3","urlCount":16,"focusedUrlCount":13,"focusedAssetKey":"935766122633192"}
-[2026-05-06T15:08:08.371Z] tracked blob media download started {"ok":true,"mergeStarted":true,"tabId":1305503219,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOLZjFRr0sr-HOCJnOSlhIsCTxkYCyiRgtdNUK-o7tPv2-e93dwnXNiAsPz86ljX0F1veeBu6ncUxhTWxmza9KZnOZVf-JTHiQdWsE.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=jX_9...(+1761)
-[2026-05-06T15:08:09.190Z] rejecting pinned media due to duration mismatch {"video":"video{currentTime=3.08,duration=24.85,paused=false,muted=false,visibility=24.9%,size=497x885}","failure":{"ok":false,"error":"bundle duration mismatch","expectedDuration":24.845351,"actualDuration":24,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOLZjFRr0sr-HOCJnOSlhIsCT...(+1923)
-[2026-05-06T15:08:26.774Z] rejecting pinned media due to duration mismatch {"video":"video{currentTime=1.07,duration=6.64,paused=false,muted=false,visibility=24.9%,size=497x885}","failure":{"ok":false,"error":"bundle duration mismatch","expectedDuration":6.640906,"actualDuration":24,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOLZjFRr0sr-HOCJnOSlhIsCTxk...(+1921)
-[2026-05-06T15:08:27.399Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf","currentSrc":"blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf","src":"blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf","currentTime":1.695812,"duration":6.640906,"paused":false,"readyState":4,"sou...(+33)
-[2026-05-06T15:08:27.401Z] tracked blob media urls {"blobUrl":"blob:https://www.instagram.com/066325d7-bd5f-4ca4-8d0b-4dc4781822bf","mediaSourceId":"ms-1778080070080-4","urlCount":9,"focusedUrlCount":9,"focusedAssetKey":"935766122633192"}
-[2026-05-06T15:08:27.427Z] tracked blob media download started {"ok":true,"mergeStarted":true,"tabId":1305503223,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOLZjFRr0sr-HOCJnOSlhIsCTxkYCyiRgtdNUK-o7tPv2-e93dwnXNiAsPz86ljX0F1veeBu6ncUxhTWxmza9KZnOZVf-JTHiQdWsE.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=jX_9...(+1757)
+[2026-05-06T15:11:29.831Z] pinned captured media {"ok":true,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m366/AQPCFzORKrkbowTi93yw1Pzopa_F5vsJMOuhc3NXZTYc3BYZa23JMvNzfMUryqGEP7BC2iM5XOT3C3gKJcvaf2n0u2NnA2UkJ8UgV20.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=a2DkwRqgCJYQ7kNvwF8zgSs&efg=eyJ2ZW5jb2RlX3R...(+1714)
+[2026-05-06T15:11:30.033Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/c46a5f72-e7cd-4c1c-87e6-72fb7fbfaa81","currentSrc":"blob:https://www.instagram.com/c46a5f72-e7cd-4c1c-87e6-72fb7fbfaa81","src":"blob:https://www.instagram.com/c46a5f72-e7cd-4c1c-87e6-72fb7fbfaa81","currentTime":0.951602,"duration":8.566711,"paused":false,"readyState":4,"sou...(+33)
+[2026-05-06T15:11:30.121Z] explicit media bundle download started {"ok":true,"mergeStarted":true,"tabId":1305503227,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m366/AQPCFzORKrkbowTi93yw1Pzopa_F5vsJMOuhc3NXZTYc3BYZa23JMvNzfMUryqGEP7BC2iM5XOT3C3gKJcvaf2n0u2NnA2UkJ8UgV20.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=a2Dk...(+1753)
+[2026-05-06T15:11:38.812Z] pinned captured media {"ok":true,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQN2NBD_AaUslkKIMtK7hlPXTVEeilPo4Y7whwa59QddnNxWQLbYrHZUh-ewSgh53YbBsSkTdsSpgCUAC33O5huiQaC4lI-0W6Podm8.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=jOq7Le7JGMwQ7kNvwF8bL0u&efg=eyJ2ZW5jb2RlX3R...(+1718)
+[2026-05-06T15:11:39.763Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/ee8a8105-9e3a-4188-a8c3-c16963a3b9e1","currentSrc":"blob:https://www.instagram.com/ee8a8105-9e3a-4188-a8c3-c16963a3b9e1","src":"blob:https://www.instagram.com/ee8a8105-9e3a-4188-a8c3-c16963a3b9e1","currentTime":2.13326,"duration":5.247709,"paused":false,"readyState":4,"sour...(+32)
+[2026-05-06T15:11:39.785Z] explicit media bundle download started {"ok":true,"mergeStarted":true,"tabId":1305503231,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQN2NBD_AaUslkKIMtK7hlPXTVEeilPo4Y7whwa59QddnNxWQLbYrHZUh-ewSgh53YbBsSkTdsSpgCUAC33O5huiQaC4lI-0W6Podm8.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=jOq7...(+1757)
+[2026-05-06T15:11:50.643Z] pinned captured media {"ok":true,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOBN0RNMgYc-u7UShLbz1N5Xq4-gGur-FVJYtP7qEiTSWk2jN6vJIKvi1jc8UH9obea011cagRR5mdSBJhtLXBzBlCzZzOTkAVf0KU.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=Bh0LpKMmy9cQ7kNvwH8jQ78&efg=eyJ2ZW5jb2RlX3R...(+1713)
+[2026-05-06T15:11:51.205Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/70500bb9-af5f-4943-981b-feeadf3d599a","currentSrc":"blob:https://www.instagram.com/70500bb9-af5f-4943-981b-feeadf3d599a","src":"blob:https://www.instagram.com/70500bb9-af5f-4943-981b-feeadf3d599a","currentTime":1.735991,"duration":6.106848,"paused":false,"readyState":4,"sou...(+33)
+[2026-05-06T15:11:51.232Z] explicit media bundle download started {"ok":true,"mergeStarted":true,"tabId":1305503235,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOBN0RNMgYc-u7UShLbz1N5Xq4-gGur-FVJYtP7qEiTSWk2jN6vJIKvi1jc8UH9obea011cagRR5mdSBJhtLXBzBlCzZzOTkAVf0KU.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_ohc=Bh0L...(+1752)
+[2026-05-06T15:12:01.119Z] rejecting pinned media due to duration mismatch {"video":"video{currentTime=1.09,duration=16.10,paused=false,muted=false,visibility=24.9%,size=497x885}","failure":{"ok":false,"error":"bundle duration mismatch","expectedDuration":16.099999,"actualDuration":15,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOcihNWunXXE5g9cXuqglMMpz...(+1924)
+[2026-05-06T15:12:01.847Z] video download diagnostics {"primaryUrl":"blob:https://www.instagram.com/2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc","currentSrc":"blob:https://www.instagram.com/2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc","src":"blob:https://www.instagram.com/2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc","currentTime":1.821238,"duration":16.099999,"paused":false,"readyState":4,"so...(+34)
+[2026-05-06T15:12:01.851Z] tracked blob media urls {"blobUrl":"blob:https://www.instagram.com/2ee0fd55-805b-4f25-b2a3-bd1f5f3afefc","mediaSourceId":"ms-1778080293478-4","urlCount":2,"focusedUrlCount":2,"focusedAssetKey":"18079586708148120"}
+[2026-05-06T15:12:01.884Z] tracked blob media download started {"ok":true,"videoDownloadId":2645,"separateAudio":false,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQOBN0RNMgYc-u7UShLbz1N5Xq4-gGur-FVJYtP7qEiTSWk2jN6vJIKvi1jc8UH9obea011cagRR5mdSBJhtLXBzBlCzZzOTkAVf0KU.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_oh...(+768)
+[2026-05-06T15:12:27.146Z] rejecting pinned media due to duration mismatch {"video":"video{currentTime=1.54,duration=22.99,paused=false,muted=false,visibility=24.9%,size=497x885}","failure":{"ok":false,"error":"bundle duration mismatch","expectedDuration":22.987755,"actualDuration":16,"bundle":{"video":{"url":"https://scontent-icn2-1.cdninstagram.com/o1/v/t2/f2/m367/AQPeBfuDkHxyNuhn2yXpYZOLM0...(+1935)

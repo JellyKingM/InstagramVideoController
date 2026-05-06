@@ -426,28 +426,12 @@ function pickBestMediaRequestForTab(tabId, hint = null) {
         return fallbackVideoCandidates[0];
     }
 
-    const nonAudioCandidates = recentList.filter(item => !item.isAudio);
-    if (nonAudioCandidates.length > 0) {
-        sortMediaCandidates(nonAudioCandidates, hint);
-        return nonAudioCandidates[0];
-    }
-
-    const fallbackNonAudio = list.filter(item => !item.isAudio);
-    if (fallbackNonAudio.length > 0) {
-        sortMediaCandidates(fallbackNonAudio, hint);
-        return fallbackNonAudio[0];
-    }
-
-    const allCandidates = [...list];
-    sortMediaCandidates(allCandidates, hint);
-    return allCandidates[0];
+    return null;
 }
 
 function pickBestMediaBundleForTab(tabId, hint = null) {
     const list = mediaRequestsByTab.get(tabId) || [];
     pruneMediaRequests(list);
-    if (list.length === 0) return null;
-
     const video = pickBestMediaRequestForTab(tabId, hint);
     if (!video) return null;
 
@@ -602,15 +586,7 @@ function pickBestMediaRequestFromCandidates(candidates, hint = null) {
         return videoCandidates[0];
     }
 
-    const nonAudioCandidates = applyTimeHint(candidates.filter(item => !item.isAudio), hint);
-    if (nonAudioCandidates.length > 0) {
-        sortMediaCandidates(nonAudioCandidates, hint);
-        return nonAudioCandidates[0];
-    }
-
-    const allCandidates = [...candidates];
-    sortMediaCandidates(allCandidates, hint);
-    return allCandidates[0];
+    return null;
 }
 
 function findMuxedMediaCandidateForBundle(tabId, bundle) {
@@ -641,7 +617,7 @@ function findMuxedMediaCandidateInCandidates(urls, bundle) {
     const matches = candidates.filter(item =>
         !item.isAudio &&
         (!video.assetId || item.assetId === video.assetId) &&
-        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.8) &&
+        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.4) &&
         !/dash/i.test(String(item.tag || ''))
     );
 
@@ -658,7 +634,7 @@ function applyDurationHint(candidates, hint) {
     const exactish = candidates.filter(item =>
         Number.isFinite(item.duration) &&
         item.duration > 0 &&
-        Math.abs(item.duration - hint.duration) <= 0.8
+        Math.abs(item.duration - hint.duration) <= 0.4
     );
 
     if (exactish.length > 0) {
@@ -784,7 +760,7 @@ function getGroupDurationStats(videoCandidates, hint) {
 
     const deltas = finiteDurations.map(duration => Math.abs(duration - hint.duration));
     const minDelta = Math.min(...deltas);
-    const matchingCount = deltas.filter(delta => delta <= 0.8).length;
+    const matchingCount = deltas.filter(delta => delta <= 0.4).length;
 
     if (matchingCount > 0) {
         return {
