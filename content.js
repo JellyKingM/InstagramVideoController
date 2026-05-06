@@ -1077,11 +1077,14 @@
             return new Promise(resolve => {
                 chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
                     if (chrome.runtime.lastError) {
+                        const errorMsg = chrome.runtime.lastError.message || '';
                         const failure = {
                             ok: false,
-                            error: chrome.runtime.lastError.message
+                            error: errorMsg
                         };
-                        log('pin captured media failed', failure);
+                        if (!errorMsg.includes('Extension context invalidated')) {
+                            log('pin captured media failed', failure);
+                        }
                         resolve(failure);
                         return;
                     }
@@ -1119,8 +1122,11 @@
                 });
             });
         } catch (error) {
-            log('pin captured media exception', error);
-            return Promise.resolve({ ok: false, error: String(error && error.message || error) });
+            const errorMsg = String(error && error.message || error);
+            if (!errorMsg.includes('Extension context invalidated')) {
+                log('pin captured media exception', error);
+            }
+            return Promise.resolve({ ok: false, error: errorMsg });
         }
     }
 
