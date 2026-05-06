@@ -641,7 +641,7 @@ function findMuxedMediaCandidateInCandidates(urls, bundle) {
     const matches = candidates.filter(item =>
         !item.isAudio &&
         (!video.assetId || item.assetId === video.assetId) &&
-        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.35) &&
+        (!Number.isFinite(video.duration) || !Number.isFinite(item.duration) || video.duration <= 0 || item.duration <= 0 || Math.abs(item.duration - video.duration) <= 0.8) &&
         !/dash/i.test(String(item.tag || ''))
     );
 
@@ -658,7 +658,7 @@ function applyDurationHint(candidates, hint) {
     const exactish = candidates.filter(item =>
         Number.isFinite(item.duration) &&
         item.duration > 0 &&
-        Math.abs(item.duration - hint.duration) <= 0.35
+        Math.abs(item.duration - hint.duration) <= 0.8
     );
 
     if (exactish.length > 0) {
@@ -784,7 +784,7 @@ function getGroupDurationStats(videoCandidates, hint) {
 
     const deltas = finiteDurations.map(duration => Math.abs(duration - hint.duration));
     const minDelta = Math.min(...deltas);
-    const matchingCount = deltas.filter(delta => delta <= 0.35).length;
+    const matchingCount = deltas.filter(delta => delta <= 0.8).length;
 
     if (matchingCount > 0) {
         return {
@@ -794,11 +794,11 @@ function getGroupDurationStats(videoCandidates, hint) {
         };
     }
 
-    if (minDelta <= 1.0) {
+    if (minDelta <= 1.5) {
         return {
             bucket: 1,
             delta: minDelta,
-            matchingCount: 0
+            matchingCount: finiteDurations.filter(d => Math.abs(d - hint.duration) <= 1.5).length
         };
     }
 

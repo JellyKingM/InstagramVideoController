@@ -1017,7 +1017,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle, tolerance = 0.35) {
+    function isBundleDurationCompatible(video, bundle, tolerance = 0.8) {
         if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
             return false;
         }
@@ -1176,7 +1176,6 @@
                 if (directBundle && directBundle.video && directBundle.video.url &&
                     (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
                     
-                    // 인스타그램이 다른 영상의 번들을 재사용하는 경우를 방지하기 위해 재생 시간 검증 수행
                     if (isBundleDurationCompatible(targetVideo, directBundle)) {
                         const explicitResponse = await chrome.runtime.sendMessage({
                             downloadMediaBundle: {
@@ -1208,9 +1207,7 @@
                 const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
                 const hint = buildVideoMediaHint(targetVideo);
                 const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
-                const downloadEntries = focusedEntries.length > 0
-                    ? focusedEntries
-                    : (trackedMedia.entries || []);
+                const downloadEntries = focusedEntries.length > 0 ? focusedEntries : (trackedMedia.entries || []);
                 const downloadUrls = downloadEntries
                     .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
                     .filter(Boolean);
@@ -1220,8 +1217,7 @@
                     mediaSourceId: trackedMedia.mediaSourceId,
                     urlCount: trackedMedia.urls.length,
                     focusedUrlCount: downloadUrls.length,
-                    focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : '',
-                    debug: trackedMedia.debug || {}
+                    focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : ''
                 });
 
                 if (downloadUrls.length > 0) {
@@ -1246,36 +1242,8 @@
                     }
                     log('tracked blob media download failed', trackedResponse);
                 }
-                            scheduleDownloadButtonReset(1800);
-                        }
-                        return;
-                    }
-                    log('explicit media bundle download failed', explicitResponse);
-                }
 
-                if (targetVideo === sideBoxVideo && !sideboxIdentityMatches) {
-                    log('skipping stale locked sidebox bundle', {
-                        currentIdentity,
-                        sideBoxVideoIdentity,
-                        lockedSideBoxIdentity
-                    });
-                }
-
-                const capturedResponse = targetVideo === sideBoxVideo && lockedSideBoxBundle
-                    ? { ok: false, error: sideboxIdentityMatches ? 'locked sidebox bundle download failed' : 'stale sidebox identity' }
-                    : await downloadCapturedVideoWithRetry(targetVideo);
-                if (capturedResponse && capturedResponse.ok) {
-                    log('captured media download started', capturedResponse);
-                    if (capturedResponse.mergeStarted) {
-                        setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
-                        scheduleDownloadButtonReset(5000);
-                    } else {
-                        setDownloadButtonState('Started', true, 'Download started');
-                        scheduleDownloadButtonReset(1800);
-                    }
-                    return;
-                }
-
+                // 3. 마지막 수단: Performance API 또는 기본 URL 시도
                 const performanceUrl = targetVideo === sideBoxVideo ? '' : findPerformanceVideoUrl(targetVideo);
                 if (performanceUrl) {
                     const response = await chrome.runtime.sendMessage({
@@ -1285,46 +1253,39 @@
                         }
                     });
                     if (response && response.ok) {
-                        log('performance video download started', {
-                            url: performanceUrl,
-                            downloadId: response.downloadId
-                        });
+                        log('performance video download started', { url: performanceUrl });
                         setDownloadButtonState('Started', true, 'Download started');
                         scheduleDownloadButtonReset(1800);
                         return;
                     }
                 }
 
-                throw new Error(capturedResponse && capturedResponse.error
-                    ? capturedResponse.error
-                    : 'no matching media request for current sidebox video');
-            }
-
-            const response = await chrome.runtime.sendMessage({
-                downloadVideo: {
-                    url: sourceUrl,
-                    filename: getDownloadFileName(sourceUrl)
+                throw new Error('no matching media request or direct bundle found');
+            } else {
+                // 블롭이 아닌 일반 비디오의 경우
+                const response = await chrome.runtime.sendMessage({
+                    downloadVideo: {
+                        url: sourceUrl,
+                        filename: getDownloadFileName(sourceUrl)
+                    }
+                });
+                if (!response || !response.ok) {
+                    throw new Error(response && response.error ? response.error : 'download request failed');
                 }
-            });
-            if (!response || !response.ok) {
-                throw new Error(response && response.error ? response.error : 'download request failed');
+                log('video download started', { url: sourceUrl });
+                setDownloadButtonState('Started', true, 'Download started');
+                scheduleDownloadButtonReset(1800);
             }
-            log('video download started', {
-                url: sourceUrl,
-                downloadId: response.downloadId
-            });
-            setDownloadButtonState('Started', true, 'Download started');
-            scheduleDownloadButtonReset(1800);
         } catch (error) {
-            log('video download fallback', error);
+            log('video download failed', error);
             const errorMessage = String(error && error.message || error);
             if (errorMessage.includes('Extension context invalidated')) {
-                setDownloadButtonState('Reload page', true, 'Extension was updated. Reload the Instagram page and try again.');
+                setDownloadButtonState('Reload page', true, 'Extension context invalidated. Please reload.');
                 scheduleDownloadButtonReset(5000);
                 return;
             }
-            setDownloadButtonState('Failed', true, errorMessage);
-            scheduleDownloadButtonReset(2800);
+            setDownloadButtonState('Failed', false, errorMessage);
+            scheduleDownloadButtonReset(3000);
             if (diagnostics.guessedType !== 'blob') {
                 window.open(sourceUrl, '_blank', 'noopener,noreferrer');
             }
