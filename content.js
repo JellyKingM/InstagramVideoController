@@ -1067,66 +1067,93 @@
         return true;
     }
 
-    function pinCapturedMediaForVideo(video) {
+    async function pinCapturedMediaForVideo(video) {
         if (!(video instanceof HTMLVideoElement)) {
-            return Promise.resolve({ ok: false, error: 'invalid target video' });
+            return { ok: false, error: 'invalid target video' };
         }
 
         try {
+            const videoIdentity = getVideoIdentity(video);
+            const sourceUrl = video.currentSrc || video.src || '';
             const hint = buildVideoMediaHint(video);
+            
+            // 블롭 추적 데이터에서 에셋 키 가져오기 (매칭 정확도 극대화)
+            if (sourceUrl.startsWith('blob:')) {
+                const trackedMedia = await requestMediaMapForBlobUrl(sourceUrl);
+                if (trackedMedia && trackedMedia.urls.length > 0) {
+                    const entries = trackedMedia.urls
+                        .map(url => getCapturedMediaEntry(url))
+                        .filter(Boolean);
+                    const assetKey = (entries.find(e => e.assetKey) || {}).assetKey;
+                    if (assetKey) {
+                        hint.assetId = assetKey; // 백그라운드에 에셋 키 전달
+                    }
+                }
+            }
+
             return new Promise(resolve => {
                 chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
                     if (chrome.runtime.lastError) {
                         const errorMsg = chrome.runtime.lastError.message || '';
-                        const failure = {
-                            ok: false,
-                            error: errorMsg
-                        };
+                        const failure = { ok: false, error: errorMsg };
                         if (!errorMsg.includes('Extension context invalidated')) {
                             log('pin captured media failed', failure);
                         }
                         resolve(failure);
                         return;
                     }
-                    if (response && response.ok && response.bundle && !isBundleDurationCompatible(video, response.bundle)) {
-                        const failure = {
-                            ok: false,
-                            error: 'bundle duration mismatch',
-                            expectedDuration: Number(video.duration || 0),
-                            actualDuration: Number(response.bundle.video && response.bundle.video.duration || 0),
-                            bundle: response.bundle
-                        };
-                        lastRejectedBundleInfo = {
-                            expectedDuration: failure.expectedDuration,
-                            actualDuration: failure.actualDuration,
-                            assetId: response.bundle.video && response.bundle.video.assetId || '',
-                            tag: response.bundle.video && response.bundle.video.tag || ''
-                        };
-                        log('rejecting pinned media due to duration mismatch', {
-                            video: describeVideo(video),
-                            failure
-                        });
-                        resolve(failure);
-                        return;
-                    }
-                    if (response && response.ok && response.bundle && shouldReplaceCapturedBundle(video, response.bundle)) {
-                        capturedMediaBundleByVideo.set(video, response.bundle);
-                        mediaIdentityByVideo.set(video, getVideoIdentity(video));
-                        if (isCurrentSideBoxVideoIdentity(video) && !lockedSideBoxBundle) {
-                            lockedSideBoxBundle = response.bundle;
-                            lockedSideBoxIdentity = sideBoxVideoIdentity;
+                    
+                    if (response && response.ok && response.bundle) {
+                        // 1차 필터: 재생 시간 검증
+                        if (!isBundleDurationCompatible(video, response.bundle)) {
+                            const failure = {
+                                ok: false,
+                                error: 'bundle duration mismatch',
+                                expectedDuration: Number(video.duration || 0),
+                                actualDuration: Number(response.bundle.video && response.bundle.video.duration || 0),
+                                bundle: response.bundle
+                            };
+                            lastRejectedBundleInfo = {
+                                expectedDuration: failure.expectedDuration,
+                                actualDuration: failure.actualDuration,
+                                assetId: response.bundle.video && response.bundle.video.assetId || '',
+                                tag: response.bundle.video && response.bundle.video.tag || ''
+                            };
+                            log('rejecting pinned media due to duration mismatch', {
+                                video: describeVideo(video),
+                                failure
+                            });
+                            resolve(failure);
+                            return;
+                        }
+
+                        // 2차 필터: 에셋 키 검증 (힌트에 있었는데 결과가 다르면 거부)
+                        if (hint.assetId && response.bundle.video && response.bundle.video.assetId && String(response.bundle.video.assetId) !== String(hint.assetId)) {
+                            const failure = { ok: false, error: 'asset key mismatch', bundle: response.bundle };
+                            log('rejecting pinned media due to asset key mismatch', { video: describeVideo(video), failure });
+                            resolve(failure);
+                            return;
+                        }
+
+                        if (shouldReplaceCapturedBundle(video, response.bundle)) {
+                            capturedMediaBundleByVideo.set(video, response.bundle);
+                            mediaIdentityByVideo.set(video, videoIdentity);
+                            
+                            // 사이드박스가 현재 비디오를 가리키고 있다면 번들 고정
+                            if (isCurrentSideBoxVideoIdentity(video)) {
+                                lockedSideBoxBundle = response.bundle;
+                                lockedSideBoxIdentity = videoIdentity;
+                            }
                         }
                     }
+                    
                     log('pinned captured media', response);
-                    resolve(response || { ok: false, error: 'empty pin response' });
+                    resolve(response || { ok: false, error: 'empty response' });
                 });
             });
         } catch (error) {
-            const errorMsg = String(error && error.message || error);
-            if (!errorMsg.includes('Extension context invalidated')) {
-                log('pin captured media exception', error);
-            }
-            return Promise.resolve({ ok: false, error: errorMsg });
+            log('pin captured media error', error);
+            return { ok: false, error: String(error) };
         }
     }
 
