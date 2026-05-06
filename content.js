@@ -1017,7 +1017,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle, tolerance = 0.2) {
+    function isBundleDurationCompatible(video, bundle) {
         if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
             return false;
         }
@@ -1029,7 +1029,8 @@
             return true;
         }
 
-        return Math.abs(videoDuration - bundleDuration) <= tolerance;
+        // 허용 오차 기능 삭제: 소수점 2자리까지 완벽히 일치해야 함
+        return videoDuration.toFixed(2) === bundleDuration.toFixed(2);
     }
 
     function getVideoIdentity(video) {

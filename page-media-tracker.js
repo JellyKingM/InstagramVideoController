@@ -125,7 +125,8 @@
             scopedCandidates = scopedCandidates.filter(item => {
                 const itemDuration = Number(item.duration || 0);
                 if (itemDuration <= 0) return true;
-                return Math.abs(itemDuration - effectiveDurationHint) <= 0.2;
+                // 허용 오차 기능 삭제: 소수점 2자리까지 일치해야 함
+                return itemDuration.toFixed(2) === effectiveDurationHint.toFixed(2);
             });
         }
 
