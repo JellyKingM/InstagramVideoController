@@ -99,13 +99,13 @@
         }
 
         if (durationHint > 0) {
-            const sameDurationCandidates = scopedCandidates.filter(item => {
+            // 재생 시간이 명시된 후보 중 힌트와 맞는 것만 남김
+            // 재생 시간이 없는 후보는 일단 유지 (나중에 byteLength 등으로 확인 가능하므로)
+            scopedCandidates = scopedCandidates.filter(item => {
                 const itemDuration = Number(item.duration || 0);
-                return itemDuration > 0 && Math.abs(itemDuration - durationHint) <= 0.35;
+                if (itemDuration <= 0) return true;
+                return Math.abs(itemDuration - durationHint) <= 0.8;
             });
-            if (sameDurationCandidates.length > 0) {
-                scopedCandidates = sameDurationCandidates;
-            }
         }
 
         if (Number.isFinite(expectedByteLength) && expectedByteLength > 0) {
@@ -203,23 +203,25 @@
     }
 
     function compareRecentFetches(a, b, meta) {
-        const preferredBeforeCount = meta ? meta.claimedCount : 0;
-        const aSubstantial = a.rangeLength >= 65536 ? 1 : 0;
-        const bSubstantial = b.rangeLength >= 65536 ? 1 : 0;
-        if (aSubstantial !== bSubstantial) {
-            return bSubstantial - aSubstantial;
+        // 1. 시간적 근접성 최우선 (방금 가져온 것이 내 것일 확률이 가장 높음)
+        // 단, 0.1초 이내라면 크기 비교를 수행
+        const timeDiff = Math.abs(a.at - b.at);
+        if (timeDiff > 100) {
+            return b.at - a.at; // 최신순
         }
 
-        if (preferredBeforeCount === 0) {
-            if (a.at !== b.at) {
-                return a.at - b.at;
-            }
-            return b.rangeLength - a.rangeLength;
+        // 2. 실질적인 데이터 조각(Substantial) 선호
+        const aSub = a.rangeLength >= 10240 ? 1 : 0; // 10KB 이상
+        const bSub = b.rangeLength >= 10240 ? 1 : 0;
+        if (aSub !== bSub) {
+            return bSub - aSub;
         }
 
+        // 3. 더 최신 것
         if (a.at !== b.at) {
-            return a.at - b.at;
+            return b.at - a.at;
         }
+
         return b.rangeLength - a.rangeLength;
     }
 
