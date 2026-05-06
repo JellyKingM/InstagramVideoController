@@ -1017,7 +1017,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle, tolerance = 0.8) {
+    function isBundleDurationCompatible(video, bundle, tolerance = 0.3) {
         if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
             return false;
         }
@@ -1180,6 +1180,12 @@
     async function downloadActiveVideo() {
         const targetVideo = getDownloadTargetVideo();
         if (!targetVideo) return;
+
+        // 사이드박스 변수에 링크된 비디오가 현재 타겟인지 엄격히 확인
+        if (sideBoxVideo && targetVideo !== sideBoxVideo) {
+            log('ignoring download request: target video does not match sidebox linked video');
+            return;
+        }
 
         activeVideo = targetVideo;
         setDownloadButtonState('Downloading...', true, 'Downloading current video');
