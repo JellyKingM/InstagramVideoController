@@ -188,7 +188,10 @@
     function describeVideo(video) {
         if (!(video instanceof HTMLVideoElement)) return String(video);
         const rect = video.getBoundingClientRect();
-        return `video{currentTime=${Number(video.currentTime || 0).toFixed(2)},duration=${Number(video.duration || 0).toFixed(2)},paused=${video.paused},muted=${video.muted},volume=${Number(video.volume || 0).toFixed(2)},size=${Math.round(rect.width)}x${Math.round(rect.height)}}`;
+        const visibleArea = getVisibleArea(video);
+        const viewportArea = window.innerWidth * window.innerHeight;
+        const visibilityPct = viewportArea > 0 ? ((visibleArea / viewportArea) * 100).toFixed(1) : '0';
+        return `video{currentTime=${Number(video.currentTime || 0).toFixed(2)},duration=${Number(video.duration || 0).toFixed(2)},paused=${video.paused},muted=${video.muted},visibility=${visibilityPct}%,size=${Math.round(rect.width)}x${Math.round(rect.height)}}`;
     }
 
     function isIgnorableMediaError(error) {
@@ -691,28 +694,38 @@
 
         const videos = getVideos();
         const eligibleVideos = videos.filter(isEligibleVideo);
-        const playing = eligibleVideos.find(video => !video.paused && !video.ended);
-        if (playing) return playing;
-
-        if (eligibleVideos.length > 0) {
-            return eligibleVideos
-                .sort((a, b) => {
-                    const areaDiff = getVisibleArea(b) - getVisibleArea(a);
-                    if (areaDiff !== 0) return areaDiff;
-
-                    const centerA = getVideoCenterDistance(a);
-                    const centerB = getVideoCenterDistance(b);
-                    if (centerA !== centerB) return centerA - centerB;
-
-                    return getDomDepth(b) - getDomDepth(a);
-                })[0] || null;
+        
+        if (eligibleVideos.length === 0) {
+            return isPostPage() ? null : (videos[0] || null);
         }
 
-        if (isPostPage()) {
-            return null;
+        const candidates = eligibleVideos.map(video => {
+            const visibleArea = getVisibleArea(video);
+            const centerDist = getVideoCenterDistance(video);
+            const isPlaying = !video.paused && !video.ended;
+            
+            const score = (visibleArea * 1.5) - (centerDist * 2) + (isPlaying ? 50000 : 0);
+            
+            return { video, score, visibleArea, centerDist, isPlaying };
+        });
+
+        candidates.sort((a, b) => b.score - a.score);
+
+        if (isReelsPage() && candidates.length > 1) {
+            const logLines = candidates.map((c, i) => 
+                `[#${i}] score=${c.score.toFixed(0)} area=${c.visibleArea.toFixed(0)} dist=${c.centerDist.toFixed(0)} playing=${c.isPlaying} ${describeVideo(c.video)}`
+            );
+            log('pickActiveVideo candidates:', logLines.join(' | '));
         }
 
-        return videos[0] || null;
+        const best = candidates[0].video;
+        
+        const playingCandidate = candidates.find(c => c.isPlaying && c.visibleArea > candidates[0].visibleArea * 0.8);
+        if (playingCandidate && playingCandidate.video !== best) {
+            return playingCandidate.video;
+        }
+
+        return best;
     }
 
     function getVideoCenterDistance(video) {
