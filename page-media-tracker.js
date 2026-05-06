@@ -21,6 +21,24 @@
 
     let mediaSourceCounter = 0;
 
+    // 메모리 누수 방지를 위한 주기적 청소 (Map 객체 관리)
+    function pruneGlobalMaps() {
+        const now = Date.now();
+        const expiry = 60000; // 1분 지난 데이터 삭제
+        for (const [id, meta] of mediaSourceMeta.entries()) {
+            if (now - meta.createdAt > expiry && meta.claimedCount > 0) {
+                mediaSourceMeta.delete(id);
+                mediaSourceEntries.delete(id);
+                mediaSourceDebug.delete(id);
+                // 역방향 맵도 청소
+                for (const [blobUrl, msId] of blobUrlToMediaSourceId.entries()) {
+                    if (msId === id) blobUrlToMediaSourceId.delete(blobUrl);
+                }
+            }
+        }
+    }
+    setInterval(pruneGlobalMaps, 30000);
+
     function isMediaRequestUrl(url) {
         return typeof url === 'string' && /\.mp4($|\?)/i.test(url);
     }
@@ -107,7 +125,7 @@
             scopedCandidates = scopedCandidates.filter(item => {
                 const itemDuration = Number(item.duration || 0);
                 if (itemDuration <= 0) return true;
-                return Math.abs(itemDuration - effectiveDurationHint) <= 0.8;
+                return Math.abs(itemDuration - effectiveDurationHint) <= 0.2;
             });
         }
 

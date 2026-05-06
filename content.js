@@ -1017,7 +1017,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle, tolerance = 0.05) {
+    function isBundleDurationCompatible(video, bundle, tolerance = 0.2) {
         if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
             return false;
         }
@@ -1065,6 +1065,10 @@
         }
 
         return true;
+    }
+
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async function pinCapturedMediaForVideo(video) {
