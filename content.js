@@ -1017,7 +1017,7 @@
         return hint;
     }
 
-    function isBundleDurationCompatible(video, bundle, tolerance = 0.3) {
+    function isBundleDurationCompatible(video, bundle, tolerance = 0.05) {
         if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) {
             return false;
         }
@@ -1316,15 +1316,12 @@
 
                     // 재시도 루프 계속 (데이터가 아직 없을 수 있음)
                     if (attempt >= maxRetries) {
-                        throw new Error('no matching media request or direct bundle found after 10 attempts');
+                        throw new Error('no matching media request found after 10 attempts');
                     }
                 } else {
-                    // 블롭이 아닌 일반 비디오의 경우 재시도 없이 즉시 처리
+                    // 블롭이 아닌 일반 비디오의 경우
                     const response = await chrome.runtime.sendMessage({
-                        downloadVideo: {
-                            url: sourceUrl,
-                            filename: getDownloadFileName(sourceUrl)
-                        }
+                        downloadVideo: { url: sourceUrl, filename: getDownloadFileName(sourceUrl) }
                     });
                     if (!response || !response.ok) {
                         throw new Error(response && response.error ? response.error : 'download request failed');
@@ -1337,22 +1334,10 @@
             } catch (error) {
                 log(`video download attempt ${attempt} failed`, error);
                 if (attempt >= maxRetries) {
+                    setDownloadButtonState('Failed', false, String(error.message || error));
+                    scheduleDownloadButtonReset(3000);
                     throw error;
                 }
-            }
-        }
-    }
-            log('video download failed', error);
-            const errorMessage = String(error && error.message || error);
-            if (errorMessage.includes('Extension context invalidated')) {
-                setDownloadButtonState('Reload page', true, 'Extension context invalidated. Please reload.');
-                scheduleDownloadButtonReset(5000);
-                return;
-            }
-            setDownloadButtonState('Failed', false, errorMessage);
-            scheduleDownloadButtonReset(3000);
-            if (diagnostics.guessedType !== 'blob') {
-                window.open(sourceUrl, '_blank', 'noopener,noreferrer');
             }
         }
     }
