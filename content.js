@@ -1159,6 +1159,52 @@
 
         try {
             if (diagnostics.guessedType === 'blob') {
+                const currentIdentity = getVideoIdentity(targetVideo);
+                const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
+                const sideboxIdentityMatches = targetVideo !== sideBoxVideo || (
+                    !!sideBoxVideoIdentity &&
+                    currentIdentity === sideBoxVideoIdentity &&
+                    lockedSideBoxIdentity === sideBoxVideoIdentity
+                );
+                const directBundle = targetVideo === sideBoxVideo &&
+                    lockedSideBoxBundle &&
+                    sideboxIdentityMatches
+                    ? lockedSideBoxBundle
+                    : capturedMediaBundleByVideo.get(targetVideo);
+
+                // 1. 직접 포착된(Pinned) 미디어 번들이 있는지 먼저 확인 (가장 정확함)
+                if (directBundle && directBundle.video && directBundle.video.url &&
+                    (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
+                    
+                    // 인스타그램이 다른 영상의 번들을 재사용하는 경우를 방지하기 위해 재생 시간 검증 수행
+                    if (isBundleDurationCompatible(targetVideo, directBundle)) {
+                        const explicitResponse = await chrome.runtime.sendMessage({
+                            downloadMediaBundle: {
+                                bundle: directBundle,
+                                filename: getDownloadFileName(sourceUrl)
+                            }
+                        });
+                        if (explicitResponse && explicitResponse.ok) {
+                            log('explicit media bundle download started', explicitResponse);
+                            if (explicitResponse.mergeStarted) {
+                                setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
+                                scheduleDownloadButtonReset(5000);
+                            } else {
+                                setDownloadButtonState('Started', true, 'Download started');
+                                scheduleDownloadButtonReset(1800);
+                            }
+                            return;
+                        }
+                        log('explicit media bundle download failed', explicitResponse);
+                    } else {
+                        log('skipping captured bundle due to duration mismatch in download step', {
+                            video: describeVideo(targetVideo),
+                            bundle: directBundle.video
+                        });
+                    }
+                }
+
+                // 2. 직접 번들이 없거나 실패한 경우, 블롭 URL을 통한 추적 로직 시도
                 const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
                 const hint = buildVideoMediaHint(targetVideo);
                 const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
@@ -1168,14 +1214,14 @@
                 const downloadUrls = downloadEntries
                     .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
                     .filter(Boolean);
+                
                 log('tracked blob media urls', {
                     blobUrl: sourceUrl,
                     mediaSourceId: trackedMedia.mediaSourceId,
                     urlCount: trackedMedia.urls.length,
                     focusedUrlCount: downloadUrls.length,
                     focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : '',
-                    debug: trackedMedia.debug || {},
-                    urls: downloadUrls
+                    debug: trackedMedia.debug || {}
                 });
 
                 if (downloadUrls.length > 0) {
@@ -1200,34 +1246,6 @@
                     }
                     log('tracked blob media download failed', trackedResponse);
                 }
-
-                const currentIdentity = getVideoIdentity(targetVideo);
-                const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
-                const sideboxIdentityMatches = targetVideo !== sideBoxVideo || (
-                    !!sideBoxVideoIdentity &&
-                    currentIdentity === sideBoxVideoIdentity &&
-                    lockedSideBoxIdentity === sideBoxVideoIdentity
-                );
-                const directBundle = targetVideo === sideBoxVideo &&
-                    lockedSideBoxBundle &&
-                    sideboxIdentityMatches
-                    ? lockedSideBoxBundle
-                    : capturedMediaBundleByVideo.get(targetVideo);
-                if (directBundle && directBundle.video && directBundle.video.url &&
-                    (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
-                    const explicitResponse = await chrome.runtime.sendMessage({
-                        downloadMediaBundle: {
-                            bundle: directBundle,
-                            filename: getDownloadFileName(sourceUrl)
-                        }
-                    });
-                    if (explicitResponse && explicitResponse.ok) {
-                        log('explicit media bundle download started', explicitResponse);
-                        if (explicitResponse.mergeStarted) {
-                            setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
-                            scheduleDownloadButtonReset(5000);
-                        } else {
-                            setDownloadButtonState('Started', true, 'Download started');
                             scheduleDownloadButtonReset(1800);
                         }
                         return;
