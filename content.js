@@ -1188,43 +1188,104 @@
         }
 
         activeVideo = targetVideo;
-        setDownloadButtonState('Downloading...', true, 'Downloading current video');
+        const maxRetries = 10;
+        let attempt = 0;
 
-        const diagnostics = getVideoDownloadDiagnostics(targetVideo);
-        log('video download diagnostics', diagnostics);
+        while (attempt < maxRetries) {
+            attempt++;
+            if (attempt > 1) {
+                setDownloadButtonState(`Retry ${attempt}/${maxRetries}...`, true, 'Waiting for media segments to load');
+                // 재시도 시점에 다시 한 번 미디어 고정 시도
+                await pinCapturedMediaForVideo(targetVideo);
+                await wait(1500);
+            } else {
+                setDownloadButtonState('Downloading...', true, 'Downloading current video');
+            }
 
-        const sourceUrl = diagnostics.primaryUrl;
-        if (!sourceUrl) return;
+            const diagnostics = getVideoDownloadDiagnostics(targetVideo);
+            log(`video download diagnostics (attempt ${attempt})`, diagnostics);
 
-        try {
-            if (diagnostics.guessedType === 'blob') {
-                const currentIdentity = getVideoIdentity(targetVideo);
-                const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
-                const sideboxIdentityMatches = targetVideo !== sideBoxVideo || (
-                    !!sideBoxVideoIdentity &&
-                    currentIdentity === sideBoxVideoIdentity &&
-                    lockedSideBoxIdentity === sideBoxVideoIdentity
-                );
-                const directBundle = targetVideo === sideBoxVideo &&
-                    lockedSideBoxBundle &&
-                    sideboxIdentityMatches
-                    ? lockedSideBoxBundle
-                    : capturedMediaBundleByVideo.get(targetVideo);
+            const sourceUrl = diagnostics.primaryUrl;
+            if (!sourceUrl) {
+                if (attempt >= maxRetries) throw new Error('video source url not found');
+                continue;
+            }
 
-                // 1. 직접 포착된(Pinned) 미디어 번들이 있는지 먼저 확인 (가장 정확함)
-                if (directBundle && directBundle.video && directBundle.video.url &&
-                    (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
+            try {
+                if (diagnostics.guessedType === 'blob') {
+                    const currentIdentity = getVideoIdentity(targetVideo);
+                    const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
+                    const sideboxIdentityMatches = targetVideo !== sideBoxVideo || (
+                        !!sideBoxVideoIdentity &&
+                        currentIdentity === sideBoxVideoIdentity &&
+                        lockedSideBoxIdentity === sideBoxVideoIdentity
+                    );
+                    const directBundle = targetVideo === sideBoxVideo &&
+                        lockedSideBoxBundle &&
+                        sideboxIdentityMatches
+                        ? lockedSideBoxBundle
+                        : capturedMediaBundleByVideo.get(targetVideo);
+
+                    // 1. 직접 포착된(Pinned) 미디어 번들이 있는지 먼저 확인 (가장 정확함)
+                    if (directBundle && directBundle.video && directBundle.video.url &&
+                        (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
+                        
+                        if (isBundleDurationCompatible(targetVideo, directBundle)) {
+                            const explicitResponse = await chrome.runtime.sendMessage({
+                                downloadMediaBundle: {
+                                    bundle: directBundle,
+                                    filename: getDownloadFileName(sourceUrl)
+                                }
+                            });
+                            if (explicitResponse && explicitResponse.ok) {
+                                log('explicit media bundle download started', explicitResponse);
+                                if (explicitResponse.mergeStarted) {
+                                    setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
+                                    scheduleDownloadButtonReset(5000);
+                                } else {
+                                    setDownloadButtonState('Started', true, 'Download started');
+                                    scheduleDownloadButtonReset(1800);
+                                }
+                                return;
+                            }
+                            log('explicit media bundle download failed', explicitResponse);
+                        } else {
+                            log('skipping captured bundle due to duration mismatch in download step', {
+                                video: describeVideo(targetVideo),
+                                bundle: directBundle.video
+                            });
+                        }
+                    }
+
+                    // 2. 직접 번들이 없거나 실패한 경우, 블롭 URL을 통한 추적 로직 시도
+                    const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
+                    const hint = buildVideoMediaHint(targetVideo);
+                    const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
+                    const downloadEntries = focusedEntries.length > 0 ? focusedEntries : (trackedMedia.entries || []);
+                    const downloadUrls = downloadEntries
+                        .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
+                        .filter(Boolean);
                     
-                    if (isBundleDurationCompatible(targetVideo, directBundle)) {
-                        const explicitResponse = await chrome.runtime.sendMessage({
-                            downloadMediaBundle: {
-                                bundle: directBundle,
+                    log('tracked blob media urls', {
+                        blobUrl: sourceUrl,
+                        mediaSourceId: trackedMedia.mediaSourceId,
+                        urlCount: trackedMedia.urls.length,
+                        focusedUrlCount: downloadUrls.length,
+                        focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : ''
+                    });
+
+                    if (downloadUrls.length > 0) {
+                        const trackedResponse = await chrome.runtime.sendMessage({
+                            downloadTrackedBlobUrls: {
+                                entries: downloadEntries,
+                                urls: downloadUrls,
+                                hint,
                                 filename: getDownloadFileName(sourceUrl)
                             }
                         });
-                        if (explicitResponse && explicitResponse.ok) {
-                            log('explicit media bundle download started', explicitResponse);
-                            if (explicitResponse.mergeStarted) {
+                        if (trackedResponse && trackedResponse.ok) {
+                            log('tracked blob media download started', trackedResponse);
+                            if (trackedResponse.mergeStarted) {
                                 setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
                                 scheduleDownloadButtonReset(5000);
                             } else {
@@ -1233,89 +1294,54 @@
                             }
                             return;
                         }
-                        log('explicit media bundle download failed', explicitResponse);
-                    } else {
-                        log('skipping captured bundle due to duration mismatch in download step', {
-                            video: describeVideo(targetVideo),
-                            bundle: directBundle.video
-                        });
+                        log('tracked blob media download failed', trackedResponse);
                     }
-                }
 
-                // 2. 직접 번들이 없거나 실패한 경우, 블롭 URL을 통한 추적 로직 시도
-                const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
-                const hint = buildVideoMediaHint(targetVideo);
-                const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
-                const downloadEntries = focusedEntries.length > 0 ? focusedEntries : (trackedMedia.entries || []);
-                const downloadUrls = downloadEntries
-                    .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
-                    .filter(Boolean);
-                
-                log('tracked blob media urls', {
-                    blobUrl: sourceUrl,
-                    mediaSourceId: trackedMedia.mediaSourceId,
-                    urlCount: trackedMedia.urls.length,
-                    focusedUrlCount: downloadUrls.length,
-                    focusedAssetKey: focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : ''
-                });
+                    // 3. 마지막 수단: Performance API 또는 기본 URL 시도
+                    const performanceUrl = targetVideo === sideBoxVideo ? '' : findPerformanceVideoUrl(targetVideo);
+                    if (performanceUrl) {
+                        const response = await chrome.runtime.sendMessage({
+                            downloadVideo: {
+                                url: performanceUrl,
+                                filename: getDownloadFileName(performanceUrl)
+                            }
+                        });
+                        if (response && response.ok) {
+                            log('performance video download started', { url: performanceUrl });
+                            setDownloadButtonState('Started', true, 'Download started');
+                            scheduleDownloadButtonReset(1800);
+                            return;
+                        }
+                    }
 
-                if (downloadUrls.length > 0) {
-                    const trackedResponse = await chrome.runtime.sendMessage({
-                        downloadTrackedBlobUrls: {
-                            entries: downloadEntries,
-                            urls: downloadUrls,
-                            hint,
+                    // 재시도 루프 계속 (데이터가 아직 없을 수 있음)
+                    if (attempt >= maxRetries) {
+                        throw new Error('no matching media request or direct bundle found after 10 attempts');
+                    }
+                } else {
+                    // 블롭이 아닌 일반 비디오의 경우 재시도 없이 즉시 처리
+                    const response = await chrome.runtime.sendMessage({
+                        downloadVideo: {
+                            url: sourceUrl,
                             filename: getDownloadFileName(sourceUrl)
                         }
                     });
-                    if (trackedResponse && trackedResponse.ok) {
-                        log('tracked blob media download started', trackedResponse);
-                        if (trackedResponse.mergeStarted) {
-                            setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
-                            scheduleDownloadButtonReset(5000);
-                        } else {
-                            setDownloadButtonState('Started', true, 'Download started');
-                            scheduleDownloadButtonReset(1800);
-                        }
-                        return;
+                    if (!response || !response.ok) {
+                        throw new Error(response && response.error ? response.error : 'download request failed');
                     }
-                    log('tracked blob media download failed', trackedResponse);
+                    log('video download started', { url: sourceUrl });
+                    setDownloadButtonState('Started', true, 'Download started');
+                    scheduleDownloadButtonReset(1800);
+                    return;
                 }
-
-                // 3. 마지막 수단: Performance API 또는 기본 URL 시도
-                const performanceUrl = targetVideo === sideBoxVideo ? '' : findPerformanceVideoUrl(targetVideo);
-                if (performanceUrl) {
-                    const response = await chrome.runtime.sendMessage({
-                        downloadVideo: {
-                            url: performanceUrl,
-                            filename: getDownloadFileName(performanceUrl)
-                        }
-                    });
-                    if (response && response.ok) {
-                        log('performance video download started', { url: performanceUrl });
-                        setDownloadButtonState('Started', true, 'Download started');
-                        scheduleDownloadButtonReset(1800);
-                        return;
-                    }
+            } catch (error) {
+                log(`video download attempt ${attempt} failed`, error);
+                if (attempt >= maxRetries) {
+                    throw error;
                 }
-
-                throw new Error('no matching media request or direct bundle found');
-            } else {
-                // 블롭이 아닌 일반 비디오의 경우
-                const response = await chrome.runtime.sendMessage({
-                    downloadVideo: {
-                        url: sourceUrl,
-                        filename: getDownloadFileName(sourceUrl)
-                    }
-                });
-                if (!response || !response.ok) {
-                    throw new Error(response && response.error ? response.error : 'download request failed');
-                }
-                log('video download started', { url: sourceUrl });
-                setDownloadButtonState('Started', true, 'Download started');
-                scheduleDownloadButtonReset(1800);
             }
-        } catch (error) {
+        }
+    }
             log('video download failed', error);
             const errorMessage = String(error && error.message || error);
             if (errorMessage.includes('Extension context invalidated')) {
