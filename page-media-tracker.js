@@ -10,6 +10,7 @@
     const arrayBufferToUrl = new WeakMap();
     const viewToUrl = new WeakMap();
     const blobUrlToMediaSourceId = new Map();
+    const blobUrlToCreatedAt = new Map();
     const mediaSourceEntries = new Map();
     const mediaSourceDebug = new Map();
     const mediaSourceMeta = new Map();
@@ -18,6 +19,7 @@
     const RECENT_FETCH_TTL_MS = 15000;
 
     const blobUrlToVideoElement = new Map();
+    const MEDIA_LIFECYCLE_DURATION_DELTA = 0.35;
 
     let mediaSourceCounter = 0;
 
@@ -32,7 +34,10 @@
                 mediaSourceDebug.delete(id);
                 // 역방향 맵도 청소
                 for (const [blobUrl, msId] of blobUrlToMediaSourceId.entries()) {
-                    if (msId === id) blobUrlToMediaSourceId.delete(blobUrl);
+                    if (msId === id) {
+                        blobUrlToMediaSourceId.delete(blobUrl);
+                        blobUrlToCreatedAt.delete(blobUrl);
+                    }
                 }
             }
         }
@@ -95,15 +100,18 @@
         const meta = mediaSourceId ? mediaSourceMeta.get(mediaSourceId) : null;
         const createdAt = meta ? meta.createdAt : 0;
         const lastClaimAt = meta ? meta.lastClaimAt : 0;
-        
-        // 고정된 duration이 있으면 그것을 우선 사용
-        const effectiveDurationHint = (meta && meta.stickyDuration) || durationHint || 0;
+        const effectiveDurationHint = durationHint || (meta && meta.stickyDuration) || 0;
 
-        const candidates = recentMediaFetches.filter(item =>
+        const strictCandidates = recentMediaFetches.filter(item =>
             !item.used &&
-            item.at >= Math.max(0, createdAt - 800) &&
-            item.at >= Math.max(0, lastClaimAt - 120)
+            item.at >= Math.max(0, createdAt - 2000) &&
+            item.at >= Math.max(0, lastClaimAt - 500)
         );
+        const looseCandidates = recentMediaFetches.filter(item =>
+            !item.used &&
+            item.at >= Math.max(0, createdAt - 20000)
+        );
+        const candidates = strictCandidates.length > 0 ? strictCandidates : looseCandidates;
 
         if (candidates.length === 0) {
             return '';
@@ -111,7 +119,7 @@
 
         const preferredAssetKey = meta && meta.preferredAssetKey ? meta.preferredAssetKey : '';
         let scopedCandidates = candidates;
-        
+
         if (preferredAssetKey) {
             const sameAssetCandidates = candidates.filter(item => item.assetKey === preferredAssetKey);
             if (sameAssetCandidates.length > 0) {
@@ -120,21 +128,34 @@
         }
 
         if (effectiveDurationHint > 0) {
-            // 재생 시간이 명시된 후보 중 힌트와 맞는 것만 남김
-            // 재생 시간이 없는 후보는 일단 유지 (나중에 byteLength 등으로 확인 가능하므로)
-            scopedCandidates = scopedCandidates.filter(item => {
+            const durationFiltered = scopedCandidates.filter(item => {
                 const itemDuration = Number(item.duration || 0);
-                if (itemDuration <= 0) return true;
-                // 허용 오차 기능 삭제: 소수점 2자리까지 일치해야 함
-                return itemDuration.toFixed(2) === effectiveDurationHint.toFixed(2);
+                if (itemDuration <= 0) return false;
+                return Math.abs(itemDuration - effectiveDurationHint) <= 0.35;
             });
+            if (durationFiltered.length > 0) {
+                scopedCandidates = durationFiltered;
+            }
         }
 
         if (Number.isFinite(expectedByteLength) && expectedByteLength > 0) {
             const sameLengthCandidates = scopedCandidates.filter(item => item.byteLength === expectedByteLength);
             if (sameLengthCandidates.length > 0) {
                 scopedCandidates = sameLengthCandidates;
+            } else {
+                const closeLengthCandidates = scopedCandidates.filter(item => {
+                    const byteLength = Number(item.byteLength || 0);
+                    if (byteLength <= 0) return false;
+                    return Math.abs(byteLength - expectedByteLength) <= 1024;
+                });
+                if (closeLengthCandidates.length > 0) {
+                    scopedCandidates = closeLengthCandidates;
+                }
             }
+        }
+
+        if (scopedCandidates.length === 0) {
+            scopedCandidates = candidates;
         }
 
         scopedCandidates.sort((a, b) => compareRecentFetches(a, b, meta));
@@ -143,7 +164,9 @@
 
         if (meta) {
             meta.lastClaimAt = item.at;
-            if (!meta.preferredAssetKey && item.assetKey) {
+            const itemDuration = Number(item.duration || 0);
+            const durationLooksCorrect = !effectiveDurationHint || (itemDuration > 0 && Math.abs(itemDuration - effectiveDurationHint) <= 0.35);
+            if (!meta.preferredAssetKey && item.assetKey && durationLooksCorrect) {
                 meta.preferredAssetKey = item.assetKey;
             }
             meta.claimedCount += 1;
@@ -151,6 +174,7 @@
 
         return item.url;
     }
+
 
     function trackUrlForMediaSource(id, url) {
         if (!id || !isMediaRequestUrl(url)) return;
@@ -247,6 +271,87 @@
         return b.rangeLength - a.rangeLength;
     }
 
+    function getMediaSourceDurationHint(id) {
+        const meta = mediaSourceMeta.get(id);
+        const stickyDuration = Number(meta && meta.stickyDuration || 0);
+        if (stickyDuration > 0) return stickyDuration;
+        const entries = mediaSourceEntries.get(id) || [];
+        for (let i = entries.length - 1; i >= 0; i -= 1) {
+            const entry = entries[i];
+            const duration = Number(entry && entry.duration || 0);
+            if (duration > 0) {
+                return duration;
+            }
+        }
+        return 0;
+    }
+
+    function getMediaSourceLastEntryAt(id) {
+        const entries = mediaSourceEntries.get(id) || [];
+        let lastAt = 0;
+        for (const entry of entries) {
+            const at = Number(entry && entry.at || 0);
+            if (at > lastAt) {
+                lastAt = at;
+            }
+        }
+        return lastAt;
+    }
+
+    function findLikelyMediaSourceIdForVideo(video) {
+        if (!(video instanceof HTMLVideoElement)) return '';
+        const targetDuration = Number(video.duration || 0);
+        const now = Date.now();
+        const candidates = [];
+
+        for (const [id, meta] of mediaSourceMeta.entries()) {
+            const entries = mediaSourceEntries.get(id) || [];
+            if (entries.length === 0) continue;
+            const durationHint = getMediaSourceDurationHint(id);
+            const durationDelta = targetDuration > 0 && durationHint > 0
+                ? Math.abs(durationHint - targetDuration)
+                : Number.POSITIVE_INFINITY;
+            const durationBucket = durationDelta <= 0.35 ? 0 : durationDelta <= 1 ? 1 : 2;
+            const lastEntryAt = getMediaSourceLastEntryAt(id);
+            const age = lastEntryAt > 0 ? now - lastEntryAt : Number.POSITIVE_INFINITY;
+            const recentScore = age <= 15000 ? 0 : age <= 60000 ? 1 : 2;
+            candidates.push({
+                id,
+                durationHint,
+                durationDelta,
+                durationBucket,
+                lastEntryAt,
+                recentScore,
+                createdAt: Number(meta && meta.createdAt || 0)
+            });
+        }
+
+        if (candidates.length === 0) return '';
+
+        candidates.sort((a, b) => {
+            if (a.durationBucket !== b.durationBucket) return a.durationBucket - b.durationBucket;
+            if (a.durationDelta !== b.durationDelta) return a.durationDelta - b.durationDelta;
+            if (a.recentScore !== b.recentScore) return a.recentScore - b.recentScore;
+            if (a.lastEntryAt !== b.lastEntryAt) return b.lastEntryAt - a.lastEntryAt;
+            return b.createdAt - a.createdAt;
+        });
+
+        return candidates[0].id || '';
+    }
+
+    function bindBlobUrlToLikelyMediaSource(blobUrl, video) {
+        if (!blobUrl || !blobUrl.startsWith('blob:')) return '';
+        if (blobUrlToMediaSourceId.has(blobUrl)) {
+            return blobUrlToMediaSourceId.get(blobUrl) || '';
+        }
+        const mediaSourceId = findLikelyMediaSourceIdForVideo(video);
+        if (!mediaSourceId) return '';
+        blobUrlToMediaSourceId.set(blobUrl, mediaSourceId);
+        blobUrlToCreatedAt.set(blobUrl, Date.now());
+        blobUrlToVideoElement.set(blobUrl, video);
+        return mediaSourceId;
+    }
+
     function parseEfgPayload(rawValue) {
         if (!rawValue) return {};
         try {
@@ -269,6 +374,9 @@
                 try {
                     if (this instanceof HTMLVideoElement && typeof val === 'string' && val.startsWith('blob:')) {
                         blobUrlToVideoElement.set(val, this);
+                        if (!blobUrlToCreatedAt.has(val)) {
+                            blobUrlToCreatedAt.set(val, Date.now());
+                        }
                     }
                 } catch (_error) {
                 }
@@ -284,11 +392,30 @@
             if (object instanceof MediaSource) {
                 const id = getMediaSourceId(object);
                 blobUrlToMediaSourceId.set(result, id);
+                blobUrlToCreatedAt.set(result, Date.now());
             }
         } catch (_error) {
         }
         return result;
     };
+
+    function onVideoLifecycleEvent(event) {
+        try {
+            const video = event && event.target;
+            if (!(video instanceof HTMLVideoElement)) return;
+            const blobUrl = video.currentSrc || video.src || '';
+            if (!blobUrl || !blobUrl.startsWith('blob:')) return;
+            blobUrlToVideoElement.set(blobUrl, video);
+            if (!blobUrlToMediaSourceId.has(blobUrl)) {
+                bindBlobUrlToLikelyMediaSource(blobUrl, video);
+            }
+        } catch (_error) {
+        }
+    }
+
+    document.addEventListener('loadedmetadata', onVideoLifecycleEvent, true);
+    document.addEventListener('loadeddata', onVideoLifecycleEvent, true);
+    document.addEventListener('play', onVideoLifecycleEvent, true);
 
     const originalAddSourceBuffer = MediaSource.prototype.addSourceBuffer;
     MediaSource.prototype.addSourceBuffer = function patchedAddSourceBuffer() {
@@ -353,12 +480,33 @@
                 
                 // 클레임된 URL의 duration을 MS 메타데이터에 고정 (비디오 요소의 duration이 아직 없을 때를 대비)
                 const meta = mediaSourceMeta.get(mediaSourceId);
-                if (meta && !meta.stickyDuration) {
-                    const efg = url.includes('efg=') ? new URL(url).searchParams.get('efg') : '';
-                    const urlMeta = parseEfgPayload(efg);
-                    const urlDur = Number(urlMeta.duration_s || 0);
-                    if (urlDur > 0) {
-                        meta.stickyDuration = urlDur;
+                if (meta) {
+                    const stickyDuration = Number(meta.stickyDuration || 0);
+                    const durationShifted =
+                        stickyDuration > 0 &&
+                        durationHint > 0 &&
+                        Math.abs(stickyDuration - durationHint) > MEDIA_LIFECYCLE_DURATION_DELTA;
+
+                    if (durationShifted) {
+                        meta.preferredAssetKey = '';
+                        meta.claimedCount = 0;
+                        meta.lastClaimAt = Date.now();
+                        mediaSourceEntries.set(mediaSourceId, []);
+                        const debugEntry = getMediaDebugEntry(mediaSourceId);
+                        debugEntry.trackedCount = 0;
+                        debugEntry.heuristicCount = 0;
+                        debugEntry.lastUrl = '';
+                    }
+
+                    if (durationHint > 0) {
+                        meta.stickyDuration = durationHint;
+                    } else if (!meta.stickyDuration) {
+                        const efg = url.includes('efg=') ? new URL(url).searchParams.get('efg') : '';
+                        const urlMeta = parseEfgPayload(efg);
+                        const urlDur = Number(urlMeta.duration_s || 0);
+                        if (urlDur > 0) {
+                            meta.stickyDuration = urlDur;
+                        }
                     }
                 }
                 
@@ -419,8 +567,16 @@
         const detail = event && event.detail ? event.detail : {};
         const requestId = detail.requestId;
         const blobUrl = detail.blobUrl;
-        const mediaSourceId = blobUrlToMediaSourceId.get(blobUrl) || '';
-        const entries = mediaSourceId ? [...(mediaSourceEntries.get(mediaSourceId) || [])] : [];
+        let mediaSourceId = blobUrlToMediaSourceId.get(blobUrl) || '';
+        if (!mediaSourceId && blobUrl) {
+            const video = blobUrlToVideoElement.get(blobUrl);
+            mediaSourceId = bindBlobUrlToLikelyMediaSource(blobUrl, video);
+        }
+        const blobCreatedAt = blobUrlToCreatedAt.get(blobUrl) || 0;
+        const allEntries = mediaSourceId ? [...(mediaSourceEntries.get(mediaSourceId) || [])] : [];
+        const entries = blobCreatedAt > 0
+            ? allEntries.filter(entry => Number(entry && entry.at) >= (blobCreatedAt - 500))
+            : allEntries;
         const urls = entries.map(entry => entry.url);
         const debug = mediaSourceId ? { ...(mediaSourceDebug.get(mediaSourceId) || {}) } : {};
         document.dispatchEvent(new CustomEvent(RESPONSE_EVENT, {
@@ -428,6 +584,7 @@
                 requestId,
                 blobUrl,
                 mediaSourceId,
+                blobCreatedAt,
                 entries,
                 urls,
                 debug

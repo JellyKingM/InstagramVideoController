@@ -3,6 +3,7 @@ importScripts('shared.js');
 const mediaRequestsByTab = new Map();
 const pinnedMediaByTab = new Map();
 const mergeJobs = new Map();
+const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 const MEDIA_REQUEST_LIMIT = 80;
 const MEDIA_REQUEST_TTL_MS = 10 * 60 * 1000;
 const RECENT_MEDIA_WINDOW_MS = 20 * 1000;
@@ -67,6 +68,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return;
     }
 
+    if (message.offscreenMergeResult && message.token) {
+        const job = mergeJobs.get(message.token);
+        if (job) {
+            job.result = message.offscreenMergeResult;
+            job.completedAt = Date.now();
+            mergeJobs.set(message.token, job);
+        }
+        sendResponse({ ok: true });
+        return;
+    }
+
     if (message.downloadCapturedVideo) {
         const tabId = sender && sender.tab ? sender.tab.id : -1;
         const bundle = pinnedMediaByTab.get(tabId) || pickBestMediaBundleForTab(tabId);
@@ -93,15 +105,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         if (shouldMerge) {
             const token = createMergeJob(bundle, videoFilename);
-                chrome.tabs.create({
-                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                    active: false
-                }, function (tab) {
+            startOffscreenMerge(token).then(function () {
                 sendResponse({
                     ok: true,
                     mergeStarted: true,
-                    tabId: tab && tab.id ? tab.id : null,
+                    tabId: null,
                     bundle
+                });
+            }).catch(function (error) {
+                sendResponse({
+                    ok: false,
+                    error: error && error.message ? error.message : String(error)
                 });
             });
             return true;
@@ -156,15 +170,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         if (shouldMerge) {
             const token = createMergeJob(bundle, videoFilename);
-                chrome.tabs.create({
-                    url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                    active: false
-                }, function (tab) {
+            startOffscreenMerge(token).then(function () {
                 sendResponse({
                     ok: true,
                     mergeStarted: true,
-                    tabId: tab && tab.id ? tab.id : null,
+                    tabId: null,
                     bundle
+                });
+            }).catch(function (error) {
+                sendResponse({
+                    ok: false,
+                    error: error && error.message ? error.message : String(error)
                 });
             });
             return true;
@@ -194,11 +210,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return true;
     }
 
-    if (message.downloadTrackedBlobUrls && Array.isArray(message.downloadTrackedBlobUrls.urls)) {
+    if (message.downloadTrackedBlobUrls && Array.isArray(message.downloadTrackedBlobUrls.entries)) {
         const explicitBundle = pickBestMediaBundleFromTrackedItems(
-            Array.isArray(message.downloadTrackedBlobUrls.entries) && message.downloadTrackedBlobUrls.entries.length > 0
-                ? message.downloadTrackedBlobUrls.entries
-                : message.downloadTrackedBlobUrls.urls,
+            message.downloadTrackedBlobUrls.entries,
             message.downloadTrackedBlobUrls.hint || null
         );
         if (!explicitBundle || !explicitBundle.video || !explicitBundle.video.url) {
@@ -211,7 +225,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         const shouldMerge = !!(explicitBundle.audio && explicitBundle.audio.url);
         const muxedCandidate = shouldMerge ? null : findMuxedMediaCandidateInCandidates(
-            message.downloadTrackedBlobUrls.urls,
+            message.downloadTrackedBlobUrls.entries,
             explicitBundle
         );
         const targetVideo = muxedCandidate || explicitBundle.video;
@@ -220,15 +234,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         if (shouldMerge) {
             const token = createMergeJob(explicitBundle, videoFilename);
-            chrome.tabs.create({
-                url: chrome.runtime.getURL(`merge-download.html?token=${encodeURIComponent(token)}`),
-                active: false
-            }, function (tab) {
+            startOffscreenMerge(token).then(function () {
                 sendResponse({
                     ok: true,
                     mergeStarted: true,
-                    tabId: tab && tab.id ? tab.id : null,
+                    tabId: null,
                     bundle: explicitBundle
+                });
+            }).catch(function (error) {
+                sendResponse({
+                    ok: false,
+                    error: error && error.message ? error.message : String(error)
                 });
             });
             return true;
@@ -371,6 +387,40 @@ function createMergeJob(bundle, filename) {
         createdAt: Date.now()
     });
     return token;
+}
+
+async function hasOffscreenDocument() {
+    if (chrome.runtime.getContexts) {
+        const contexts = await chrome.runtime.getContexts({
+            contextTypes: ['OFFSCREEN_DOCUMENT'],
+            documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)]
+        });
+        return contexts.length > 0;
+    }
+    return false;
+}
+
+async function ensureOffscreenDocument() {
+    if (await hasOffscreenDocument()) {
+        return;
+    }
+
+    await chrome.offscreen.createDocument({
+        url: OFFSCREEN_DOCUMENT_PATH,
+        reasons: ['BLOBS'],
+        justification: 'Merge separate Instagram MP4 audio and video tracks without opening a visible tab.'
+    });
+}
+
+async function startOffscreenMerge(token) {
+    await ensureOffscreenDocument();
+    const response = await chrome.runtime.sendMessage({
+        runOffscreenMerge: true,
+        token
+    });
+    if (!response || !response.ok) {
+        throw new Error(response && response.error ? response.error : 'offscreen merge start failed');
+    }
 }
 
 function parseEfgPayload(rawValue) {
@@ -562,11 +612,12 @@ function pickBestMediaBundleGroupFromCandidates(candidates, hint = null) {
 }
 
 function compareBundleGroups(a, b) {
-    if (a.durationBucket !== b.durationBucket) return a.durationBucket - b.durationBucket;
-    if (a.durationDelta !== b.durationDelta) return a.durationDelta - b.durationDelta;
-    if (b.matchingVideoCount !== a.matchingVideoCount) return b.matchingVideoCount - a.matchingVideoCount;
-    if (b.hasAudio !== a.hasAudio) return Number(b.hasAudio) - Number(a.hasAudio);
-    if (b.substantialVideoCount !== a.substantialVideoCount) return b.substantialVideoCount - a.substantialVideoCount;
+      if (a.durationBucket !== b.durationBucket) return a.durationBucket - b.durationBucket;
+      if (a.durationDelta !== b.durationDelta) return a.durationDelta - b.durationDelta;
+      if (b.matchingVideoCount !== a.matchingVideoCount) return b.matchingVideoCount - a.matchingVideoCount;
+      if (a.durationBucket <= 1 && b.hasAudio !== a.hasAudio) return Number(b.hasAudio) - Number(a.hasAudio);
+      if (b.hasAudio !== a.hasAudio) return Number(b.hasAudio) - Number(a.hasAudio);
+      if (b.substantialVideoCount !== a.substantialVideoCount) return b.substantialVideoCount - a.substantialVideoCount;
     if (b.videoMaxRange !== a.videoMaxRange) return b.videoMaxRange - a.videoMaxRange;
     if (b.videoTotalRange !== a.videoTotalRange) return b.videoTotalRange - a.videoTotalRange;
     if (b.videoCount !== a.videoCount) return b.videoCount - a.videoCount;

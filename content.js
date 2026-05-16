@@ -71,8 +71,6 @@
     let capturedMediaBundleByVideo = new WeakMap();
     let mediaHintStartedAtByVideo = new WeakMap();
     let mediaIdentityByVideo = new WeakMap();
-    let lockedSideBoxBundle = null;
-    let lockedSideBoxIdentity = '';
     let sideBoxVideoIdentity = '';
     let sideBoxCreatedAt = 0;
     let lastRejectedBundleInfo = null;
@@ -80,6 +78,16 @@
     let internalPlayRequestAtByVideo = new WeakMap();
     let hiddenWideInfoWrapperByVideo = new WeakMap();
     let lastReexpandLogAtByVideo = new WeakMap();
+    let lockedBundleByVideo = new WeakMap();
+    let sideBoxCreatedAtByVideo = new WeakMap();
+    let sideBoxByVideo = new WeakMap();
+    let sideBoxInfoByVideo = new WeakMap();
+    let sideBoxControlsByVideo = new WeakMap();
+    let panelByVideo = new WeakMap();
+    let downloadButtonByVideo = new WeakMap();
+    let downloadSessionCounter = 0;
+    let activeDownloadSession = null;
+    let downloadButtonIdentity = '';
     const MAX_INTERNAL_LOGS = 120;
 
     function log(...args) {
@@ -101,8 +109,11 @@
             'tracked blob media urls',
             'tracked blob media download started',
             'tracked blob media download failed',
+            'video download attempt',
             'explicit media bundle download started',
             'explicit media bundle download failed',
+            'merge started',
+            'merge failed',
             'captured media download started',
             'pin captured media failed',
             'pin captured media before download',
@@ -215,7 +226,11 @@
                 try {
                     const targetVideo = getDownloadTargetVideo();
                     if (targetVideo instanceof HTMLVideoElement) {
-                        return getDownloadFileName(targetVideo.currentSrc || targetVideo.src || location.href);
+                        const fileName = getDownloadFileName(targetVideo.currentSrc || targetVideo.src || location.href);
+                        if (/Waiting for/i.test(fileName)) {
+                            return `${getCurrentShortcode() || 'instagram-video'}-pending.mp4`;
+                        }
+                        return fileName;
                     }
                 } catch (error) {
                     return '';
@@ -224,6 +239,7 @@
             })();
 
             const downloadDebugLines = await buildDownloadDebugLines();
+            const sideBoxDebugLines = buildSideBoxDebugLines();
             const conciseInternalLogs = buildConciseInternalLogLines();
             const lines = [
                 'Instagram Video Controller internal log',
@@ -233,10 +249,13 @@
                 `sideBoxVideo=${renderLogValue(sideBoxVideo)}`,
                 `sideBoxVideoIdentity=${sideBoxVideoIdentity || ''}`,
                 `sideBoxCreatedAt=${sideBoxCreatedAt || 0}`,
-                `lockedSideBoxIdentity=${lockedSideBoxIdentity || ''}`,
-                `lockedSideBoxBundle=${summarizeBundleForLog(lockedSideBoxBundle)}`,
+                `lockedSideBoxIdentity=${sideBoxVideo instanceof HTMLVideoElement ? getVideoIdentity(sideBoxVideo) : ''}`,
+                `lockedSideBoxBundle=${summarizeBundleForLog(sideBoxVideo instanceof HTMLVideoElement ? lockedBundleByVideo.get(sideBoxVideo) : null)}`,
                 `lastRejectedBundleInfo=${renderLogValue(lastRejectedBundleInfo)}`,
                 `currentDownloadFileName=${currentDownloadFileName}`,
+                '',
+                '=== sidebox debug ===',
+                ...sideBoxDebugLines,
                 '',
                 '=== download debug ===',
                 ...downloadDebugLines,
@@ -282,6 +301,7 @@
             const trackedMedia = await getTrackedMediaUrlsForBlob(targetVideo.currentSrc || targetVideo.src || '');
             const focusedEntries = focusTrackedMediaEntries(trackedMedia.entries || [], hint);
             lines.push(`targetTrackedMediaSourceId=${trackedMedia.mediaSourceId || ''}`);
+            lines.push(`targetTrackedBlobCreatedAt=${trackedMedia.blobCreatedAt || 0}`);
             lines.push(`targetTrackedUrlCount=${trackedMedia.urls.length}`);
             lines.push(`targetTrackedEntryCount=${Array.isArray(trackedMedia.entries) ? trackedMedia.entries.length : 0}`);
             lines.push(`targetFocusedEntryCount=${focusedEntries.length}`);
@@ -298,16 +318,57 @@
             });
         }
 
-        lines.push(`lockedBundleVideoUrl=${lockedSideBoxBundle && lockedSideBoxBundle.video ? shortenUrlForLog(lockedSideBoxBundle.video.url || '') : ''}`);
-        lines.push(`lockedBundleAudioUrl=${lockedSideBoxBundle && lockedSideBoxBundle.audio ? shortenUrlForLog(lockedSideBoxBundle.audio.url || '') : ''}`);
-        lines.push(`lockedBundleVideoAssetId=${lockedSideBoxBundle && lockedSideBoxBundle.video ? lockedSideBoxBundle.video.assetId || '' : ''}`);
-        lines.push(`lockedBundleVideoDuration=${lockedSideBoxBundle && lockedSideBoxBundle.video ? Number(lockedSideBoxBundle.video.duration || 0) : 0}`);
+        const currentLockedBundle = targetVideo instanceof HTMLVideoElement ? lockedBundleByVideo.get(targetVideo) : null;
+        lines.push(`lockedBundleVideoUrl=${currentLockedBundle && currentLockedBundle.video ? shortenUrlForLog(currentLockedBundle.video.url || '') : ''}`);
+        lines.push(`lockedBundleAudioUrl=${currentLockedBundle && currentLockedBundle.audio ? shortenUrlForLog(currentLockedBundle.audio.url || '') : ''}`);
+        lines.push(`lockedBundleVideoAssetId=${currentLockedBundle && currentLockedBundle.video ? currentLockedBundle.video.assetId || '' : ''}`);
+        lines.push(`lockedBundleVideoDuration=${currentLockedBundle && currentLockedBundle.video ? Number(currentLockedBundle.video.duration || 0) : 0}`);
 
         lines.push('--- page videos ---');
         videoSnapshots.forEach(snapshot => {
             lines.push(snapshot);
         });
 
+        return lines;
+    }
+
+    function buildSideBoxDebugLines() {
+        const lines = [];
+        const targetVideo = getDownloadTargetVideo();
+        const targetAnchor = targetVideo instanceof HTMLVideoElement ? findSideBoxAnchor(targetVideo) : null;
+        const movedInfo = sideBoxVideo ? movedInfoByVideo.get(sideBoxVideo) : null;
+        const hiddenWrapper = sideBoxVideo ? hiddenWideInfoWrapperByVideo.get(sideBoxVideo) : null;
+
+        lines.push(`sideBoxExists=${!!sideBox}`);
+        lines.push(`sideBoxInfoExists=${!!sideBoxInfo}`);
+        lines.push(`sideBoxControlsExists=${!!sideBoxControls}`);
+        lines.push(`downloadButtonIdentity=${downloadButtonIdentity || ''}`);
+        lines.push(`activeDownloadSession=${activeDownloadSession ? JSON.stringify({
+            id: activeDownloadSession.id,
+            targetIdentity: activeDownloadSession.targetIdentity,
+            cancelled: !!activeDownloadSession.cancelled
+        }) : 'null'}`);
+        lines.push(`activeVideoIndex=${activeVideo instanceof HTMLVideoElement ? getVideos().indexOf(activeVideo) : -1}`);
+        lines.push(`sideBoxVideoIndex=${sideBoxVideo instanceof HTMLVideoElement ? getVideos().indexOf(sideBoxVideo) : -1}`);
+        lines.push(`targetAnchor=${describeElementDebug(targetAnchor)}`);
+        lines.push(`targetAnchorParent=${describeElementDebug(targetAnchor && targetAnchor.parentElement)}`);
+        lines.push(`targetAnchorRect=${describeElementRect(targetAnchor)}`);
+        lines.push(`sideBoxElement=${describeElementDebug(sideBox)}`);
+        lines.push(`sideBoxParent=${describeElementDebug(sideBox && sideBox.parentElement)}`);
+        lines.push(`sideBoxRect=${describeElementRect(sideBox)}`);
+        lines.push(`sideBoxStyle=${describeElementStyleSummary(sideBox)}`);
+        lines.push(`sideBoxInfoChildren=${sideBoxInfo ? sideBoxInfo.children.length : 0}`);
+        lines.push(`movedInfo=${describeElementDebug(movedInfo)}`);
+        lines.push(`movedInfoParent=${describeElementDebug(movedInfo && movedInfo.parentElement)}`);
+        lines.push(`movedInfoRect=${describeElementRect(movedInfo)}`);
+        lines.push(`movedInfoStyle=${describeElementStyleSummary(movedInfo)}`);
+        lines.push(`hiddenWideInfoWrapper=${describeElementDebug(hiddenWrapper)}`);
+        lines.push(`hiddenWideInfoWrapperParent=${describeElementDebug(hiddenWrapper && hiddenWrapper.parentElement)}`);
+        lines.push(`hiddenWideInfoWrapperRect=${describeElementRect(hiddenWrapper)}`);
+        lines.push(`hiddenWideInfoWrapperStyle=${describeElementStyleSummary(hiddenWrapper)}`);
+        lines.push(`isWideReelsTarget=${targetVideo instanceof HTMLVideoElement ? isWideReelsVideo(targetVideo) : false}`);
+        lines.push(`hasMovedInfoForSideBoxVideo=${sideBoxVideo instanceof HTMLVideoElement ? hasMovedInfoForVideo(sideBoxVideo) : false}`);
+        lines.push(`pendingSideBoxVideoIdentity=${pendingSideBoxVideo instanceof HTMLVideoElement ? getVideoIdentity(pendingSideBoxVideo) : ''}`);
         return lines;
     }
 
@@ -338,6 +399,30 @@
             `currentSrc=${shortenUrlForLog(currentSrc)}`,
             `src=${shortenUrlForLog(src)}`
         ].join(' | ');
+    }
+
+    function describeElementDebug(element) {
+        if (!(element instanceof Element)) return '';
+        return `${describeElement(element)} connected=${document.contains(element)} childCount=${element.children.length}`;
+    }
+
+    function describeElementRect(element) {
+        if (!(element instanceof Element)) return '';
+        const rect = element.getBoundingClientRect();
+        return `${Math.round(rect.left)},${Math.round(rect.top)},${Math.round(rect.right)},${Math.round(rect.bottom)} size=${Math.round(rect.width)}x${Math.round(rect.height)}`;
+    }
+
+    function describeElementStyleSummary(element) {
+        if (!(element instanceof Element)) return '';
+        const style = window.getComputedStyle(element);
+        return JSON.stringify({
+            display: style.display,
+            visibility: style.visibility,
+            pointerEvents: style.pointerEvents,
+            position: style.position,
+            zIndex: style.zIndex,
+            opacity: style.opacity
+        });
     }
 
     function summarizeTrackedMediaGroups(items) {
@@ -403,7 +488,6 @@
         }
 
         const targetCapturedAt = Number(hint && hint.targetCapturedAt) || 0;
-        const targetDuration = Number(hint && hint.duration) || 0;
         const decorated = entries
             .map((entry, index) => ({
                 entry,
@@ -416,25 +500,71 @@
             return [];
         }
 
-        const tail = decorated.slice(-16);
-        const tailVideos = tail.filter(item => item.candidate.isVideo);
-        const orderedVideos = tailVideos.sort((left, right) =>
-            compareFocusedTrackedCandidates(left, right, targetDuration, targetCapturedAt)
-        );
-        const anchor = orderedVideos[0] || tail[tail.length - 1];
+        const tail = decorated.slice(-20);
+        const groups = new Map();
+        for (const item of tail) {
+            const assetKey = item.candidate.assetId || item.entry.assetKey || item.candidate.url;
+            if (!groups.has(assetKey)) {
+                groups.set(assetKey, []);
+            }
+            groups.get(assetKey).push(item);
+        }
 
-        if (!anchor) {
+        const scoredGroups = Array.from(groups.entries()).map(([assetKey, items]) => {
+            const videoItems = items.filter(item => item.candidate.isVideo);
+            const audioItems = items.filter(item => item.candidate.isAudio);
+            const substantialVideoCount = videoItems.filter(item => Number(item.candidate.rangeLength || 0) >= 64 * 1024).length;
+            const maxRange = videoItems.reduce((max, item) => Math.max(max, Number(item.candidate.rangeLength || 0)), 0);
+            const totalVideoRange = videoItems.reduce((sum, item) => sum + Number(item.candidate.rangeLength || 0), 0);
+            const timeDelta = targetCapturedAt > 0
+                ? Math.min(...items.map(item => Math.abs(Number(item.entry && item.entry.at) - targetCapturedAt)))
+                : Number.POSITIVE_INFINITY;
+            const latestAt = Math.max(...items.map(item => Number(item.entry && item.entry.at) || 0));
+
+            return {
+                assetKey,
+                items,
+                videoItems,
+                audioItems,
+                substantialVideoCount,
+                maxRange,
+                totalVideoRange,
+                timeDelta,
+                latestAt
+            };
+        });
+
+        scoredGroups.sort((left, right) => {
+            if (right.videoItems.length !== left.videoItems.length) {
+                return right.videoItems.length - left.videoItems.length;
+            }
+            if (right.audioItems.length !== left.audioItems.length) {
+                return right.audioItems.length - left.audioItems.length;
+            }
+            if (right.substantialVideoCount !== left.substantialVideoCount) {
+                return right.substantialVideoCount - left.substantialVideoCount;
+            }
+            if (right.maxRange !== left.maxRange) {
+                return right.maxRange - left.maxRange;
+            }
+            if (right.totalVideoRange !== left.totalVideoRange) {
+                return right.totalVideoRange - left.totalVideoRange;
+            }
+            if (left.timeDelta !== right.timeDelta) {
+                return left.timeDelta - right.timeDelta;
+            }
+            if (right.latestAt !== left.latestAt) {
+                return right.latestAt - left.latestAt;
+            }
+            return 0;
+        });
+
+        const bestGroup = scoredGroups[0];
+        if (!bestGroup) {
             return [];
         }
 
-        const assetKey = anchor.candidate.assetId || anchor.entry.assetKey || '';
-        if (!assetKey) {
-            return [anchor.entry];
-        }
-
-        return decorated
-            .filter(item => (item.candidate.assetId || item.entry.assetKey || '') === assetKey)
-            .map(item => item.entry);
+        return bestGroup.items.map(item => item.entry);
     }
 
     function compareFocusedTrackedCandidates(left, right, targetDuration, targetCapturedAt) {
@@ -951,18 +1081,105 @@
         downloadButtonEl.style.cursor = disabled ? 'default' : 'pointer';
     }
 
-    function scheduleDownloadButtonReset(delay = 2200) {
+    function resetDownloadButtonToDefault() {
+        setDownloadButtonState(
+            t('buttonDownloadVideo', 'Download video'),
+            false,
+            t('tooltipDownloadVideo', 'Download the active video')
+        );
+    }
+
+    function cancelActiveDownloadSession(reason = '') {
+        if (downloadButtonResetTimer) {
+            clearTimeout(downloadButtonResetTimer);
+            downloadButtonResetTimer = null;
+        }
+
+        if (activeDownloadSession) {
+            activeDownloadSession.cancelled = true;
+            activeDownloadSession = null;
+        }
+
+        downloadSessionCounter += 1;
+        resetDownloadButtonToDefault();
+
+        if (reason) {
+            log('cancelled active download session', {
+                reason,
+                sideBoxVideoIdentity,
+                downloadButtonIdentity
+            });
+        }
+    }
+
+    function scheduleDownloadButtonReset(delay = 2200, expectedIdentity = downloadButtonIdentity) {
         if (downloadButtonResetTimer) {
             clearTimeout(downloadButtonResetTimer);
         }
         downloadButtonResetTimer = window.setTimeout(() => {
             downloadButtonResetTimer = null;
-            setDownloadButtonState(
-                t('buttonDownloadVideo', 'Download video'),
-                false,
-                t('tooltipDownloadVideo', 'Download the active video')
-            );
+            if (expectedIdentity && expectedIdentity !== downloadButtonIdentity) {
+                return;
+            }
+            resetDownloadButtonToDefault();
         }, delay);
+    }
+
+    function createDownloadSession(targetVideo) {
+        const session = {
+            id: ++downloadSessionCounter,
+            targetVideo,
+            targetIdentity: getVideoIdentity(targetVideo),
+            cancelled: false
+        };
+        activeDownloadSession = session;
+        return session;
+    }
+
+    function isDownloadSessionActive(session) {
+        if (!session || session.cancelled) return false;
+        if (!activeDownloadSession || activeDownloadSession.id !== session.id) return false;
+        if (!(session.targetVideo instanceof HTMLVideoElement)) return false;
+        if (!document.contains(session.targetVideo)) return false;
+        if (sideBoxVideo !== session.targetVideo) return false;
+        if (!sideBoxVideoIdentity || sideBoxVideoIdentity !== session.targetIdentity) return false;
+        if (downloadButtonIdentity && downloadButtonIdentity !== session.targetIdentity) return false;
+        return true;
+    }
+
+    function syncDownloadButtonStateForCurrentSideBox() {
+        if (!downloadButtonEl) return;
+
+        if (!sideBox || !(sideBoxVideo instanceof HTMLVideoElement)) {
+            if (!activeDownloadSession && downloadButtonEl.disabled) {
+                resetDownloadButtonToDefault();
+            }
+            return;
+        }
+
+        const currentIdentity = getVideoIdentity(sideBoxVideo);
+        if (!sideBoxVideoIdentity || sideBoxVideoIdentity !== currentIdentity) {
+            sideBoxVideoIdentity = currentIdentity;
+        }
+
+        if (!downloadButtonIdentity || downloadButtonIdentity !== sideBoxVideoIdentity) {
+            downloadButtonIdentity = sideBoxVideoIdentity;
+        }
+
+        if (!activeDownloadSession) {
+            if (downloadButtonEl.disabled || downloadButtonEl.textContent !== t('buttonDownloadVideo', 'Download video')) {
+                resetDownloadButtonToDefault();
+            }
+            return;
+        }
+
+        if (
+            activeDownloadSession.cancelled ||
+            activeDownloadSession.targetVideo !== sideBoxVideo ||
+            activeDownloadSession.targetIdentity !== sideBoxVideoIdentity
+        ) {
+            cancelActiveDownloadSession('stale session detected during sidebox sync');
+        }
     }
 
     function ensureMovedInfoStash() {
@@ -982,16 +1199,26 @@
             return sideBoxVideo;
         }
 
+        const currentVisible = pickActiveVideo();
+
+        if (currentVisible && document.contains(currentVisible) && isVisibleVideo(currentVisible)) {
+            if (sideBoxVideo !== currentVisible) {
+                activeVideo = currentVisible;
+            }
+            return currentVisible;
+        }
+
         if (activeVideo && document.contains(activeVideo) && isVisibleVideo(activeVideo)) {
             return activeVideo;
         }
 
-        return pickActiveVideo();
+        return currentVisible;
     }
 
     function buildVideoMediaHint(video) {
         const startedAt = mediaHintStartedAtByVideo.get(video) || mediaHintStartedAt || 0;
-        const sideboxTime = isCurrentSideBoxVideoIdentity(video) && sideBoxCreatedAt > 0 ? sideBoxCreatedAt : 0;
+        const videoSideBoxCreatedAt = sideBoxCreatedAtByVideo.get(video) || 0;
+        const sideboxTime = videoSideBoxCreatedAt > 0 ? videoSideBoxCreatedAt : 0;
         let targetTime = startedAt > 0 ? startedAt : sideboxTime;
 
         if (startedAt > 0 && sideboxTime > 0 && Math.abs(startedAt - sideboxTime) <= 3000) {
@@ -1021,7 +1248,7 @@
 
     function getVideoIdentity(video) {
         if (!(video instanceof HTMLVideoElement)) return '';
-        return `${video.currentSrc || video.src || ''}::${Number(video.duration || 0).toFixed(3)}`;
+        return `${video.currentSrc || video.src || ''}`;
     }
 
     function isCurrentSideBoxVideoIdentity(video) {
@@ -1038,15 +1265,14 @@
         const existingBundle = capturedMediaBundleByVideo.get(video);
         if (!existingBundle || !existingBundle.video) return true;
 
-        const videoDuration = Number(video.duration || 0);
-        const existingDelta = videoDuration > 0 ? Math.abs(Number(existingBundle.video.duration || 0) - videoDuration) : 0;
-        const nextDelta = videoDuration > 0 ? Math.abs(Number(nextBundle.video.duration || 0) - videoDuration) : 0;
+        const existingAssetId = String(existingBundle.video.assetId || '');
+        const nextAssetId = String(nextBundle.video.assetId || '');
 
-        if (existingDelta <= 0.35 && nextDelta > 0.35) {
-            log('skipping bundle replacement due to worse duration match', {
+        if (existingAssetId && nextAssetId && existingAssetId !== nextAssetId) {
+            log('skipping bundle replacement due to asset drift', {
                 video: describeVideo(video),
-                existing: existingBundle.video,
-                next: nextBundle.video
+                existingAssetId,
+                nextAssetId
             });
             return false;
         }
@@ -1054,8 +1280,67 @@
         return true;
     }
 
+    function isBundleDurationCompatible(video, bundle) {
+        if (!(video instanceof HTMLVideoElement) || !bundle || !bundle.video) return false;
+        return true;
+    }
+
+    function sendRuntimeMessage(message, timeoutMs = 6000) {
+        return new Promise(resolve => {
+            let settled = false;
+            const timeoutId = window.setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                resolve({ ok: false, error: `runtime message timeout after ${timeoutMs}ms` });
+            }, timeoutMs);
+
+            chrome.runtime.sendMessage(message, response => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+
+                if (chrome.runtime.lastError) {
+                    resolve({
+                        ok: false,
+                        error: chrome.runtime.lastError.message || 'runtime message failed'
+                    });
+                    return;
+                }
+
+                resolve(response || { ok: false, error: 'empty response' });
+            });
+        });
+    }
+
     function wait(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function getFocusedTrackedMediaForVideo(video, trackedMedia = null) {
+        if (!(video instanceof HTMLVideoElement)) {
+            return {
+                trackedMedia: trackedMedia || { blobUrl: '', urls: [], entries: [], mediaSourceId: '', debug: {} },
+                focusedEntries: [],
+                focusedUrls: [],
+                focusedAssetKey: ''
+            };
+        }
+
+        const sourceUrl = video.currentSrc || video.src || '';
+        const hint = buildVideoMediaHint(video);
+        const media = trackedMedia || { blobUrl: sourceUrl, urls: [], entries: [], mediaSourceId: '', debug: {} };
+        const focusedEntries = focusTrackedMediaEntries(Array.isArray(media.entries) ? media.entries : [], hint);
+        const focusedUrls = focusedEntries
+            .map(entry => entry && entry.url)
+            .filter(Boolean);
+        const focusedAssetKey = focusedEntries[0] && focusedEntries[0].assetKey ? focusedEntries[0].assetKey : '';
+
+        return {
+            trackedMedia: media,
+            focusedEntries,
+            focusedUrls,
+            focusedAssetKey
+        };
     }
 
     async function pinCapturedMediaForVideo(video) {
@@ -1068,33 +1353,17 @@
             const sourceUrl = video.currentSrc || video.src || '';
             const hint = buildVideoMediaHint(video);
             
-            // 블롭 추적 데이터에서 에셋 키 가져오기 (매칭 정확도 극대화)
             if (sourceUrl.startsWith('blob:')) {
-                const trackedMedia = await requestMediaMapForBlobUrl(sourceUrl);
-                if (trackedMedia && trackedMedia.urls.length > 0) {
-                    const entries = trackedMedia.urls
-                        .map(url => getCapturedMediaEntry(url))
-                        .filter(Boolean);
-                    const assetKey = (entries.find(e => e.assetKey) || {}).assetKey;
-                    if (assetKey) {
-                        hint.assetId = assetKey; // 백그라운드에 에셋 키 전달
-                    }
+                const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
+                const focused = getFocusedTrackedMediaForVideo(video, trackedMedia);
+                if (focused.focusedAssetKey) {
+                    hint.assetId = focused.focusedAssetKey;
                 }
             }
 
-            return new Promise(resolve => {
-                chrome.runtime.sendMessage({ pinCapturedVideo: true, hint }, response => {
-                    if (chrome.runtime.lastError) {
-                        const errorMsg = chrome.runtime.lastError.message || '';
-                        const failure = { ok: false, error: errorMsg };
-                        if (!errorMsg.includes('Extension context invalidated')) {
-                            log('pin captured media failed', failure);
-                        }
-                        resolve(failure);
-                        return;
-                    }
-                    
-                    if (response && response.ok && response.bundle) {
+            const response = await sendRuntimeMessage({ pinCapturedVideo: true, hint }, 5000);
+
+            if (response && response.ok && response.bundle) {
                         // 1차 필터: 재생 시간 검증
                         if (!isBundleDurationCompatible(video, response.bundle)) {
                             const failure = {
@@ -1114,16 +1383,14 @@
                                 video: describeVideo(video),
                                 failure
                             });
-                            resolve(failure);
-                            return;
+                            return failure;
                         }
 
                         // 2차 필터: 에셋 키 검증 (힌트에 있었는데 결과가 다르면 거부)
                         if (hint.assetId && response.bundle.video && response.bundle.video.assetId && String(response.bundle.video.assetId) !== String(hint.assetId)) {
                             const failure = { ok: false, error: 'asset key mismatch', bundle: response.bundle };
                             log('rejecting pinned media due to asset key mismatch', { video: describeVideo(video), failure });
-                            resolve(failure);
-                            return;
+                            return failure;
                         }
 
                         if (shouldReplaceCapturedBundle(video, response.bundle)) {
@@ -1131,17 +1398,18 @@
                             mediaIdentityByVideo.set(video, videoIdentity);
                             
                             // 사이드박스가 현재 비디오를 가리키고 있다면 번들 고정
-                            if (isCurrentSideBoxVideoIdentity(video)) {
-                                lockedSideBoxBundle = response.bundle;
-                                lockedSideBoxIdentity = videoIdentity;
-                            }
+                            lockedBundleByVideo.set(video, response.bundle);
                         }
-                    }
-                    
-                    log('pinned captured media', response);
-                    resolve(response || { ok: false, error: 'empty response' });
-                });
-            });
+            }
+
+            if (!response || !response.ok) {
+                if (!(response && typeof response.error === 'string' && response.error.includes('Extension context invalidated'))) {
+                    log('pin captured media failed', response);
+                }
+            }
+
+            log('pinned captured media', response);
+            return response || { ok: false, error: 'empty response' };
         } catch (error) {
             log('pin captured media error', error);
             return { ok: false, error: String(error) };
@@ -1172,25 +1440,36 @@
         const targetVideo = getDownloadTargetVideo();
         if (!targetVideo) return;
 
-        // 사이드박스 변수에 링크된 비디오가 현재 타겟인지 엄격히 확인
         if (sideBoxVideo && targetVideo !== sideBoxVideo) {
             log('ignoring download request: target video does not match sidebox linked video');
             return;
         }
 
         activeVideo = targetVideo;
+        const session = createDownloadSession(targetVideo);
+        downloadButtonIdentity = session.targetIdentity;
         const maxRetries = 10;
         let attempt = 0;
 
         while (attempt < maxRetries) {
+            if (!isDownloadSessionActive(session)) {
+                return;
+            }
+
             attempt++;
             if (attempt > 1) {
-                setDownloadButtonState(`Retry ${attempt}/${maxRetries}...`, true, 'Waiting for media segments to load');
-                // 재시도 시점에 다시 한 번 미디어 고정 시도
+                setDownloadButtonState(`Retry ${Math.max(1, attempt - 1)}/${Math.max(1, maxRetries - 1)}...`, true, 'Waiting for media segments to load');
                 await pinCapturedMediaForVideo(targetVideo);
+                if (!isDownloadSessionActive(session)) {
+                    return;
+                }
                 await wait(1500);
             } else {
                 setDownloadButtonState('Downloading...', true, 'Downloading current video');
+            }
+
+            if (!isDownloadSessionActive(session)) {
+                return;
             }
 
             const diagnostics = getVideoDownloadDiagnostics(targetVideo);
@@ -1206,125 +1485,111 @@
                 if (diagnostics.guessedType === 'blob') {
                     const currentIdentity = getVideoIdentity(targetVideo);
                     const cachedIdentity = mediaIdentityByVideo.get(targetVideo) || '';
-                    const sideboxIdentityMatches = targetVideo !== sideBoxVideo || (
-                        !!sideBoxVideoIdentity &&
-                        currentIdentity === sideBoxVideoIdentity &&
-                        lockedSideBoxIdentity === sideBoxVideoIdentity
-                    );
-                    const directBundle = targetVideo === sideBoxVideo &&
-                        lockedSideBoxBundle &&
-                        sideboxIdentityMatches
-                        ? lockedSideBoxBundle
-                        : capturedMediaBundleByVideo.get(targetVideo);
+                    const lockedBundle = lockedBundleByVideo.get(targetVideo) || null;
+                    const directBundle = lockedBundle || capturedMediaBundleByVideo.get(targetVideo);
 
-                    // 1. 직접 포착된(Pinned) 미디어 번들이 있는지 먼저 확인 (가장 정확함)
+                    const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
+                    const focused = getFocusedTrackedMediaForVideo(targetVideo, trackedMedia);
+                    const focusedAssetId = focused.focusedAssetKey;
+
                     if (directBundle && directBundle.video && directBundle.video.url &&
                         (targetVideo === sideBoxVideo || currentIdentity === cachedIdentity)) {
-                        
-                        if (isBundleDurationCompatible(targetVideo, directBundle)) {
-                            const explicitResponse = await chrome.runtime.sendMessage({
+                        const directBundleMatchesFocusedAsset =
+                            !focusedAssetId ||
+                            !directBundle.video.assetId ||
+                            String(directBundle.video.assetId) === String(focusedAssetId);
+
+                        if (isBundleDurationCompatible(targetVideo, directBundle) && directBundleMatchesFocusedAsset) {
+                            const explicitResponse = await sendRuntimeMessage({
                                 downloadMediaBundle: {
                                     bundle: directBundle,
                                     filename: getDownloadFileName(sourceUrl)
                                 }
-                            });
+                            }, 12000);
+                            if (!isDownloadSessionActive(session)) {
+                                return;
+                            }
                             if (explicitResponse && explicitResponse.ok) {
                                 log('explicit media bundle download started', explicitResponse);
+                                activeDownloadSession = null;
                                 if (explicitResponse.mergeStarted) {
-                                    setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
-                                    scheduleDownloadButtonReset(5000);
+                                    log('merge started', explicitResponse);
+                                    setDownloadButtonState('Merging...', true, 'Merging audio and video');
+                                    scheduleDownloadButtonReset(5000, session.targetIdentity);
                                 } else {
                                     setDownloadButtonState('Started', true, 'Download started');
-                                    scheduleDownloadButtonReset(1800);
+                                    scheduleDownloadButtonReset(1800, session.targetIdentity);
                                 }
                                 return;
                             }
                             log('explicit media bundle download failed', explicitResponse);
-                        } else {
-                            log('skipping captured bundle due to duration mismatch in download step', {
-                                video: describeVideo(targetVideo),
-                                bundle: directBundle.video
-                            });
                         }
                     }
 
-                    // 2. 블롭 URL을 통한 추적 로직 (ID 기반 직결)
-                    const trackedMedia = await getTrackedMediaUrlsForBlob(sourceUrl);
-                    
-                    // 사용자 요청: 재생 시간 기반의 필터링을 삭제하고 해당 블롭 ID에 할당된 모든 URL을 신뢰함
-                    const downloadEntries = trackedMedia.entries || [];
-                    const downloadUrls = downloadEntries
-                        .map(entry => typeof entry === 'string' ? entry : entry && entry.url)
-                        .filter(Boolean);
-                    
                     log('tracked blob media identity mapping', {
                         blobUrl: sourceUrl,
                         mediaSourceId: trackedMedia.mediaSourceId,
-                        urlCount: downloadUrls.length,
-                        found: downloadUrls.length > 0
+                        urlCount: focused.focusedUrls.length,
+                        focusedAssetKey: focused.focusedAssetKey || '',
+                        found: focused.focusedUrls.length > 0
                     });
 
-                    if (downloadUrls.length > 0) {
-                        const trackedResponse = await chrome.runtime.sendMessage({
+                    if (focused.focusedUrls.length > 0) {
+                        const trackedResponse = await sendRuntimeMessage({
                             downloadTrackedBlobUrls: {
-                                entries: downloadEntries,
-                                urls: downloadUrls,
+                                entries: focused.focusedEntries,
+                                urls: focused.focusedUrls,
+                                hint: {
+                                    assetId: focusedAssetId || '',
+                                    duration: Number(targetVideo.duration || 0)
+                                },
                                 filename: getDownloadFileName(sourceUrl)
                             }
-                        });
+                        }, 12000);
+                        if (!isDownloadSessionActive(session)) {
+                            return;
+                        }
                         if (trackedResponse && trackedResponse.ok) {
                             log('tracked blob media download started', trackedResponse);
+                            activeDownloadSession = null;
                             if (trackedResponse.mergeStarted) {
-                                setDownloadButtonState('Merging...', true, 'Merging audio and video in a background tab');
-                                scheduleDownloadButtonReset(5000);
+                                log('merge started', trackedResponse);
+                                setDownloadButtonState('Merging...', true, 'Merging audio and video');
+                                scheduleDownloadButtonReset(5000, session.targetIdentity);
                             } else {
                                 setDownloadButtonState('Started', true, 'Download started');
-                                scheduleDownloadButtonReset(1800);
+                                scheduleDownloadButtonReset(1800, session.targetIdentity);
                             }
                             return;
                         }
                         log('tracked blob media download failed', trackedResponse);
                     }
 
-                    // 3. 마지막 수단: Performance API 또는 기본 URL 시도
-                    const performanceUrl = targetVideo === sideBoxVideo ? '' : findPerformanceVideoUrl(targetVideo);
-                    if (performanceUrl) {
-                        const response = await chrome.runtime.sendMessage({
-                            downloadVideo: {
-                                url: performanceUrl,
-                                filename: getDownloadFileName(performanceUrl)
-                            }
-                        });
-                        if (response && response.ok) {
-                            log('performance video download started', { url: performanceUrl });
-                            setDownloadButtonState('Started', true, 'Download started');
-                            scheduleDownloadButtonReset(1800);
-                            return;
-                        }
-                    }
-
-                    // 재시도 루프 계속 (데이터가 아직 없을 수 있음)
                     if (attempt >= maxRetries) {
-                        throw new Error('no matching media request found after 10 attempts');
+                        throw new Error('no tracked media request matched current sidebox video');
                     }
                 } else {
-                    // 블롭이 아닌 일반 비디오의 경우
-                    const response = await chrome.runtime.sendMessage({
+                    const response = await sendRuntimeMessage({
                         downloadVideo: { url: sourceUrl, filename: getDownloadFileName(sourceUrl) }
-                    });
+                    }, 12000);
+                    if (!isDownloadSessionActive(session)) {
+                        return;
+                    }
                     if (!response || !response.ok) {
                         throw new Error(response && response.error ? response.error : 'download request failed');
                     }
                     log('video download started', { url: sourceUrl });
+                    activeDownloadSession = null;
                     setDownloadButtonState('Started', true, 'Download started');
-                    scheduleDownloadButtonReset(1800);
+                    scheduleDownloadButtonReset(1800, session.targetIdentity);
                     return;
                 }
             } catch (error) {
                 log(`video download attempt ${attempt} failed`, error);
                 if (attempt >= maxRetries) {
+                    activeDownloadSession = null;
                     setDownloadButtonState('Failed', false, String(error.message || error));
-                    scheduleDownloadButtonReset(3000);
+                    scheduleDownloadButtonReset(3000, session.targetIdentity);
                     throw error;
                 }
             }
@@ -1419,12 +1684,12 @@
                 continue;
             }
 
-            const response = await chrome.runtime.sendMessage({
+            const response = await sendRuntimeMessage({
                 downloadMediaBundle: {
                     bundle: pinResponse.bundle,
                     filename: getDownloadFileName(video.currentSrc || video.src || '')
                 }
-            });
+            }, 12000);
             if (response && response.ok) {
                 return response;
             }
@@ -1629,8 +1894,6 @@
     }
 
     function createPanel() {
-        if (panel) return panel;
-
         panel = document.createElement('div');
         panel.id = 'instagram-video-controller-panel';
         panel.style.cssText = `
@@ -1660,6 +1923,7 @@
         header.appendChild(title);
 
         statusEl = document.createElement('div');
+        statusEl.className = 'instagram-video-controller-status';
         statusEl.style.cssText = `
             margin-bottom: 8px;
             color: #cfd8ff;
@@ -1908,6 +2172,8 @@
     }
 
     function cleanupSideBox() {
+        cancelActiveDownloadSession('cleanupSideBox');
+
         if (sideBoxVideo && sideBoxInfo) {
             const movedInfo = movedInfoByVideo.get(sideBoxVideo);
             if (movedInfo instanceof Element && sideBoxInfo.contains(movedInfo)) {
@@ -1935,20 +2201,70 @@
         }
 
         if (sideBox) {
+            if (sideBoxVideo instanceof HTMLVideoElement) {
+                sideBoxByVideo.delete(sideBoxVideo);
+                sideBoxInfoByVideo.delete(sideBoxVideo);
+                sideBoxControlsByVideo.delete(sideBoxVideo);
+                panelByVideo.delete(sideBoxVideo);
+                downloadButtonByVideo.delete(sideBoxVideo);
+            }
             sideBox.remove();
             sideBox = null;
             sideBoxVideo = null;
             sideBoxInfo = null;
             sideBoxControls = null;
+            panel = null;
+            statusEl = null;
+            downloadButtonEl = null;
         }
 
-        lockedSideBoxBundle = null;
-        lockedSideBoxIdentity = '';
         sideBoxVideoIdentity = '';
+        downloadButtonIdentity = '';
         sideBoxCreatedAt = 0;
         lastRejectedBundleInfo = null;
 
         donatePrompt = null;
+    }
+
+    function deactivateCurrentSideBox(reason = '') {
+        cancelActiveDownloadSession(reason || 'deactivateCurrentSideBox');
+
+        sideBox = null;
+        sideBoxVideo = null;
+        sideBoxInfo = null;
+        sideBoxControls = null;
+        panel = null;
+        statusEl = null;
+        downloadButtonEl = null;
+        sideBoxVideoIdentity = '';
+        downloadButtonIdentity = '';
+        sideBoxCreatedAt = 0;
+        lastRejectedBundleInfo = null;
+        donatePrompt = null;
+    }
+
+    function activateStoredSideBox(video) {
+        if (!(video instanceof HTMLVideoElement)) return false;
+        const existingSideBox = sideBoxByVideo.get(video);
+        const existingInfo = sideBoxInfoByVideo.get(video);
+        const existingControls = sideBoxControlsByVideo.get(video);
+        const existingPanel = panelByVideo.get(video);
+        const existingDownloadButton = downloadButtonByVideo.get(video);
+
+        if (!(existingSideBox instanceof Element) || !(existingInfo instanceof Element) || !(existingControls instanceof Element)) {
+            return false;
+        }
+
+        sideBox = existingSideBox;
+        sideBoxVideo = video;
+        sideBoxInfo = existingInfo;
+        sideBoxControls = existingControls;
+        panel = existingPanel || null;
+        downloadButtonEl = existingDownloadButton || null;
+        sideBoxVideoIdentity = getVideoIdentity(video);
+        downloadButtonIdentity = sideBoxVideoIdentity;
+        statusEl = panel ? panel.querySelector('.instagram-video-controller-status') : null;
+        return true;
     }
 
     function hideSideBoxRestoreButton() {
@@ -2070,8 +2386,6 @@
     }
 
     function createSideBox(video) {
-        cleanupSideBox();
-
         sideBox = document.createElement('div');
         sideBox.id = 'instagram-video-controller-side-box';
         sideBox.dataset.instagramVideoControllerSideBox = 'true';
@@ -2115,12 +2429,19 @@
 
         sideBox.appendChild(sideBoxInfo);
         sideBox.appendChild(sideBoxControls);
-        sideBoxControls.appendChild(createPanel());
+        const currentPanel = createPanel();
+        sideBoxControls.appendChild(currentPanel);
         sideBoxVideo = video;
         sideBoxVideoIdentity = getVideoIdentity(video);
+        downloadButtonIdentity = sideBoxVideoIdentity;
         sideBoxCreatedAt = Date.now();
-        lockedSideBoxBundle = null;
-        lockedSideBoxIdentity = '';
+        sideBoxCreatedAtByVideo.set(video, sideBoxCreatedAt);
+        sideBoxByVideo.set(video, sideBox);
+        sideBoxInfoByVideo.set(video, sideBoxInfo);
+        sideBoxControlsByVideo.set(video, sideBoxControls);
+        panelByVideo.set(video, currentPanel);
+        downloadButtonByVideo.set(video, downloadButtonEl);
+        resetDownloadButtonToDefault();
         return sideBox;
     }
 
@@ -2653,17 +2974,17 @@
         if (!(video instanceof HTMLVideoElement) || !(infoElement instanceof Element)) return false;
 
         if (isWideReelsVideo(video)) {
-            const originalInfoElement = infoElement;
-            const narrowedInfoElement = getWideReelsDisplayInfoElement(infoElement);
-            if (narrowedInfoElement instanceof Element) {
-                infoElement = narrowedInfoElement;
-            }
-            if (originalInfoElement !== infoElement) {
-                originalInfoElement.style.setProperty('display', 'none', 'important');
-                originalInfoElement.style.setProperty('visibility', 'hidden', 'important');
-                originalInfoElement.style.setProperty('pointer-events', 'none', 'important');
-                hiddenWideInfoWrapperByVideo.set(video, originalInfoElement);
-            }
+            infoElement.dataset.instagramVideoControllerMovedInfo = 'true';
+            infoElement.style.setProperty('display', 'none', 'important');
+            infoElement.style.setProperty('visibility', 'hidden', 'important');
+            infoElement.style.setProperty('pointer-events', 'none', 'important');
+            hiddenWideInfoWrapperByVideo.set(video, infoElement);
+            movedInfoByVideo.set(video, infoElement);
+            log('stashed wide reels info source', {
+                video: describeVideo(video),
+                info: describeElement(infoElement)
+            });
+            return true;
         }
 
         prepareMovedInfoElement(infoElement);
@@ -2761,6 +3082,20 @@
             element.style.setProperty('display', 'none', 'important');
             element.style.setProperty('pointer-events', 'none', 'important');
         });
+    }
+
+    function buildWideReelsDisplayClone(video) {
+        const originalInfo = movedInfoByVideo.get(video);
+        if (!(originalInfo instanceof Element)) return null;
+
+        const displayElement = getWideReelsDisplayInfoElement(originalInfo) || originalInfo;
+        if (!(displayElement instanceof Element)) return null;
+
+        const clone = displayElement.cloneNode(true);
+        prepareMovedInfoElement(clone);
+        applyWhiteTextToInfoElement(clone);
+        sanitizeWideReelsInfoElement(clone);
+        return clone;
     }
 
     function preCaptureWideReelsInfo(video) {
@@ -2895,23 +3230,23 @@
 
         let infoElement = movedInfoByVideo.get(video);
         delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
+
+        if (isWideReelsVideo(video)) {
+            const displayClone = buildWideReelsDisplayClone(video);
+            if (displayClone instanceof Element) {
+                sideBoxInfo.replaceChildren(displayClone);
+                return true;
+            }
+            return false;
+        }
+
         if (infoElement.parentElement !== sideBoxInfo) {
             sideBoxInfo.replaceChildren();
             sideBoxInfo.appendChild(infoElement);
         }
 
-        if (isWideReelsVideo(video)) {
-            const narrowedInfoElement = getWideReelsDisplayInfoElement(infoElement);
-            if (narrowedInfoElement instanceof Element && narrowedInfoElement !== infoElement) {
-                sideBoxInfo.replaceChildren(narrowedInfoElement);
-                infoElement = narrowedInfoElement;
-                movedInfoByVideo.set(video, infoElement);
-                installMovedInfoColorObserver(video, infoElement);
-                applyWhiteTextToInfoElement(infoElement);
-            }
-            sanitizeWideReelsInfoElement(infoElement);
-        }
-
+        installMovedInfoColorObserver(video, infoElement);
+        applyWhiteTextToInfoElement(infoElement);
         return true;
     }
 
@@ -3068,18 +3403,20 @@
         }
 
         if (isPostPage() && activeVideo && !isEligibleVideo(activeVideo)) {
-            cleanupSideBox();
+            deactivateCurrentSideBox('post page active video became ineligible');
             hideSideBoxRestoreButton();
             clearWideReelsInfoObserver();
             return;
         }
 
         if (!activeVideo || !document.contains(activeVideo) || !isVisibleVideo(activeVideo)) {
-            cleanupSideBox();
+            deactivateCurrentSideBox('no visible active video during sidebox update');
             hideSideBoxRestoreButton();
             clearWideReelsInfoObserver();
             return;
         }
+
+        syncDownloadButtonStateForCurrentSideBox();
 
         if (isWideReelsVideo(activeVideo) && !hasMovedInfoForVideo(activeVideo)) {
             log('wide reels sidebox precheck start', describeVideo(activeVideo));
@@ -3095,11 +3432,11 @@
 
                 const waitingAnchor = findSideBoxAnchor(activeVideo);
                 if (!waitingAnchor || !waitingAnchor.parentElement) {
-                    cleanupSideBox();
+                    deactivateCurrentSideBox('wide reels waiting anchor missing');
                     return;
                 }
 
-                if (!sideBox || sideBoxVideo !== activeVideo) {
+                if (!activateStoredSideBox(activeVideo)) {
                     const box = createSideBox(activeVideo);
                     waitingAnchor.parentElement.insertBefore(box, waitingAnchor);
                     sideBoxInfo.replaceChildren();
@@ -3138,7 +3475,7 @@
 
         const anchor = findSideBoxAnchor(activeVideo);
         if (!anchor || !anchor.parentElement) {
-            cleanupSideBox();
+            deactivateCurrentSideBox('anchor missing for active video');
             return;
         }
 
@@ -3151,7 +3488,7 @@
             cleanupSideBox();
         }
 
-        if (!sideBox || sideBoxVideo !== activeVideo) {
+        if (!activateStoredSideBox(activeVideo)) {
             const box = createSideBox(activeVideo);
             anchor.parentElement.insertBefore(box, anchor);
             recordSideBoxShown();
@@ -3167,6 +3504,8 @@
         else if (sideBox.parentElement !== anchor.parentElement || sideBox.nextElementSibling !== anchor) {
             anchor.parentElement.insertBefore(sideBox, anchor);
         }
+
+        syncDownloadButtonStateForCurrentSideBox();
 
         sizeSideBoxToVideo(activeVideo);
         updateDonatePromptVisibility();
