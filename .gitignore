@@ -3,6 +3,8 @@ dist/
 build/
 local_versions/
 legacy/
+package/
+mp4box-*.tgz
 .env
 .env.*
 *.zip

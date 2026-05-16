@@ -605,6 +605,19 @@
         return Math.round(lastSibling.getBoundingClientRect().width || lastSibling.offsetWidth || 0);
     }
 
+    function getSideBoxWidth(video, anchor) {
+        if (isStandalonePostPageLayout()) return 0;
+
+        const videoRect = video ? video.getBoundingClientRect() : null;
+        if (isStoriesPage()) {
+            return Math.round((video && video.offsetWidth) || (videoRect && videoRect.width) || 0);
+        }
+
+        const fixedWidth = (isReelsPage() || isReelStyleLayout()) ? 497 : 337;
+        const maxWidth = getReelPageSideBoxMaxWidth(anchor);
+        return maxWidth > 0 ? Math.min(fixedWidth, maxWidth) : fixedWidth;
+    }
+
     function clampNumber(value, min, max) {
         return Math.min(Math.max(value, min), max);
     }
@@ -683,21 +696,25 @@
             sideBoxRestoreButton.appendChild(button);
         }
 
-        if (sideBoxRestoreButton.nextElementSibling !== anchor) {
-            anchor.parentElement.insertBefore(sideBoxRestoreButton, anchor);
-        }
-
-        const width = Math.round(video.offsetWidth || video.getBoundingClientRect().width);
+        const width = getSideBoxWidth(video, anchor);
         const height = Math.round(video.offsetHeight || video.getBoundingClientRect().height);
         if (width > 0) {
             sideBoxRestoreButton.style.width = `${width}px`;
             sideBoxRestoreButton.style.minWidth = `${width}px`;
             sideBoxRestoreButton.style.maxWidth = `${width}px`;
+        } else {
+            sideBoxRestoreButton.style.removeProperty('width');
+            sideBoxRestoreButton.style.removeProperty('min-width');
+            sideBoxRestoreButton.style.removeProperty('max-width');
         }
         if (height > 0) {
             sideBoxRestoreButton.style.height = `${height}px`;
             sideBoxRestoreButton.style.minHeight = `${height}px`;
             sideBoxRestoreButton.style.maxHeight = `${height}px`;
+        }
+
+        if (sideBoxRestoreButton.nextElementSibling !== anchor) {
+            anchor.parentElement.insertBefore(sideBoxRestoreButton, anchor);
         }
     }
 
@@ -867,9 +884,7 @@
             sideBox.style.removeProperty('min-width');
             sideBox.style.removeProperty('max-width');
         } else {
-            const width = isStoriesPage()
-                ? Math.round(video.offsetWidth || videoRect.width)
-                : ((isReelsPage() || isReelStyleLayout()) ? 497 : 337);
+            const width = getSideBoxWidth(video, findSideBoxAnchor(video));
             if (width <= 0) return;
             sideBox.style.setProperty('width', `${width}px`, 'important');
             sideBox.style.setProperty('min-width', `${width}px`, 'important');
@@ -1460,6 +1475,16 @@
     function installViewportListeners() {
         window.addEventListener('resize', updateSideBox, { passive: true });
         window.addEventListener('scroll', updateSideBox, { passive: true, capture: true });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                window.setTimeout(updateSideBox, 0);
+                window.setTimeout(updateSideBox, 250);
+            }
+        });
+        window.addEventListener('pageshow', () => {
+            window.setTimeout(updateSideBox, 0);
+            window.setTimeout(updateSideBox, 250);
+        }, { passive: true });
     }
 
     function createDebugPanel() {
