@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "开发者主页"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "赞助开发者"
   },
   "panelTitle": {
     "message": "Instagram Video Controller"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Back 3 seconds"
+    "message": "后退所选秒数"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "前进所选秒数"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "开发者调试遥控器"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "启用后会停止自动执行，并在页面右侧显示分步按钮。"
   },
   "saved": {
     "message": "Saved"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "?????????"
+  },
+  "backwardIntervalLabel": {
+    "message": "后退秒数"
+  },
+  "forwardIntervalLabel": {
+    "message": "前进秒数"
+  },
+  "developerSectionTitle": {
+    "message": "开发者"
   }
 }

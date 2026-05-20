@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "Page du développeur"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "Faire un don au développeur"
   },
   "panelTitle": {
     "message": "Controleur video Instagram"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Reculer de 3 secondes"
+    "message": "Reculer du nombre de secondes choisi"
   },
   "tooltipForward": {
-    "message": "Avancer de 3 secondes"
+    "message": "Avancer du nombre de secondes choisi"
   },
   "tooltipSlowDown": {
     "message": "Ralentir"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "Télécommande de débogage"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "Lorsque cette option est activée, l’exécution automatique s’arrête et les boutons d’étape apparaissent à droite de la page."
   },
   "saved": {
     "message": "Saved"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Ne plus afficher ce message"
+  },
+  "backwardIntervalLabel": {
+    "message": "Secondes en arrière"
+  },
+  "forwardIntervalLabel": {
+    "message": "Secondes en avant"
+  },
+  "developerSectionTitle": {
+    "message": "Développeur"
   }
 }

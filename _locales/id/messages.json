@@ -9,10 +9,10 @@
     "message": "Opsi"
   },
   "developerLink": {
-    "message": "Halaman Pengembang"
+    "message": "Halaman Developer"
   },
   "donate": {
-    "message": "Donasi ke Pengembang"
+    "message": "Donasi ke Developer"
   },
   "panelTitle": {
     "message": "Pengontrol Video Instagram"
@@ -42,10 +42,10 @@
     "message": "Pindai ulang video"
   },
   "tooltipBack": {
-    "message": "Mundur 3 detik"
+    "message": "Mundur sesuai detik yang dipilih"
   },
   "tooltipForward": {
-    "message": "Maju 3 detik"
+    "message": "Maju sesuai detik yang dipilih"
   },
   "tooltipSlowDown": {
     "message": "Perlambat"
@@ -93,7 +93,7 @@
     "message": "Area informasi video tidak terdeteksi."
   },
   "debugRemoteLabel": {
-    "message": "Remote debug pengembang"
+    "message": "Remote debug developer"
   },
   "debugRemoteHint": {
     "message": "Saat aktif, eksekusi otomatis berhenti dan tombol langkah muncul di sisi kanan halaman."
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Jangan tampilkan pemberitahuan ini lagi"
+  },
+  "backwardIntervalLabel": {
+    "message": "Detik mundur"
+  },
+  "forwardIntervalLabel": {
+    "message": "Detik maju"
+  },
+  "developerSectionTitle": {
+    "message": "Developer"
   }
 }

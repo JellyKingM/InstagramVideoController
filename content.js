@@ -7,6 +7,8 @@
         muted: 'volumeMute',
         mutedExplicit: 'volumeMuteExplicitV',
         playbackRate: 'playbackRateV',
+        backwardInterval: 'backwardIntervalV',
+        forwardInterval: 'forwardIntervalV',
         controllerVisible: 'controllerVisibleV',
         sideBoxVisible: 'sideBoxVisibleV',
         debugRemoteVisible: 'debugRemoteVisibleV',
@@ -20,8 +22,8 @@
         volumeMute: false,
         volumeSliderV: 0.5,
         playbackRateV: 1,
-        backwardIntervalV: 3,
-        forwardIntervalV: 3,
+        backwardIntervalV: 10,
+        forwardIntervalV: 10,
         controllerVisibleV: true,
         sideBoxVisibleV: true,
         debugRemoteVisibleV: false
@@ -74,6 +76,8 @@
         const savedMuteStatus = localStorage.getItem(STORAGE_KEYS.muted);
         const savedMuteExplicit = localStorage.getItem(STORAGE_KEYS.mutedExplicit);
         const savedPlaybackRate = localStorage.getItem(STORAGE_KEYS.playbackRate);
+        const savedBackwardInterval = localStorage.getItem(STORAGE_KEYS.backwardInterval);
+        const savedForwardInterval = localStorage.getItem(STORAGE_KEYS.forwardInterval);
         const savedControllerVisible = localStorage.getItem(STORAGE_KEYS.controllerVisible);
         const savedDebugRemoteVisible = localStorage.getItem(STORAGE_KEYS.debugRemoteVisible);
 
@@ -87,6 +91,14 @@
 
         if (savedPlaybackRate !== null && !Number.isNaN(parseFloat(savedPlaybackRate))) {
             options.playbackRateV = clamp(parseFloat(savedPlaybackRate), 0.25, 4);
+        }
+
+        if (savedBackwardInterval !== null && !Number.isNaN(parseInt(savedBackwardInterval, 10))) {
+            options.backwardIntervalV = clamp(parseInt(savedBackwardInterval, 10), 1, 60);
+        }
+
+        if (savedForwardInterval !== null && !Number.isNaN(parseInt(savedForwardInterval, 10))) {
+            options.forwardIntervalV = clamp(parseInt(savedForwardInterval, 10), 1, 60);
         }
 
         if (savedControllerVisible !== null) {
@@ -123,9 +135,17 @@
                 return;
             }
 
-            chrome.storage.local.get({ [STORAGE_KEYS.debugRemoteVisible]: options.debugRemoteVisibleV }, result => {
+            chrome.storage.local.get({
+                [STORAGE_KEYS.debugRemoteVisible]: options.debugRemoteVisibleV,
+                [STORAGE_KEYS.backwardInterval]: options.backwardIntervalV,
+                [STORAGE_KEYS.forwardInterval]: options.forwardIntervalV
+            }, result => {
                 options.debugRemoteVisibleV = result[STORAGE_KEYS.debugRemoteVisible] === true;
+                options.backwardIntervalV = clamp(parseInt(result[STORAGE_KEYS.backwardInterval], 10) || options.backwardIntervalV, 1, 60);
+                options.forwardIntervalV = clamp(parseInt(result[STORAGE_KEYS.forwardInterval], 10) || options.forwardIntervalV, 1, 60);
                 localStorage.setItem(STORAGE_KEYS.debugRemoteVisible, String(options.debugRemoteVisibleV));
+                localStorage.setItem(STORAGE_KEYS.backwardInterval, String(options.backwardIntervalV));
+                localStorage.setItem(STORAGE_KEYS.forwardInterval, String(options.forwardIntervalV));
                 callback();
             });
         } catch (error) {
@@ -402,8 +422,12 @@
 
         const row2 = document.createElement('div');
         row2.style.cssText = 'display: flex; gap: 6px; margin-bottom: 8px;';
-        row2.appendChild(createButton('-3s', t('tooltipBack', 'Back 3 seconds'), () => seekActive(-options.backwardIntervalV)));
-        row2.appendChild(createButton('+3s', t('tooltipForward', 'Forward 3 seconds'), () => seekActive(options.forwardIntervalV)));
+        const backButton = createButton(`-${options.backwardIntervalV}s`, t('tooltipBack', 'Back selected seconds'), () => seekActive(-options.backwardIntervalV));
+        backButton.id = 'instagram-video-controller-back';
+        row2.appendChild(backButton);
+        const forwardButton = createButton(`+${options.forwardIntervalV}s`, t('tooltipForward', 'Forward selected seconds'), () => seekActive(options.forwardIntervalV));
+        forwardButton.id = 'instagram-video-controller-forward';
+        row2.appendChild(forwardButton);
         row2.appendChild(createButton('-0.25x', t('tooltipSlowDown', 'Slow down'), () => setPlaybackRate(options.playbackRateV - 0.25)));
         row2.appendChild(createButton('+0.25x', t('tooltipSpeedUp', 'Speed up'), () => setPlaybackRate(options.playbackRateV + 0.25)));
 
@@ -484,6 +508,18 @@
 
         if (!options.debugRemoteVisibleV) {
             updateSideBox();
+        }
+
+        const backButton = document.getElementById('instagram-video-controller-back');
+        if (backButton) {
+            backButton.textContent = `-${options.backwardIntervalV}s`;
+            backButton.title = t('tooltipBack', 'Back selected seconds');
+        }
+
+        const forwardButton = document.getElementById('instagram-video-controller-forward');
+        if (forwardButton) {
+            forwardButton.textContent = `+${options.forwardIntervalV}s`;
+            forwardButton.title = t('tooltipForward', 'Forward selected seconds');
         }
 
         const volumeSlider = document.getElementById('instagram-video-controller-volume');
@@ -1802,13 +1838,38 @@
         }
     }
 
+    function applySkipIntervals(backwardInterval, forwardInterval) {
+        const nextBackwardInterval = clamp(parseInt(backwardInterval, 10) || options.backwardIntervalV, 1, 60);
+        const nextForwardInterval = clamp(parseInt(forwardInterval, 10) || options.forwardIntervalV, 1, 60);
+
+        options.backwardIntervalV = nextBackwardInterval;
+        options.forwardIntervalV = nextForwardInterval;
+        localStorage.setItem(STORAGE_KEYS.backwardInterval, String(nextBackwardInterval));
+        localStorage.setItem(STORAGE_KEYS.forwardInterval, String(nextForwardInterval));
+        updatePanel();
+    }
+
     function installOptionListeners() {
         try {
             if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.onChanged) return;
 
             chrome.storage.onChanged.addListener((changes, areaName) => {
-                if (areaName !== 'local' || !changes[STORAGE_KEYS.debugRemoteVisible]) return;
-                applyDebugRemoteVisibility(changes[STORAGE_KEYS.debugRemoteVisible].newValue === true);
+                if (areaName !== 'local') return;
+
+                if (changes[STORAGE_KEYS.debugRemoteVisible]) {
+                    applyDebugRemoteVisibility(changes[STORAGE_KEYS.debugRemoteVisible].newValue === true);
+                }
+
+                if (changes[STORAGE_KEYS.backwardInterval] || changes[STORAGE_KEYS.forwardInterval]) {
+                    applySkipIntervals(
+                        changes[STORAGE_KEYS.backwardInterval]
+                            ? changes[STORAGE_KEYS.backwardInterval].newValue
+                            : options.backwardIntervalV,
+                        changes[STORAGE_KEYS.forwardInterval]
+                            ? changes[STORAGE_KEYS.forwardInterval].newValue
+                            : options.forwardIntervalV
+                    );
+                }
             });
         } catch (error) {
             if (!String(error && error.message).includes('Extension context invalidated')) {

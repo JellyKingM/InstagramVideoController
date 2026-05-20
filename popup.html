@@ -5,30 +5,128 @@
     <title>Instagram Video Controller</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            width: 200px;
+            box-sizing: border-box;
+            width: 320px;
             margin: 0;
-            padding: 10px;
+            padding: 14px;
+            font-family: Arial, sans-serif;
+            color: #111;
+            background: #fff;
         }
-        .menu-item {
-            margin: 5px 0;
-            padding: 10px;
-            text-align: center;
-            background-color: #f0f0f0;
-            border-radius: 5px;
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            line-height: 1.3;
+        }
+
+        .field {
+            display: grid;
+            grid-template-columns: 1fr 76px;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+
+        .field input[type="number"] {
+            box-sizing: border-box;
+            width: 76px;
+            padding: 6px 8px;
+            border: 1px solid #c8ced8;
+            border-radius: 6px;
+            font: inherit;
+        }
+
+        details {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        summary {
             cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
         }
-        .menu-item:hover {
-            background-color: #e0e0e0;
+
+        label.checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .hint {
+            margin: 8px 0 0 24px;
+            color: #555;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .links {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        button {
+            min-height: 30px;
+            padding: 6px 10px;
+            border: 1px solid #c8ced8;
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #111;
+            cursor: pointer;
+            font: 600 12px Arial, sans-serif;
+        }
+
+        button:hover {
+            background: #eef2f7;
+        }
+
+        .status {
+            min-height: 18px;
+            margin-top: 12px;
+            color: #216e39;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="menu-item" id="settings" aria-label="Open settings"></div>
-    <div class="menu-item" id="developer" aria-label="Visit developer page"></div>
-    <div class="menu-item" id="donate" aria-label="Donate to developer"></div>
+    <h1 id="pageTitle">Instagram Video Controller</h1>
+
+    <label class="field" for="backwardInterval">
+        <span id="backwardIntervalLabel">Back seconds</span>
+        <input type="number" id="backwardInterval" min="1" max="60" step="1">
+    </label>
+
+    <label class="field" for="forwardInterval">
+        <span id="forwardIntervalLabel">Forward seconds</span>
+        <input type="number" id="forwardInterval" min="1" max="60" step="1">
+    </label>
+
+    <div class="links">
+        <button type="button" id="developer">Developer Page</button>
+        <button type="button" id="donate">Donate</button>
+    </div>
+
+    <details>
+        <summary id="developerSectionTitle">Developer</summary>
+        <label class="checkbox">
+            <input type="checkbox" id="debugRemoteVisible">
+            <span id="debugRemoteLabel">Developer debug remote</span>
+        </label>
+        <p class="hint" id="debugRemoteHint">When enabled, automatic execution stops and step buttons appear on the right side of the page.</p>
+    </details>
+
+    <div class="status" id="status" aria-live="polite"></div>
 
     <script src="shared.js"></script>
-    <script src="popup.js"></script>
+    <script src="options.js"></script>
 </body>
 </html>

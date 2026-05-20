@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "डेवलपर होमपेज"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "डेवलपर को दान करें"
   },
   "panelTitle": {
     "message": "Instagram Video Controller"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Back 3 seconds"
+    "message": "चुने गए सेकंड पीछे जाएं"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "चुने गए सेकंड आगे जाएं"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "डेवलपर डिबग रिमोट"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "चालू होने पर स्वचालित चलना रुकता है और पेज के दाईं ओर स्टेप बटन दिखाई देते हैं।"
   },
   "saved": {
     "message": "Saved"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "?? ????? ?? ?????? ? ??????"
+  },
+  "backwardIntervalLabel": {
+    "message": "पीछे जाने के सेकंड"
+  },
+  "forwardIntervalLabel": {
+    "message": "आगे जाने के सेकंड"
+  },
+  "developerSectionTitle": {
+    "message": "डेवलपर"
   }
 }

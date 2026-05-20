@@ -9,7 +9,7 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "Developer Homepage"
   },
   "donate": {
     "message": "Donate to Developer"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Back 3 seconds"
+    "message": "Back selected seconds"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "Forward selected seconds"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Do not show this prompt again"
+  },
+  "backwardIntervalLabel": {
+    "message": "Back seconds"
+  },
+  "forwardIntervalLabel": {
+    "message": "Forward seconds"
+  },
+  "developerSectionTitle": {
+    "message": "Developer"
   }
 }

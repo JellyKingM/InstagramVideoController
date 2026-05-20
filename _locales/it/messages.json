@@ -9,7 +9,7 @@
     "message": "Opzioni"
   },
   "developerLink": {
-    "message": "Pagina sviluppatore"
+    "message": "Pagina dello sviluppatore"
   },
   "donate": {
     "message": "Dona allo sviluppatore"
@@ -42,10 +42,10 @@
     "message": "Cerca di nuovo i video"
   },
   "tooltipBack": {
-    "message": "Indietro di 3 secondi"
+    "message": "Torna indietro dei secondi selezionati"
   },
   "tooltipForward": {
-    "message": "Avanti di 3 secondi"
+    "message": "Avanza dei secondi selezionati"
   },
   "tooltipSlowDown": {
     "message": "Riduci velocita"
@@ -96,7 +96,7 @@
     "message": "Telecomando debug sviluppatore"
   },
   "debugRemoteHint": {
-    "message": "Quando attivo, lesecuzione automatica si ferma e i pulsanti passo passo appaiono a destra della pagina."
+    "message": "Quando è attivo, l’esecuzione automatica si ferma e i pulsanti passo-passo appaiono sul lato destro della pagina."
   },
   "saved": {
     "message": "Salvato"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Non mostrare pi? questo avviso"
+  },
+  "backwardIntervalLabel": {
+    "message": "Secondi indietro"
+  },
+  "forwardIntervalLabel": {
+    "message": "Secondi avanti"
+  },
+  "developerSectionTitle": {
+    "message": "Sviluppatore"
   }
 }

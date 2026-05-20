@@ -9,7 +9,7 @@
     "message": "Opciones"
   },
   "developerLink": {
-    "message": "Pagina del desarrollador"
+    "message": "Página del desarrollador"
   },
   "donate": {
     "message": "Donar al desarrollador"
@@ -42,10 +42,10 @@
     "message": "Volver a buscar videos"
   },
   "tooltipBack": {
-    "message": "Retroceder 3 segundos"
+    "message": "Retroceder los segundos seleccionados"
   },
   "tooltipForward": {
-    "message": "Avanzar 3 segundos"
+    "message": "Avanzar los segundos seleccionados"
   },
   "tooltipSlowDown": {
     "message": "Reducir velocidad"
@@ -93,10 +93,10 @@
     "message": "No se detecto el area de informacion del video."
   },
   "debugRemoteLabel": {
-    "message": "Control remoto de depuracion"
+    "message": "Control remoto de depuración"
   },
   "debugRemoteHint": {
-    "message": "Cuando esta activo, la ejecucion automatica se detiene y aparecen botones por pasos a la derecha de la pagina."
+    "message": "Cuando está activado, se detiene la ejecución automática y aparecen botones de pasos a la derecha de la página."
   },
   "saved": {
     "message": "Guardado"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "No volver a mostrar este aviso"
+  },
+  "backwardIntervalLabel": {
+    "message": "Segundos hacia atrás"
+  },
+  "forwardIntervalLabel": {
+    "message": "Segundos hacia adelante"
+  },
+  "developerSectionTitle": {
+    "message": "Desarrollador"
   }
 }

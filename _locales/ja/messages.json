@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "開発者ホームページ"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "開発者に寄付"
   },
   "panelTitle": {
     "message": "Instagram Video Controller"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Back 3 seconds"
+    "message": "選択した秒数だけ戻る"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "選択した秒数だけ進む"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "開発者用デバッグリモコン"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "有効にすると自動実行が停止し、ページ右側にステップボタンが表示されます。"
   },
   "saved": {
     "message": "Saved"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "????????????"
+  },
+  "backwardIntervalLabel": {
+    "message": "戻る秒数"
+  },
+  "forwardIntervalLabel": {
+    "message": "進む秒数"
+  },
+  "developerSectionTitle": {
+    "message": "開発者"
   }
 }

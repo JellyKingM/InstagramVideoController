@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "صفحة المطور"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "ادعم المطور"
   },
   "panelTitle": {
     "message": "Instagram Video Controller"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Back 3 seconds"
+    "message": "الرجوع بعدد الثواني المحدد"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "التقدم بعدد الثواني المحدد"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "وحدة تحكم التصحيح للمطور"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "عند التفعيل، يتوقف التشغيل التلقائي وتظهر أزرار الخطوات على يمين الصفحة."
   },
   "saved": {
     "message": "Saved"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "?? ????? ??? ??????? ??? ????"
+  },
+  "backwardIntervalLabel": {
+    "message": "ثواني الرجوع"
+  },
+  "forwardIntervalLabel": {
+    "message": "ثواني التقدم"
+  },
+  "developerSectionTitle": {
+    "message": "المطور"
   }
 }

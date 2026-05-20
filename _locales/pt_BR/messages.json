@@ -9,7 +9,7 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "Página do desenvolvedor"
   },
   "donate": {
     "message": "Doar ao desenvolvedor"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Voltar 3 segundos"
+    "message": "Voltar os segundos selecionados"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "Avançar os segundos selecionados"
   },
   "tooltipSlowDown": {
     "message": "Diminuir velocidade"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "Controle remoto de depuração"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "Quando ativado, a execução automática para e botões de etapa aparecem no lado direito da página."
   },
   "saved": {
     "message": "Salvo"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "N?o mostrar este aviso novamente"
+  },
+  "backwardIntervalLabel": {
+    "message": "Segundos para voltar"
+  },
+  "forwardIntervalLabel": {
+    "message": "Segundos para avançar"
+  },
+  "developerSectionTitle": {
+    "message": "Desenvolvedor"
   }
 }

@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "Страница разработчика"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "Поддержать разработчика"
   },
   "panelTitle": {
     "message": "Kontroller video Instagram"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "Back 3 seconds"
+    "message": "Назад на выбранное число секунд"
   },
   "tooltipForward": {
-    "message": "Forward 3 seconds"
+    "message": "Вперед на выбранное число секунд"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "Пульт отладки разработчика"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "Если включено, автоматическое выполнение останавливается, а кнопки шагов появляются справа на странице."
   },
   "saved": {
     "message": "Saved"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "?????? ?? ?????????? ??? ?????????"
+  },
+  "backwardIntervalLabel": {
+    "message": "Секунды назад"
+  },
+  "forwardIntervalLabel": {
+    "message": "Секунды вперед"
+  },
+  "developerSectionTitle": {
+    "message": "Разработчик"
   }
 }

@@ -12,7 +12,7 @@
     "message": "Dasturchi sahifasi"
   },
   "donate": {
-    "message": "Dasturchini qollab-quvvatlash"
+    "message": "Dasturchini qo‘llab-quvvatlash"
   },
   "panelTitle": {
     "message": "Instagram video boshqaruvchisi"
@@ -42,10 +42,10 @@
     "message": "Videolarni qayta qidirish"
   },
   "tooltipBack": {
-    "message": "3 soniya orqaga"
+    "message": "Tanlangan soniyaga orqaga o‘tish"
   },
   "tooltipForward": {
-    "message": "3 soniya oldinga"
+    "message": "Tanlangan soniyaga oldinga o‘tish"
   },
   "tooltipSlowDown": {
     "message": "Sekinlatish"
@@ -96,7 +96,7 @@
     "message": "Dasturchi debug pulti"
   },
   "debugRemoteHint": {
-    "message": "Yoqilganda avtomatik bajarish toxtaydi va sahifaning ong tomonida bosqich tugmalari korinadi."
+    "message": "Yoqilganda avtomatik bajarish to‘xtaydi va sahifaning o‘ng tomonida qadam tugmalari ko‘rinadi."
   },
   "saved": {
     "message": "Saqlandi"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Bu xabarni boshqa ko?rsatma"
+  },
+  "backwardIntervalLabel": {
+    "message": "Orqaga soniyalar"
+  },
+  "forwardIntervalLabel": {
+    "message": "Oldinga soniyalar"
+  },
+  "developerSectionTitle": {
+    "message": "Dasturchi"
   }
 }

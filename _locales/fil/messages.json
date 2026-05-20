@@ -9,7 +9,7 @@
     "message": "Mga opsyon"
   },
   "developerLink": {
-    "message": "Pahina ng Developer"
+    "message": "Homepage ng Developer"
   },
   "donate": {
     "message": "Mag-donate sa Developer"
@@ -42,10 +42,10 @@
     "message": "I-scan muli ang mga video"
   },
   "tooltipBack": {
-    "message": "Bumalik ng 3 segundo"
+    "message": "Bumalik ayon sa napiling segundo"
   },
   "tooltipForward": {
-    "message": "Sumulong ng 3 segundo"
+    "message": "Sumulong ayon sa napiling segundo"
   },
   "tooltipSlowDown": {
     "message": "Bagalan"
@@ -96,7 +96,7 @@
     "message": "Developer debug remote"
   },
   "debugRemoteHint": {
-    "message": "Kapag naka-on, hihinto ang automatic execution at lalabas ang step buttons sa kanang bahagi ng page."
+    "message": "Kapag naka-enable, hihinto ang awtomatikong pagpapatakbo at lalabas ang step buttons sa kanang bahagi ng page."
   },
   "saved": {
     "message": "Nai-save"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Huwag nang ipakita muli ang paalalang ito"
+  },
+  "backwardIntervalLabel": {
+    "message": "Segundo pabalik"
+  },
+  "forwardIntervalLabel": {
+    "message": "Segundo pasulong"
+  },
+  "developerSectionTitle": {
+    "message": "Developer"
   }
 }

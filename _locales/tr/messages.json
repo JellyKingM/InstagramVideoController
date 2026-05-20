@@ -9,10 +9,10 @@
     "message": "Options"
   },
   "developerLink": {
-    "message": "Developer Page"
+    "message": "Geliştirici ana sayfası"
   },
   "donate": {
-    "message": "Donate to Developer"
+    "message": "Geliştiriciye bağış yap"
   },
   "panelTitle": {
     "message": "Instagram Video Kontrolcusu"
@@ -42,10 +42,10 @@
     "message": "Rescan videos"
   },
   "tooltipBack": {
-    "message": "3 saniye geri"
+    "message": "Seçilen saniye kadar geri sar"
   },
   "tooltipForward": {
-    "message": "3 saniye ileri"
+    "message": "Seçilen saniye kadar ileri sar"
   },
   "tooltipSlowDown": {
     "message": "Slow down"
@@ -93,10 +93,10 @@
     "message": "No video info area detected."
   },
   "debugRemoteLabel": {
-    "message": "Developer debug remote"
+    "message": "Geliştirici hata ayıklama kumandası"
   },
   "debugRemoteHint": {
-    "message": "When enabled, automatic execution stops and step buttons appear on the right side of the page."
+    "message": "Etkinleştirildiğinde otomatik çalışma durur ve sayfanın sağında adım düğmeleri görünür."
   },
   "saved": {
     "message": "Kaydedildi"
@@ -124,5 +124,14 @@
   },
   "donatePromptNeverTooltip": {
     "message": "Bu bildirimi tekrar g?sterme"
+  },
+  "backwardIntervalLabel": {
+    "message": "Geri sarma saniyesi"
+  },
+  "forwardIntervalLabel": {
+    "message": "İleri sarma saniyesi"
+  },
+  "developerSectionTitle": {
+    "message": "Geliştirici"
   }
 }
