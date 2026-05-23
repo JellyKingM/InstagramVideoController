@@ -9,9 +9,17 @@
         playbackRate: 'playbackRateV',
         backwardInterval: 'backwardIntervalV',
         forwardInterval: 'forwardIntervalV',
+        nativeControlsEnabled: 'nativeControlsEnabledV',
+        sideBoxEnabled: 'sideBoxEnabledV',
         controllerVisible: 'controllerVisibleV',
         sideBoxVisible: 'sideBoxVisibleV',
+        hideReelClickCover: 'hideReelClickCoverV',
+        sideBoxColor: 'sideBoxColorV',
         debugRemoteVisible: 'debugRemoteVisibleV',
+        debugLogVisible: 'debugLogVisibleV',
+        debugLogFontSize: 'debugLogFontSizeV',
+        debugLogFontFamily: 'debugLogFontFamilyV',
+        debugLogTheme: 'debugLogThemeV',
         donatePromptSeenCount: 'donatePromptSeenCountV',
         donatePromptNextAt: 'donatePromptNextAtV',
         donatePromptDismissed: 'donatePromptDismissedV'
@@ -24,9 +32,17 @@
         playbackRateV: 1,
         backwardIntervalV: 10,
         forwardIntervalV: 10,
+        nativeControlsEnabledV: true,
+        sideBoxEnabledV: true,
         controllerVisibleV: true,
         sideBoxVisibleV: true,
-        debugRemoteVisibleV: false
+        hideReelClickCoverV: true,
+        sideBoxColorV: '#121212',
+        debugRemoteVisibleV: false,
+        debugLogVisibleV: false,
+        debugLogFontSizeV: 10,
+        debugLogFontFamilyV: 'Consolas, monospace',
+        debugLogThemeV: 'dark'
     };
 
     let panel = null;
@@ -49,12 +65,15 @@
     let debugAnchor = null;
     let debugOverlay = null;
     let debugInfoElement = null;
+    let debugLogOverlay = null;
+    let debugLogOutput = null;
     let donatePromptSeenCount = 0;
     let donatePromptNextAt = 30;
     let donatePromptDismissed = false;
 
     function log(...args) {
         console.log(LOG_PREFIX, ...args);
+        appendDebugLog('system', args);
     }
 
     function t(key, fallback) {
@@ -78,8 +97,17 @@
         const savedPlaybackRate = localStorage.getItem(STORAGE_KEYS.playbackRate);
         const savedBackwardInterval = localStorage.getItem(STORAGE_KEYS.backwardInterval);
         const savedForwardInterval = localStorage.getItem(STORAGE_KEYS.forwardInterval);
+        const savedNativeControlsEnabled = localStorage.getItem(STORAGE_KEYS.nativeControlsEnabled);
+        const savedSideBoxEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxEnabled);
         const savedControllerVisible = localStorage.getItem(STORAGE_KEYS.controllerVisible);
+        const savedSideBoxVisible = localStorage.getItem(STORAGE_KEYS.sideBoxVisible);
+        const savedHideReelClickCover = localStorage.getItem(STORAGE_KEYS.hideReelClickCover);
+        const savedSideBoxColor = localStorage.getItem(STORAGE_KEYS.sideBoxColor);
         const savedDebugRemoteVisible = localStorage.getItem(STORAGE_KEYS.debugRemoteVisible);
+        const savedDebugLogVisible = localStorage.getItem(STORAGE_KEYS.debugLogVisible);
+        const savedDebugLogFontSize = localStorage.getItem(STORAGE_KEYS.debugLogFontSize);
+        const savedDebugLogFontFamily = localStorage.getItem(STORAGE_KEYS.debugLogFontFamily);
+        const savedDebugLogTheme = localStorage.getItem(STORAGE_KEYS.debugLogTheme);
 
         if (savedVolume !== null && !Number.isNaN(parseFloat(savedVolume))) {
             options.volumeSliderV = clamp(parseFloat(savedVolume), 0, 1);
@@ -101,12 +129,49 @@
             options.forwardIntervalV = clamp(parseInt(savedForwardInterval, 10), 1, 60);
         }
 
+        if (savedNativeControlsEnabled !== null) {
+            options.nativeControlsEnabledV = savedNativeControlsEnabled === 'true';
+            options.videoControllerV = options.nativeControlsEnabledV;
+        }
+
+        if (savedSideBoxEnabled !== null) {
+            options.sideBoxEnabledV = savedSideBoxEnabled === 'true';
+        }
+
         if (savedControllerVisible !== null) {
             options.controllerVisibleV = savedControllerVisible === 'true';
         }
 
+        if (savedSideBoxVisible !== null) {
+            options.sideBoxVisibleV = savedSideBoxVisible === 'true';
+        }
+
+        if (savedHideReelClickCover !== null) {
+            options.hideReelClickCoverV = savedHideReelClickCover === 'true';
+        }
+
+        if (savedSideBoxColor) {
+            options.sideBoxColorV = savedSideBoxColor;
+        }
+
         if (savedDebugRemoteVisible !== null) {
             options.debugRemoteVisibleV = savedDebugRemoteVisible === 'true';
+        }
+
+        if (savedDebugLogVisible !== null) {
+            options.debugLogVisibleV = savedDebugLogVisible === 'true';
+        }
+
+        if (savedDebugLogFontSize !== null && !Number.isNaN(parseInt(savedDebugLogFontSize, 10))) {
+            options.debugLogFontSizeV = clamp(parseInt(savedDebugLogFontSize, 10), 8, 18);
+        }
+
+        if (savedDebugLogFontFamily) {
+            options.debugLogFontFamilyV = savedDebugLogFontFamily;
+        }
+
+        if (savedDebugLogTheme) {
+            options.debugLogThemeV = savedDebugLogTheme;
         }
 
         const savedDonatePromptSeenCount = parseInt(localStorage.getItem(STORAGE_KEYS.donatePromptSeenCount) || '0', 10);
@@ -138,14 +203,45 @@
             chrome.storage.local.get({
                 [STORAGE_KEYS.debugRemoteVisible]: options.debugRemoteVisibleV,
                 [STORAGE_KEYS.backwardInterval]: options.backwardIntervalV,
-                [STORAGE_KEYS.forwardInterval]: options.forwardIntervalV
+                [STORAGE_KEYS.forwardInterval]: options.forwardIntervalV,
+                [STORAGE_KEYS.nativeControlsEnabled]: options.nativeControlsEnabledV,
+                [STORAGE_KEYS.sideBoxEnabled]: options.sideBoxEnabledV,
+                [STORAGE_KEYS.sideBoxVisible]: options.sideBoxVisibleV,
+                [STORAGE_KEYS.hideReelClickCover]: options.hideReelClickCoverV,
+                [STORAGE_KEYS.sideBoxColor]: options.sideBoxColorV,
+                [STORAGE_KEYS.debugLogVisible]: options.debugLogVisibleV,
+                [STORAGE_KEYS.debugLogFontSize]: options.debugLogFontSizeV,
+                [STORAGE_KEYS.debugLogFontFamily]: options.debugLogFontFamilyV,
+                [STORAGE_KEYS.debugLogTheme]: options.debugLogThemeV
             }, result => {
-                options.debugRemoteVisibleV = result[STORAGE_KEYS.debugRemoteVisible] === true;
+                options.debugRemoteVisibleV = false;
                 options.backwardIntervalV = clamp(parseInt(result[STORAGE_KEYS.backwardInterval], 10) || options.backwardIntervalV, 1, 60);
                 options.forwardIntervalV = clamp(parseInt(result[STORAGE_KEYS.forwardInterval], 10) || options.forwardIntervalV, 1, 60);
+                options.nativeControlsEnabledV = result[STORAGE_KEYS.nativeControlsEnabled] !== false;
+                options.videoControllerV = options.nativeControlsEnabledV;
+                options.sideBoxEnabledV = result[STORAGE_KEYS.sideBoxEnabled] !== false;
+                options.sideBoxVisibleV = result[STORAGE_KEYS.sideBoxVisible] !== false;
+                options.hideReelClickCoverV = result[STORAGE_KEYS.hideReelClickCover] !== false;
+                options.sideBoxColorV = result[STORAGE_KEYS.sideBoxColor] || options.sideBoxColorV;
+                options.debugLogVisibleV = result[STORAGE_KEYS.debugLogVisible] === true;
+                options.debugLogFontSizeV = clamp(parseInt(result[STORAGE_KEYS.debugLogFontSize], 10) || options.debugLogFontSizeV, 8, 18);
+                options.debugLogFontFamilyV = result[STORAGE_KEYS.debugLogFontFamily] || options.debugLogFontFamilyV;
+                options.debugLogThemeV = result[STORAGE_KEYS.debugLogTheme] || options.debugLogThemeV;
                 localStorage.setItem(STORAGE_KEYS.debugRemoteVisible, String(options.debugRemoteVisibleV));
                 localStorage.setItem(STORAGE_KEYS.backwardInterval, String(options.backwardIntervalV));
                 localStorage.setItem(STORAGE_KEYS.forwardInterval, String(options.forwardIntervalV));
+                localStorage.setItem(STORAGE_KEYS.nativeControlsEnabled, String(options.nativeControlsEnabledV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxEnabled, String(options.sideBoxEnabledV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxVisible, String(options.sideBoxVisibleV));
+                localStorage.setItem(STORAGE_KEYS.hideReelClickCover, String(options.hideReelClickCoverV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxColor, options.sideBoxColorV);
+                localStorage.setItem(STORAGE_KEYS.debugLogVisible, String(options.debugLogVisibleV));
+                localStorage.setItem(STORAGE_KEYS.debugLogFontSize, String(options.debugLogFontSizeV));
+                localStorage.setItem(STORAGE_KEYS.debugLogFontFamily, options.debugLogFontFamilyV);
+                localStorage.setItem(STORAGE_KEYS.debugLogTheme, options.debugLogThemeV);
+                if (result[STORAGE_KEYS.debugRemoteVisible] === true) {
+                    persistExtensionOptions({ [STORAGE_KEYS.debugRemoteVisible]: false });
+                }
                 callback();
             });
         } catch (error) {
@@ -164,6 +260,17 @@
         localStorage.setItem(STORAGE_KEYS.donatePromptSeenCount, String(donatePromptSeenCount));
         localStorage.setItem(STORAGE_KEYS.donatePromptNextAt, String(donatePromptNextAt));
         localStorage.setItem(STORAGE_KEYS.donatePromptDismissed, String(donatePromptDismissed));
+    }
+
+    function persistExtensionOptions(values) {
+        try {
+            if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) return;
+            chrome.storage.local.set(values);
+        } catch (error) {
+            if (!String(error && error.message).includes('Extension context invalidated')) {
+                log('storage save failed', error);
+            }
+        }
     }
 
     function openDonatePage() {
@@ -291,9 +398,7 @@
     function applySettingsToVideo(video) {
         if (!(video instanceof HTMLVideoElement)) return;
 
-        if (options.videoControllerV) {
-            video.controls = true;
-        }
+        video.controls = options.videoControllerV;
 
         video.volume = options.volumeSliderV;
         applyingMute = true;
@@ -374,6 +479,18 @@
         return button;
     }
 
+    function applySideBoxColor() {
+        if (panel) {
+            panel.style.background = options.sideBoxColorV || '#121212';
+        }
+        if (sideBox) {
+            sideBox.style.background = options.sideBoxColorV || '#121212';
+        }
+        if (sideBoxInfo) {
+            sideBoxInfo.style.background = options.sideBoxColorV || '#121212';
+        }
+    }
+
     function createPanel() {
         if (panel) return panel;
 
@@ -384,7 +501,7 @@
             width: 100%;
             padding: 10px;
             border-top: 1px solid rgba(255,255,255,0.16);
-            background: rgba(18,18,18,0.96);
+            background: ${options.sideBoxColorV || '#121212'};
             color: #fff;
             font-family: Arial, sans-serif;
             font-size: 12px;
@@ -458,6 +575,7 @@
         panel.appendChild(row3);
         panel.appendChild(volumeLabel);
         panel.appendChild(volumeSlider);
+        applySideBoxColor();
 
         return panel;
     }
@@ -767,7 +885,7 @@
             position: relative;
             z-index: 2147483646;
             overflow: hidden;
-            background: rgba(18, 18, 18, 0.96);
+            background: ${options.sideBoxColorV || '#121212'};
             pointer-events: auto;
             display: flex;
             flex-direction: column;
@@ -784,7 +902,7 @@
             overflow: auto;
             padding: 12px;
             color: #fff;
-            background: rgba(18, 18, 18, 0.96);
+            background: ${options.sideBoxColorV || '#121212'};
             font-family: Arial, sans-serif;
             font-size: 14px;
             line-height: 1.35;
@@ -1281,6 +1399,13 @@
         return true;
     }
 
+    function restoreReelPageClickCovers() {
+        document.querySelectorAll('[data-instagram-video-controller-hidden-reel-click-cover="true"]').forEach(element => {
+            element.style.removeProperty('display');
+            delete element.dataset.instagramVideoControllerHiddenReelClickCover;
+        });
+    }
+
     function updateSideBox() {
         if (!isSupportedPage()) {
             cleanupSideBox();
@@ -1300,10 +1425,21 @@
             return;
         }
 
+        if (!options.sideBoxEnabledV) {
+            cleanupSideBox();
+            hideSideBoxRestoreButton();
+            restoreReelPageClickCovers();
+            return;
+        }
+
         hideAllVideoPlayerElements();
 
         const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
-        hideReelPageClickCover(activeVideo);
+        if (options.hideReelClickCoverV) {
+            hideReelPageClickCover(activeVideo);
+        } else {
+            restoreReelPageClickCovers();
+        }
 
         if (!options.sideBoxVisibleV) {
             cleanupSideBox();
@@ -1389,6 +1525,9 @@
 
     function toggleNativeControls() {
         options.videoControllerV = !options.videoControllerV;
+        options.nativeControlsEnabledV = options.videoControllerV;
+        localStorage.setItem(STORAGE_KEYS.nativeControlsEnabled, String(options.nativeControlsEnabledV));
+        persistExtensionOptions({ [STORAGE_KEYS.nativeControlsEnabled]: options.nativeControlsEnabledV });
         getVideos().forEach(video => {
             video.controls = options.videoControllerV;
         });
@@ -1396,6 +1535,8 @@
 
     function setSideBoxVisible(visible) {
         options.sideBoxVisibleV = visible;
+        localStorage.setItem(STORAGE_KEYS.sideBoxVisible, String(visible));
+        persistExtensionOptions({ [STORAGE_KEYS.sideBoxVisible]: visible });
         updateSideBox();
     }
 
@@ -1523,6 +1664,129 @@
         }, { passive: true });
     }
 
+    function getDebugLogThemeStyles() {
+        if (options.debugLogThemeV === 'light') {
+            return {
+                background: 'rgba(255,255,255,0.94)',
+                color: '#111827',
+                border: 'rgba(17,24,39,0.18)'
+            };
+        }
+        if (options.debugLogThemeV === 'signal') {
+            return {
+                background: 'rgba(5,12,22,0.94)',
+                color: '#86efac',
+                border: 'rgba(134,239,172,0.38)'
+            };
+        }
+        return {
+            background: 'rgba(12,12,12,0.92)',
+            color: '#dbeafe',
+            border: 'rgba(255,255,255,0.18)'
+        };
+    }
+
+    function applyDebugLogOverlayStyle() {
+        if (!debugLogOverlay || !debugLogOutput) return;
+        const theme = getDebugLogThemeStyles();
+        debugLogOverlay.style.background = theme.background;
+        debugLogOverlay.style.color = theme.color;
+        debugLogOverlay.style.borderColor = theme.border;
+        debugLogOverlay.style.fontSize = `${options.debugLogFontSizeV}px`;
+        debugLogOverlay.style.fontFamily = options.debugLogFontFamilyV;
+        debugLogOutput.style.font = `${options.debugLogFontSizeV}px ${options.debugLogFontFamilyV}`;
+    }
+
+    function createDebugLogOverlay() {
+        if (debugLogOverlay) {
+            applyDebugLogOverlayStyle();
+            return debugLogOverlay;
+        }
+
+        debugLogOverlay = document.createElement('div');
+        debugLogOverlay.id = 'instagram-video-controller-debug-log';
+        debugLogOverlay.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 2147483647;
+            width: 360px;
+            max-width: calc(100vw - 20px);
+            max-height: 42vh;
+            overflow: hidden;
+            box-sizing: border-box;
+            padding: 8px;
+            border: 1px solid;
+            border-radius: 8px;
+            pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        `;
+
+        const title = document.createElement('div');
+        title.textContent = 'IVC Debug Log';
+        title.style.cssText = 'font-weight:700; margin-bottom:5px;';
+
+        debugLogOutput = document.createElement('pre');
+        debugLogOutput.style.cssText = `
+            margin: 0;
+            max-height: calc(42vh - 30px);
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-break: break-word;
+        `;
+
+        debugLogOverlay.appendChild(title);
+        debugLogOverlay.appendChild(debugLogOutput);
+        document.documentElement.appendChild(debugLogOverlay);
+        applyDebugLogOverlayStyle();
+        return debugLogOverlay;
+    }
+
+    function removeDebugLogOverlay() {
+        if (!debugLogOverlay) return;
+        debugLogOverlay.remove();
+        debugLogOverlay = null;
+        debugLogOutput = null;
+    }
+
+    function appendDebugLog(kind, args) {
+        if (!options.debugLogVisibleV) return;
+        createDebugLogOverlay();
+        if (!debugLogOutput) return;
+
+        const now = new Date().toLocaleTimeString();
+        const text = args.map(formatDebugValue).join(' ');
+        const line = `[${now}] [${kind}] ${text}`;
+        const next = `${line}\n${debugLogOutput.textContent || ''}`;
+        debugLogOutput.textContent = next.split('\n').slice(0, 80).join('\n');
+    }
+
+    function applyDebugLogSettings(settings) {
+        if (Object.prototype.hasOwnProperty.call(settings, STORAGE_KEYS.debugLogVisible)) {
+            options.debugLogVisibleV = settings[STORAGE_KEYS.debugLogVisible] === true;
+            localStorage.setItem(STORAGE_KEYS.debugLogVisible, String(options.debugLogVisibleV));
+        }
+        if (Object.prototype.hasOwnProperty.call(settings, STORAGE_KEYS.debugLogFontSize)) {
+            options.debugLogFontSizeV = clamp(parseInt(settings[STORAGE_KEYS.debugLogFontSize], 10) || 10, 8, 18);
+            localStorage.setItem(STORAGE_KEYS.debugLogFontSize, String(options.debugLogFontSizeV));
+        }
+        if (Object.prototype.hasOwnProperty.call(settings, STORAGE_KEYS.debugLogFontFamily)) {
+            options.debugLogFontFamilyV = settings[STORAGE_KEYS.debugLogFontFamily] || 'Consolas, monospace';
+            localStorage.setItem(STORAGE_KEYS.debugLogFontFamily, options.debugLogFontFamilyV);
+        }
+        if (Object.prototype.hasOwnProperty.call(settings, STORAGE_KEYS.debugLogTheme)) {
+            options.debugLogThemeV = settings[STORAGE_KEYS.debugLogTheme] || 'dark';
+            localStorage.setItem(STORAGE_KEYS.debugLogTheme, options.debugLogThemeV);
+        }
+
+        if (options.debugLogVisibleV) {
+            createDebugLogOverlay();
+            appendDebugLog('settings', ['debug log updated']);
+        } else {
+            removeDebugLogOverlay();
+        }
+    }
+
     function createDebugPanel() {
         if (debugPanel) return debugPanel;
 
@@ -1646,7 +1910,14 @@
             return `<${value.tagName.toLowerCase()}${id}${classes}> ${Math.round(rect.width)}x${Math.round(rect.height)}`;
         }
         if (Array.isArray(value)) return `${value.length} item(s)`;
-        if (value && typeof value === 'object') return JSON.stringify(value);
+        if (value instanceof Error) return value.message;
+        if (value && typeof value === 'object') {
+            try {
+                return JSON.stringify(value);
+            } catch (error) {
+                return Object.prototype.toString.call(value);
+            }
+        }
         return String(value);
     }
 
@@ -1849,6 +2120,41 @@
         updatePanel();
     }
 
+    function applyFeatureOptions(values) {
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.nativeControlsEnabled)) {
+            options.nativeControlsEnabledV = values[STORAGE_KEYS.nativeControlsEnabled] !== false;
+            options.videoControllerV = options.nativeControlsEnabledV;
+            localStorage.setItem(STORAGE_KEYS.nativeControlsEnabled, String(options.nativeControlsEnabledV));
+            getVideos().forEach(video => {
+                video.controls = options.videoControllerV;
+            });
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxEnabled)) {
+            options.sideBoxEnabledV = values[STORAGE_KEYS.sideBoxEnabled] !== false;
+            localStorage.setItem(STORAGE_KEYS.sideBoxEnabled, String(options.sideBoxEnabledV));
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxVisible)) {
+            options.sideBoxVisibleV = values[STORAGE_KEYS.sideBoxVisible] !== false;
+            localStorage.setItem(STORAGE_KEYS.sideBoxVisible, String(options.sideBoxVisibleV));
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.hideReelClickCover)) {
+            options.hideReelClickCoverV = values[STORAGE_KEYS.hideReelClickCover] !== false;
+            localStorage.setItem(STORAGE_KEYS.hideReelClickCover, String(options.hideReelClickCoverV));
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxColor)) {
+            options.sideBoxColorV = values[STORAGE_KEYS.sideBoxColor] || '#121212';
+            localStorage.setItem(STORAGE_KEYS.sideBoxColor, options.sideBoxColorV);
+            applySideBoxColor();
+        }
+
+        updateSideBox();
+        updatePanel();
+    }
+
     function installOptionListeners() {
         try {
             if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.onChanged) return;
@@ -1857,7 +2163,11 @@
                 if (areaName !== 'local') return;
 
                 if (changes[STORAGE_KEYS.debugRemoteVisible]) {
-                    applyDebugRemoteVisibility(changes[STORAGE_KEYS.debugRemoteVisible].newValue === true);
+                    if (changes[STORAGE_KEYS.debugRemoteVisible].newValue === true) {
+                        persistExtensionOptions({ [STORAGE_KEYS.debugRemoteVisible]: false });
+                    } else {
+                        applyDebugRemoteVisibility(false);
+                    }
                 }
 
                 if (changes[STORAGE_KEYS.backwardInterval] || changes[STORAGE_KEYS.forwardInterval]) {
@@ -1869,6 +2179,35 @@
                             ? changes[STORAGE_KEYS.forwardInterval].newValue
                             : options.forwardIntervalV
                     );
+                }
+
+                const featureKeys = [
+                    STORAGE_KEYS.nativeControlsEnabled,
+                    STORAGE_KEYS.sideBoxEnabled,
+                    STORAGE_KEYS.sideBoxVisible,
+                    STORAGE_KEYS.hideReelClickCover,
+                    STORAGE_KEYS.sideBoxColor
+                ];
+                const featureValues = {};
+                featureKeys.forEach(key => {
+                    if (changes[key]) featureValues[key] = changes[key].newValue;
+                });
+                if (Object.keys(featureValues).length > 0) {
+                    applyFeatureOptions(featureValues);
+                }
+
+                const debugLogKeys = [
+                    STORAGE_KEYS.debugLogVisible,
+                    STORAGE_KEYS.debugLogFontSize,
+                    STORAGE_KEYS.debugLogFontFamily,
+                    STORAGE_KEYS.debugLogTheme
+                ];
+                const debugLogValues = {};
+                debugLogKeys.forEach(key => {
+                    if (changes[key]) debugLogValues[key] = changes[key].newValue;
+                });
+                if (Object.keys(debugLogValues).length > 0) {
+                    applyDebugLogSettings(debugLogValues);
                 }
             });
         } catch (error) {
@@ -1884,6 +2223,7 @@
         loadOptionsFromExtensionStorage(() => {
             createPanel();
             if (options.debugRemoteVisibleV) createDebugPanel();
+            if (options.debugLogVisibleV) createDebugLogOverlay();
             installVideoObserver();
             installKeyboardShortcuts();
             installViewportListeners();

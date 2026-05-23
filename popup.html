@@ -4,66 +4,150 @@
     <meta charset="UTF-8">
     <title>Instagram Video Controller</title>
     <style>
-        body {
+        :root {
+            color-scheme: light;
+            --line: #d9dee8;
+            --muted: #5d6675;
+            --panel: #f6f8fb;
+            --accent: #2563eb;
+        }
+
+        * {
             box-sizing: border-box;
-            width: 320px;
+        }
+
+        body {
+            width: 430px;
             margin: 0;
-            padding: 14px;
+            padding: 16px;
             font-family: Arial, sans-serif;
-            color: #111;
+            color: #111827;
             background: #fff;
         }
 
         h1 {
-            margin: 0 0 12px;
-            font-size: 16px;
+            margin: 0 0 14px;
+            font-size: 17px;
             line-height: 1.3;
         }
 
-        .field {
-            display: grid;
-            grid-template-columns: 1fr 76px;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-            font-size: 13px;
-        }
-
-        .field input[type="number"] {
-            box-sizing: border-box;
-            width: 76px;
-            padding: 6px 8px;
-            border: 1px solid #c8ced8;
-            border-radius: 6px;
-            font: inherit;
-        }
-
-        details {
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        summary {
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 13px;
-        }
-
-        label.checkbox {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
+        .section {
             margin-top: 12px;
-            font-size: 13px;
-            line-height: 1.45;
+            padding-top: 12px;
+            border-top: 1px solid var(--line);
         }
 
-        .hint {
-            margin: 8px 0 0 24px;
-            color: #555;
+        .section-title {
+            margin: 0 0 8px;
             font-size: 12px;
-            line-height: 1.45;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+        }
+
+        .tree {
+            display: grid;
+            gap: 8px;
+        }
+
+        .option-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 12px;
+            min-height: 34px;
+            padding: 8px 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .option-row.child {
+            margin-left: 22px;
+            border-left: 3px solid #b9c3d5;
+            background: var(--panel);
+        }
+
+        .option-row.disabled {
+            opacity: 0.48;
+        }
+
+        .label {
+            min-width: 0;
+        }
+
+        .label strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .label span {
+            display: block;
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-flex;
+            width: 42px;
+            height: 24px;
+            flex: 0 0 auto;
+        }
+
+        .switch input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .slider {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background: #c8ced8;
+            transition: background 120ms ease;
+        }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            left: 3px;
+            top: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.22);
+            transition: transform 120ms ease;
+        }
+
+        .switch input:checked + .slider {
+            background: var(--accent);
+        }
+
+        .switch input:checked + .slider::before {
+            transform: translateX(18px);
+        }
+
+        .control {
+            min-width: 116px;
+            height: 30px;
+            padding: 4px 8px;
+            border: 1px solid #c8ced8;
+            border-radius: 7px;
+            background: #fff;
+            font: 12px Arial, sans-serif;
+        }
+
+        input.control[type="color"] {
+            width: 58px;
+            min-width: 58px;
+            padding: 2px;
         }
 
         .links {
@@ -71,14 +155,14 @@
             gap: 8px;
             margin-top: 12px;
             padding-top: 12px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid var(--line);
         }
 
         button {
             min-height: 30px;
             padding: 6px 10px;
             border: 1px solid #c8ced8;
-            border-radius: 6px;
+            border-radius: 7px;
             background: #f8fafc;
             color: #111;
             cursor: pointer;
@@ -100,29 +184,118 @@
 <body>
     <h1 id="pageTitle">Instagram Video Controller</h1>
 
-    <label class="field" for="backwardInterval">
-        <span id="backwardIntervalLabel">Back seconds</span>
-        <input type="number" id="backwardInterval" min="1" max="60" step="1">
-    </label>
+    <section class="section">
+        <h2 class="section-title">Basic</h2>
+        <div class="tree">
+            <div class="option-row">
+                <div class="label">
+                    <strong>Native video controls</strong>
+                    <span>Show Instagram video controls on the video itself.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="nativeControlsEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <label class="option-row">
+                <div class="label">
+                    <strong>Back seconds</strong>
+                    <span>Step size for the back button.</span>
+                </div>
+                <input class="control" type="number" id="backwardInterval" min="1" max="60" step="1">
+            </label>
+            <label class="option-row">
+                <div class="label">
+                    <strong>Forward seconds</strong>
+                    <span>Step size for the forward button.</span>
+                </div>
+                <input class="control" type="number" id="forwardInterval" min="1" max="60" step="1">
+            </label>
+        </div>
+    </section>
 
-    <label class="field" for="forwardInterval">
-        <span id="forwardIntervalLabel">Forward seconds</span>
-        <input type="number" id="forwardInterval" min="1" max="60" step="1">
-    </label>
+    <section class="section">
+        <h2 class="section-title">Side Box</h2>
+        <div class="tree" id="sideBoxTree">
+            <div class="option-row">
+                <div class="label">
+                    <strong>Create side box</strong>
+                    <span>Turns off every side-box feature below when disabled.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="sideBoxEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Hide Reels click cover</strong>
+                    <span>Hide the transparent click layer covering Reels videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="hideReelClickCover">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <label class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Side box color</strong>
+                    <span>Background color for the controller box.</span>
+                </div>
+                <input class="control" type="color" id="sideBoxColor">
+            </label>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Debug Log</h2>
+        <div class="tree" id="debugLogTree">
+            <div class="option-row">
+                <div class="label">
+                    <strong>Developer debug log</strong>
+                    <span>Show page logs in the top-right corner of Instagram.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="debugLogVisible">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <label class="option-row child" data-parent="debugLogVisible">
+                <div class="label">
+                    <strong>Font size</strong>
+                    <span>Default is 10px.</span>
+                </div>
+                <input class="control" type="number" id="debugLogFontSize" min="8" max="18" step="1">
+            </label>
+            <label class="option-row child" data-parent="debugLogVisible">
+                <div class="label">
+                    <strong>Font</strong>
+                    <span>Choose a readable debug font.</span>
+                </div>
+                <select class="control" id="debugLogFontFamily">
+                    <option value="Consolas, monospace">Consolas</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                </select>
+            </label>
+            <label class="option-row child" data-parent="debugLogVisible">
+                <div class="label">
+                    <strong>Color theme</strong>
+                    <span>Pick contrast for the page overlay.</span>
+                </div>
+                <select class="control" id="debugLogTheme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                    <option value="signal">Signal</option>
+                </select>
+            </label>
+        </div>
+    </section>
 
     <div class="links">
         <button type="button" id="developer">Developer Page</button>
         <button type="button" id="donate">Donate</button>
     </div>
-
-    <details>
-        <summary id="developerSectionTitle">Developer</summary>
-        <label class="checkbox">
-            <input type="checkbox" id="debugRemoteVisible">
-            <span id="debugRemoteLabel">Developer debug remote</span>
-        </label>
-        <p class="hint" id="debugRemoteHint">When enabled, automatic execution stops and step buttons appear on the right side of the page.</p>
-    </details>
 
     <div class="status" id="status" aria-live="polite"></div>
 
