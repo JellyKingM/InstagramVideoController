@@ -133,5 +133,167 @@
   },
   "developerSectionTitle": {
     "message": "개발자 메뉴"
+  },
+  "sectionBasic": {
+    "message": "기본"
+  },
+  "sectionVideoBehavior": {
+    "message": "비디오 동작"
+  },
+  "sectionSideBox": {
+    "message": "사이드박스"
+  },
+  "sectionDebugLog": {
+    "message": "디버그 로그"
+  },
+  "nativeControlsLabel": {
+    "message": "비디오 기본 컨트롤"
+  },
+  "nativeControlsHint": {
+    "message": "비디오 자체에 Instagram 기본 컨트롤을 표시합니다."
+  },
+  "backwardIntervalHint": {
+    "message": "뒤로 이동 버튼의 초 단위 간격입니다."
+  },
+  "forwardIntervalHint": {
+    "message": "앞으로 이동 버튼의 초 단위 간격입니다."
+  },
+  "volumeControlLabel": {
+    "message": "볼륨 제어"
+  },
+  "volumeControlHint": {
+    "message": "감지된 비디오에 확장 프로그램의 볼륨 값을 적용합니다."
+  },
+  "muteControlLabel": {
+    "message": "음소거 제어"
+  },
+  "muteControlHint": {
+    "message": "확장 프로그램의 음소거/해제 상태를 적용합니다."
+  },
+  "playbackRateControlLabel": {
+    "message": "재생 속도 제어"
+  },
+  "playbackRateControlHint": {
+    "message": "확장 프로그램의 재생 속도를 비디오에 적용합니다."
+  },
+  "keyboardShortcutsLabel": {
+    "message": "키보드 단축키"
+  },
+  "keyboardShortcutsHint": {
+    "message": "M, 쉼표, 마침표, B 단축키를 활성화합니다."
+  },
+  "squareVideoContainerLabel": {
+    "message": "각진 비디오 컨테이너"
+  },
+  "squareVideoContainerHint": {
+    "message": "비디오 컨테이너의 둥근 모서리를 제거합니다."
+  },
+  "standalonePostLayoutLabel": {
+    "message": "단독 게시물 레이아웃"
+  },
+  "standalonePostLayoutHint": {
+    "message": "사이드박스를 위해 단독 게시물 레이아웃을 넓힙니다."
+  },
+  "hideInstagramVideoPlayerLabel": {
+    "message": "Instagram 비디오 플레이어 레이어 숨김"
+  },
+  "hideInstagramVideoPlayerHint": {
+    "message": "Instagram 자체 Video player 오버레이 요소를 숨깁니다."
+  },
+  "autoScanLabel": {
+    "message": "자동 재탐색"
+  },
+  "autoScanHint": {
+    "message": "Instagram 페이지가 바뀔 때 계속 비디오를 다시 탐색합니다."
+  },
+  "sideBoxEnabledLabel": {
+    "message": "사이드박스 생성"
+  },
+  "sideBoxEnabledHint": {
+    "message": "끄면 아래의 모든 사이드박스 하위 기능이 꺼집니다."
+  },
+  "sideBoxInfoLabel": {
+    "message": "정보 영역 생성"
+  },
+  "sideBoxInfoHint": {
+    "message": "Instagram 게시물 데이터를 받을 상단 영역을 추가합니다."
+  },
+  "moveInfoToSideBoxLabel": {
+    "message": "게시물 정보를 사이드박스로 이동"
+  },
+  "moveInfoToSideBoxHint": {
+    "message": "캡션과 관련 정보를 Instagram 오버레이에서 사이드박스로 옮깁니다."
+  },
+  "hideMovedInfoOverlayLabel": {
+    "message": "이동된 정보의 원본 오버레이 숨김"
+  },
+  "hideMovedInfoOverlayHint": {
+    "message": "정보를 사이드박스로 옮긴 뒤 원래 오버레이를 숨깁니다."
+  },
+  "sideBoxControlsLabel": {
+    "message": "컨트롤 버튼 생성"
+  },
+  "sideBoxControlsHint": {
+    "message": "재생, 음소거, 이동, 속도, 볼륨, 후원 버튼을 추가합니다."
+  },
+  "sideBoxRestoreButtonLabel": {
+    "message": "복원 버튼 생성"
+  },
+  "sideBoxRestoreButtonHint": {
+    "message": "사이드박스를 숨긴 뒤 다시 표시할 버튼을 생성합니다."
+  },
+  "sideBoxDonatePromptLabel": {
+    "message": "후원 안내"
+  },
+  "sideBoxDonatePromptHint": {
+    "message": "사이드박스에서 가끔 후원 안내를 표시하도록 허용합니다."
+  },
+  "hideReelClickCoverLabel": {
+    "message": "릴스 클릭 커버 숨김"
+  },
+  "hideReelClickCoverHint": {
+    "message": "릴스 비디오를 덮는 투명 클릭 영역을 숨깁니다."
+  },
+  "sideBoxColorLabel": {
+    "message": "사이드박스 색상"
+  },
+  "sideBoxColorHint": {
+    "message": "컨트롤러 박스의 배경색입니다."
+  },
+  "debugLogVisibleLabel": {
+    "message": "개발자용 디버그 로그"
+  },
+  "debugLogVisibleHint": {
+    "message": "Instagram 페이지 우측 상단에 페이지 로그를 표시합니다."
+  },
+  "debugLogFontSizeLabel": {
+    "message": "글자 크기"
+  },
+  "debugLogFontSizeHint": {
+    "message": "기본값은 10px입니다."
+  },
+  "debugLogFontFamilyLabel": {
+    "message": "글꼴"
+  },
+  "debugLogFontFamilyHint": {
+    "message": "읽기 쉬운 디버그 글꼴을 선택합니다."
+  },
+  "debugLogThemeLabel": {
+    "message": "색상 테마"
+  },
+  "debugLogThemeHint": {
+    "message": "페이지 오버레이의 대비 테마를 선택합니다."
+  },
+  "debugLogThemeDark": {
+    "message": "어두움"
+  },
+  "debugLogThemeLight": {
+    "message": "밝음"
+  },
+  "debugLogThemeSignal": {
+    "message": "신호색"
+  },
+  "debugLogTitle": {
+    "message": "IVC 디버그 로그"
   }
 }

@@ -1854,7 +1854,7 @@
         `;
 
         const title = document.createElement('div');
-        title.textContent = 'IVC Debug Log';
+        title.textContent = t('debugLogTitle', 'IVC Debug Log');
         title.style.cssText = 'font-weight:700; margin-bottom:5px;';
 
         debugLogOutput = document.createElement('pre');

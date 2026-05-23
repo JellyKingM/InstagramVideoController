@@ -111,6 +111,60 @@ function bindLabels() {
     document.getElementById('pageTitle').textContent = t('panelTitle', 'Instagram Video Controller');
     document.getElementById('developer').textContent = t('developerLink', 'Developer Page');
     document.getElementById('donate').textContent = t('donate', 'Donate to Developer');
+
+    const sectionTitles = document.querySelectorAll('.section-title');
+    [
+        ['sectionBasic', 'Basic'],
+        ['sectionVideoBehavior', 'Video Behavior'],
+        ['sectionSideBox', 'Side Box'],
+        ['sectionDebugLog', 'Debug Log']
+    ].forEach(([key, fallback], index) => {
+        if (sectionTitles[index]) sectionTitles[index].textContent = t(key, fallback);
+    });
+
+    [
+        ['nativeControlsEnabled', 'nativeControlsLabel', 'Native video controls', 'nativeControlsHint', 'Show Instagram video controls on the video itself.'],
+        ['backwardInterval', 'backwardIntervalLabel', 'Back seconds', 'backwardIntervalHint', 'Step size for the back button.'],
+        ['forwardInterval', 'forwardIntervalLabel', 'Forward seconds', 'forwardIntervalHint', 'Step size for the forward button.'],
+        ['volumeControlEnabled', 'volumeControlLabel', 'Volume control', 'volumeControlHint', 'Apply the extension volume value to detected videos.'],
+        ['muteControlEnabled', 'muteControlLabel', 'Mute control', 'muteControlHint', 'Apply mute and unmute state from the extension.'],
+        ['playbackRateControlEnabled', 'playbackRateControlLabel', 'Playback speed control', 'playbackRateControlHint', 'Apply the extension playback speed to videos.'],
+        ['keyboardShortcutsEnabled', 'keyboardShortcutsLabel', 'Keyboard shortcuts', 'keyboardShortcutsHint', 'Enable M, comma, period, and B shortcuts.'],
+        ['squareVideoContainerEnabled', 'squareVideoContainerLabel', 'Square video container', 'squareVideoContainerHint', 'Remove rounded corners from the video container.'],
+        ['standalonePostLayoutEnabled', 'standalonePostLayoutLabel', 'Standalone post layout', 'standalonePostLayoutHint', 'Widen standalone post layout for the side box.'],
+        ['hideInstagramVideoPlayerEnabled', 'hideInstagramVideoPlayerLabel', 'Hide Instagram video player layer', 'hideInstagramVideoPlayerHint', "Hide Instagram's own Video player overlay elements."],
+        ['autoScanEnabled', 'autoScanLabel', 'Automatic rescanning', 'autoScanHint', 'Keep scanning the page as Instagram changes videos.'],
+        ['sideBoxEnabled', 'sideBoxEnabledLabel', 'Create side box', 'sideBoxEnabledHint', 'Turns off every side-box feature below when disabled.'],
+        ['sideBoxInfoEnabled', 'sideBoxInfoLabel', 'Create info area', 'sideBoxInfoHint', 'Add the upper area that receives Instagram post data.'],
+        ['moveInfoToSideBoxEnabled', 'moveInfoToSideBoxLabel', 'Move post info into side box', 'moveInfoToSideBoxHint', 'Move captions and related info from Instagram overlays.'],
+        ['hideMovedInfoOverlayEnabled', 'hideMovedInfoOverlayLabel', 'Hide moved-info overlays', 'hideMovedInfoOverlayHint', 'Hide original overlays after moving info into the box.'],
+        ['sideBoxControlsEnabled', 'sideBoxControlsLabel', 'Create control buttons', 'sideBoxControlsHint', 'Add play, mute, seek, speed, volume, and donate controls.'],
+        ['sideBoxRestoreButtonEnabled', 'sideBoxRestoreButtonLabel', 'Create restore button', 'sideBoxRestoreButtonHint', 'Show a button to bring back the side box after hiding it.'],
+        ['sideBoxDonatePromptEnabled', 'sideBoxDonatePromptLabel', 'Donation prompt', 'sideBoxDonatePromptHint', 'Allow the side box to show the occasional support prompt.'],
+        ['hideReelClickCover', 'hideReelClickCoverLabel', 'Hide Reels click cover', 'hideReelClickCoverHint', 'Hide the transparent click layer covering Reels videos.'],
+        ['sideBoxColor', 'sideBoxColorLabel', 'Side box color', 'sideBoxColorHint', 'Background color for the controller box.'],
+        ['debugLogVisible', 'debugLogVisibleLabel', 'Developer debug log', 'debugLogVisibleHint', 'Show page logs in the top-right corner of Instagram.'],
+        ['debugLogFontSize', 'debugLogFontSizeLabel', 'Font size', 'debugLogFontSizeHint', 'Default is 10px.'],
+        ['debugLogFontFamily', 'debugLogFontFamilyLabel', 'Font', 'debugLogFontFamilyHint', 'Choose a readable debug font.'],
+        ['debugLogTheme', 'debugLogThemeLabel', 'Color theme', 'debugLogThemeHint', 'Pick contrast for the page overlay.']
+    ].forEach(([id, labelKey, labelFallback, hintKey, hintFallback]) => {
+        const control = document.getElementById(id);
+        const row = control && control.closest('.option-row');
+        if (!row) return;
+        const label = row.querySelector('.label strong');
+        const hint = row.querySelector('.label span');
+        if (label) label.textContent = t(labelKey, labelFallback);
+        if (hint) hint.textContent = t(hintKey, hintFallback);
+    });
+
+    const themeLabels = {
+        dark: t('debugLogThemeDark', 'Dark'),
+        light: t('debugLogThemeLight', 'Light'),
+        signal: t('debugLogThemeSignal', 'Signal')
+    };
+    Array.from(debugLogThemeSelect.options).forEach(option => {
+        option.textContent = themeLabels[option.value] || option.textContent;
+    });
 }
 
 function bindLinks() {

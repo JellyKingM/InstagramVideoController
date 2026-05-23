@@ -133,5 +133,167 @@
   },
   "developerSectionTitle": {
     "message": "Geliştirici"
+  },
+  "sectionBasic": {
+    "message": "Basic"
+  },
+  "sectionVideoBehavior": {
+    "message": "Video Behavior"
+  },
+  "sectionSideBox": {
+    "message": "Side Box"
+  },
+  "sectionDebugLog": {
+    "message": "Debug Log"
+  },
+  "nativeControlsLabel": {
+    "message": "Native video controls"
+  },
+  "nativeControlsHint": {
+    "message": "Show Instagram video controls on the video itself."
+  },
+  "backwardIntervalHint": {
+    "message": "Step size for the back button."
+  },
+  "forwardIntervalHint": {
+    "message": "Step size for the forward button."
+  },
+  "volumeControlLabel": {
+    "message": "Volume control"
+  },
+  "volumeControlHint": {
+    "message": "Apply the extension volume value to detected videos."
+  },
+  "muteControlLabel": {
+    "message": "Mute control"
+  },
+  "muteControlHint": {
+    "message": "Apply mute and unmute state from the extension."
+  },
+  "playbackRateControlLabel": {
+    "message": "Playback speed control"
+  },
+  "playbackRateControlHint": {
+    "message": "Apply the extension playback speed to videos."
+  },
+  "keyboardShortcutsLabel": {
+    "message": "Keyboard shortcuts"
+  },
+  "keyboardShortcutsHint": {
+    "message": "Enable M, comma, period, and B shortcuts."
+  },
+  "squareVideoContainerLabel": {
+    "message": "Square video container"
+  },
+  "squareVideoContainerHint": {
+    "message": "Remove rounded corners from the video container."
+  },
+  "standalonePostLayoutLabel": {
+    "message": "Standalone post layout"
+  },
+  "standalonePostLayoutHint": {
+    "message": "Widen standalone post layout for the side box."
+  },
+  "hideInstagramVideoPlayerLabel": {
+    "message": "Hide Instagram video player layer"
+  },
+  "hideInstagramVideoPlayerHint": {
+    "message": "Hide Instagram's own Video player overlay elements."
+  },
+  "autoScanLabel": {
+    "message": "Automatic rescanning"
+  },
+  "autoScanHint": {
+    "message": "Keep scanning the page as Instagram changes videos."
+  },
+  "sideBoxEnabledLabel": {
+    "message": "Create side box"
+  },
+  "sideBoxEnabledHint": {
+    "message": "Turns off every side-box feature below when disabled."
+  },
+  "sideBoxInfoLabel": {
+    "message": "Create info area"
+  },
+  "sideBoxInfoHint": {
+    "message": "Add the upper area that receives Instagram post data."
+  },
+  "moveInfoToSideBoxLabel": {
+    "message": "Move post info into side box"
+  },
+  "moveInfoToSideBoxHint": {
+    "message": "Move captions and related info from Instagram overlays."
+  },
+  "hideMovedInfoOverlayLabel": {
+    "message": "Hide moved-info overlays"
+  },
+  "hideMovedInfoOverlayHint": {
+    "message": "Hide original overlays after moving info into the box."
+  },
+  "sideBoxControlsLabel": {
+    "message": "Create control buttons"
+  },
+  "sideBoxControlsHint": {
+    "message": "Add play, mute, seek, speed, volume, and donate controls."
+  },
+  "sideBoxRestoreButtonLabel": {
+    "message": "Create restore button"
+  },
+  "sideBoxRestoreButtonHint": {
+    "message": "Show a button to bring back the side box after hiding it."
+  },
+  "sideBoxDonatePromptLabel": {
+    "message": "Donation prompt"
+  },
+  "sideBoxDonatePromptHint": {
+    "message": "Allow the side box to show the occasional support prompt."
+  },
+  "hideReelClickCoverLabel": {
+    "message": "Hide Reels click cover"
+  },
+  "hideReelClickCoverHint": {
+    "message": "Hide the transparent click layer covering Reels videos."
+  },
+  "sideBoxColorLabel": {
+    "message": "Side box color"
+  },
+  "sideBoxColorHint": {
+    "message": "Background color for the controller box."
+  },
+  "debugLogVisibleLabel": {
+    "message": "Developer debug log"
+  },
+  "debugLogVisibleHint": {
+    "message": "Show page logs in the top-right corner of Instagram."
+  },
+  "debugLogFontSizeLabel": {
+    "message": "Font size"
+  },
+  "debugLogFontSizeHint": {
+    "message": "Default is 10px."
+  },
+  "debugLogFontFamilyLabel": {
+    "message": "Font"
+  },
+  "debugLogFontFamilyHint": {
+    "message": "Choose a readable debug font."
+  },
+  "debugLogThemeLabel": {
+    "message": "Color theme"
+  },
+  "debugLogThemeHint": {
+    "message": "Pick contrast for the page overlay."
+  },
+  "debugLogThemeDark": {
+    "message": "Dark"
+  },
+  "debugLogThemeLight": {
+    "message": "Light"
+  },
+  "debugLogThemeSignal": {
+    "message": "Signal"
+  },
+  "debugLogTitle": {
+    "message": "IVC Debug Log"
   }
 }
