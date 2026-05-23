@@ -2,7 +2,21 @@ const STORAGE_KEYS = {
     backwardInterval: 'backwardIntervalV',
     forwardInterval: 'forwardIntervalV',
     nativeControlsEnabled: 'nativeControlsEnabledV',
+    volumeControlEnabled: 'volumeControlEnabledV',
+    muteControlEnabled: 'muteControlEnabledV',
+    playbackRateControlEnabled: 'playbackRateControlEnabledV',
+    keyboardShortcutsEnabled: 'keyboardShortcutsEnabledV',
+    squareVideoContainerEnabled: 'squareVideoContainerEnabledV',
+    standalonePostLayoutEnabled: 'standalonePostLayoutEnabledV',
+    hideInstagramVideoPlayerEnabled: 'hideInstagramVideoPlayerEnabledV',
+    autoScanEnabled: 'autoScanEnabledV',
     sideBoxEnabled: 'sideBoxEnabledV',
+    sideBoxInfoEnabled: 'sideBoxInfoEnabledV',
+    sideBoxControlsEnabled: 'sideBoxControlsEnabledV',
+    sideBoxRestoreButtonEnabled: 'sideBoxRestoreButtonEnabledV',
+    sideBoxDonatePromptEnabled: 'sideBoxDonatePromptEnabledV',
+    moveInfoToSideBoxEnabled: 'moveInfoToSideBoxEnabledV',
+    hideMovedInfoOverlayEnabled: 'hideMovedInfoOverlayEnabledV',
     sideBoxVisible: 'sideBoxVisibleV',
     hideReelClickCover: 'hideReelClickCoverV',
     sideBoxColor: 'sideBoxColorV',
@@ -17,7 +31,21 @@ const DEFAULTS = {
     [STORAGE_KEYS.backwardInterval]: 10,
     [STORAGE_KEYS.forwardInterval]: 10,
     [STORAGE_KEYS.nativeControlsEnabled]: true,
+    [STORAGE_KEYS.volumeControlEnabled]: true,
+    [STORAGE_KEYS.muteControlEnabled]: true,
+    [STORAGE_KEYS.playbackRateControlEnabled]: true,
+    [STORAGE_KEYS.keyboardShortcutsEnabled]: true,
+    [STORAGE_KEYS.squareVideoContainerEnabled]: true,
+    [STORAGE_KEYS.standalonePostLayoutEnabled]: true,
+    [STORAGE_KEYS.hideInstagramVideoPlayerEnabled]: true,
+    [STORAGE_KEYS.autoScanEnabled]: true,
     [STORAGE_KEYS.sideBoxEnabled]: true,
+    [STORAGE_KEYS.sideBoxInfoEnabled]: true,
+    [STORAGE_KEYS.sideBoxControlsEnabled]: true,
+    [STORAGE_KEYS.sideBoxRestoreButtonEnabled]: true,
+    [STORAGE_KEYS.sideBoxDonatePromptEnabled]: true,
+    [STORAGE_KEYS.moveInfoToSideBoxEnabled]: true,
+    [STORAGE_KEYS.hideMovedInfoOverlayEnabled]: true,
     [STORAGE_KEYS.sideBoxVisible]: true,
     [STORAGE_KEYS.hideReelClickCover]: true,
     [STORAGE_KEYS.sideBoxColor]: '#121212',
@@ -31,7 +59,21 @@ const DEFAULTS = {
 const backwardInput = document.getElementById('backwardInterval');
 const forwardInput = document.getElementById('forwardInterval');
 const nativeControlsCheckbox = document.getElementById('nativeControlsEnabled');
+const volumeControlCheckbox = document.getElementById('volumeControlEnabled');
+const muteControlCheckbox = document.getElementById('muteControlEnabled');
+const playbackRateControlCheckbox = document.getElementById('playbackRateControlEnabled');
+const keyboardShortcutsCheckbox = document.getElementById('keyboardShortcutsEnabled');
+const squareVideoContainerCheckbox = document.getElementById('squareVideoContainerEnabled');
+const standalonePostLayoutCheckbox = document.getElementById('standalonePostLayoutEnabled');
+const hideInstagramVideoPlayerCheckbox = document.getElementById('hideInstagramVideoPlayerEnabled');
+const autoScanCheckbox = document.getElementById('autoScanEnabled');
 const sideBoxEnabledCheckbox = document.getElementById('sideBoxEnabled');
+const sideBoxInfoCheckbox = document.getElementById('sideBoxInfoEnabled');
+const sideBoxControlsCheckbox = document.getElementById('sideBoxControlsEnabled');
+const sideBoxRestoreButtonCheckbox = document.getElementById('sideBoxRestoreButtonEnabled');
+const sideBoxDonatePromptCheckbox = document.getElementById('sideBoxDonatePromptEnabled');
+const moveInfoToSideBoxCheckbox = document.getElementById('moveInfoToSideBoxEnabled');
+const hideMovedInfoOverlayCheckbox = document.getElementById('hideMovedInfoOverlayEnabled');
 const hideReelClickCoverCheckbox = document.getElementById('hideReelClickCover');
 const sideBoxColorInput = document.getElementById('sideBoxColor');
 const debugLogVisibleCheckbox = document.getElementById('debugLogVisible');
@@ -92,6 +134,13 @@ function setChildrenDisabled(parentId, disabled) {
 
 function updateDependencyState() {
     setChildrenDisabled('sideBoxEnabled', !sideBoxEnabledCheckbox.checked);
+    document.querySelectorAll('[data-side-info-child="true"]').forEach(row => {
+        const disabled = !sideBoxEnabledCheckbox.checked || !sideBoxInfoCheckbox.checked;
+        row.classList.toggle('disabled', disabled);
+        row.querySelectorAll('input, select, button').forEach(control => {
+            control.disabled = disabled;
+        });
+    });
     setChildrenDisabled('debugLogVisible', !debugLogVisibleCheckbox.checked);
 }
 
@@ -99,7 +148,21 @@ function loadValues(result) {
     backwardInput.value = String(clampNumber(result[STORAGE_KEYS.backwardInterval], 1, 60, 10));
     forwardInput.value = String(clampNumber(result[STORAGE_KEYS.forwardInterval], 1, 60, 10));
     nativeControlsCheckbox.checked = result[STORAGE_KEYS.nativeControlsEnabled] !== false;
+    volumeControlCheckbox.checked = result[STORAGE_KEYS.volumeControlEnabled] !== false;
+    muteControlCheckbox.checked = result[STORAGE_KEYS.muteControlEnabled] !== false;
+    playbackRateControlCheckbox.checked = result[STORAGE_KEYS.playbackRateControlEnabled] !== false;
+    keyboardShortcutsCheckbox.checked = result[STORAGE_KEYS.keyboardShortcutsEnabled] !== false;
+    squareVideoContainerCheckbox.checked = result[STORAGE_KEYS.squareVideoContainerEnabled] !== false;
+    standalonePostLayoutCheckbox.checked = result[STORAGE_KEYS.standalonePostLayoutEnabled] !== false;
+    hideInstagramVideoPlayerCheckbox.checked = result[STORAGE_KEYS.hideInstagramVideoPlayerEnabled] !== false;
+    autoScanCheckbox.checked = result[STORAGE_KEYS.autoScanEnabled] !== false;
     sideBoxEnabledCheckbox.checked = result[STORAGE_KEYS.sideBoxEnabled] !== false;
+    sideBoxInfoCheckbox.checked = result[STORAGE_KEYS.sideBoxInfoEnabled] !== false;
+    sideBoxControlsCheckbox.checked = result[STORAGE_KEYS.sideBoxControlsEnabled] !== false;
+    sideBoxRestoreButtonCheckbox.checked = result[STORAGE_KEYS.sideBoxRestoreButtonEnabled] !== false;
+    sideBoxDonatePromptCheckbox.checked = result[STORAGE_KEYS.sideBoxDonatePromptEnabled] !== false;
+    moveInfoToSideBoxCheckbox.checked = result[STORAGE_KEYS.moveInfoToSideBoxEnabled] !== false;
+    hideMovedInfoOverlayCheckbox.checked = result[STORAGE_KEYS.hideMovedInfoOverlayEnabled] !== false;
     hideReelClickCoverCheckbox.checked = result[STORAGE_KEYS.hideReelClickCover] !== false;
     sideBoxColorInput.value = result[STORAGE_KEYS.sideBoxColor] || DEFAULTS[STORAGE_KEYS.sideBoxColor];
     debugLogVisibleCheckbox.checked = result[STORAGE_KEYS.debugLogVisible] === true;
@@ -126,12 +189,52 @@ function bindControls() {
         save({ [STORAGE_KEYS.nativeControlsEnabled]: nativeControlsCheckbox.checked });
     });
 
+    [
+        [volumeControlCheckbox, STORAGE_KEYS.volumeControlEnabled],
+        [muteControlCheckbox, STORAGE_KEYS.muteControlEnabled],
+        [playbackRateControlCheckbox, STORAGE_KEYS.playbackRateControlEnabled],
+        [keyboardShortcutsCheckbox, STORAGE_KEYS.keyboardShortcutsEnabled],
+        [squareVideoContainerCheckbox, STORAGE_KEYS.squareVideoContainerEnabled],
+        [standalonePostLayoutCheckbox, STORAGE_KEYS.standalonePostLayoutEnabled],
+        [hideInstagramVideoPlayerCheckbox, STORAGE_KEYS.hideInstagramVideoPlayerEnabled],
+        [autoScanCheckbox, STORAGE_KEYS.autoScanEnabled]
+    ].forEach(([checkbox, key]) => {
+        checkbox.addEventListener('change', () => {
+            save({ [key]: checkbox.checked });
+        });
+    });
+
     sideBoxEnabledCheckbox.addEventListener('change', () => {
         updateDependencyState();
         save({
             [STORAGE_KEYS.sideBoxEnabled]: sideBoxEnabledCheckbox.checked,
             [STORAGE_KEYS.sideBoxVisible]: sideBoxEnabledCheckbox.checked
         });
+    });
+
+    sideBoxInfoCheckbox.addEventListener('change', () => {
+        updateDependencyState();
+        save({ [STORAGE_KEYS.sideBoxInfoEnabled]: sideBoxInfoCheckbox.checked });
+    });
+
+    sideBoxControlsCheckbox.addEventListener('change', () => {
+        save({ [STORAGE_KEYS.sideBoxControlsEnabled]: sideBoxControlsCheckbox.checked });
+    });
+
+    sideBoxRestoreButtonCheckbox.addEventListener('change', () => {
+        save({ [STORAGE_KEYS.sideBoxRestoreButtonEnabled]: sideBoxRestoreButtonCheckbox.checked });
+    });
+
+    sideBoxDonatePromptCheckbox.addEventListener('change', () => {
+        save({ [STORAGE_KEYS.sideBoxDonatePromptEnabled]: sideBoxDonatePromptCheckbox.checked });
+    });
+
+    moveInfoToSideBoxCheckbox.addEventListener('change', () => {
+        save({ [STORAGE_KEYS.moveInfoToSideBoxEnabled]: moveInfoToSideBoxCheckbox.checked });
+    });
+
+    hideMovedInfoOverlayCheckbox.addEventListener('change', () => {
+        save({ [STORAGE_KEYS.hideMovedInfoOverlayEnabled]: hideMovedInfoOverlayCheckbox.checked });
     });
 
     hideReelClickCoverCheckbox.addEventListener('change', () => {

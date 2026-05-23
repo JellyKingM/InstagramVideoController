@@ -10,7 +10,21 @@
         backwardInterval: 'backwardIntervalV',
         forwardInterval: 'forwardIntervalV',
         nativeControlsEnabled: 'nativeControlsEnabledV',
+        volumeControlEnabled: 'volumeControlEnabledV',
+        muteControlEnabled: 'muteControlEnabledV',
+        playbackRateControlEnabled: 'playbackRateControlEnabledV',
+        keyboardShortcutsEnabled: 'keyboardShortcutsEnabledV',
+        squareVideoContainerEnabled: 'squareVideoContainerEnabledV',
+        standalonePostLayoutEnabled: 'standalonePostLayoutEnabledV',
+        hideInstagramVideoPlayerEnabled: 'hideInstagramVideoPlayerEnabledV',
+        autoScanEnabled: 'autoScanEnabledV',
         sideBoxEnabled: 'sideBoxEnabledV',
+        sideBoxInfoEnabled: 'sideBoxInfoEnabledV',
+        sideBoxControlsEnabled: 'sideBoxControlsEnabledV',
+        sideBoxRestoreButtonEnabled: 'sideBoxRestoreButtonEnabledV',
+        sideBoxDonatePromptEnabled: 'sideBoxDonatePromptEnabledV',
+        moveInfoToSideBoxEnabled: 'moveInfoToSideBoxEnabledV',
+        hideMovedInfoOverlayEnabled: 'hideMovedInfoOverlayEnabledV',
         controllerVisible: 'controllerVisibleV',
         sideBoxVisible: 'sideBoxVisibleV',
         hideReelClickCover: 'hideReelClickCoverV',
@@ -33,7 +47,21 @@
         backwardIntervalV: 10,
         forwardIntervalV: 10,
         nativeControlsEnabledV: true,
+        volumeControlEnabledV: true,
+        muteControlEnabledV: true,
+        playbackRateControlEnabledV: true,
+        keyboardShortcutsEnabledV: true,
+        squareVideoContainerEnabledV: true,
+        standalonePostLayoutEnabledV: true,
+        hideInstagramVideoPlayerEnabledV: true,
+        autoScanEnabledV: true,
         sideBoxEnabledV: true,
+        sideBoxInfoEnabledV: true,
+        sideBoxControlsEnabledV: true,
+        sideBoxRestoreButtonEnabledV: true,
+        sideBoxDonatePromptEnabledV: true,
+        moveInfoToSideBoxEnabledV: true,
+        hideMovedInfoOverlayEnabledV: true,
         controllerVisibleV: true,
         sideBoxVisibleV: true,
         hideReelClickCoverV: true,
@@ -98,7 +126,21 @@
         const savedBackwardInterval = localStorage.getItem(STORAGE_KEYS.backwardInterval);
         const savedForwardInterval = localStorage.getItem(STORAGE_KEYS.forwardInterval);
         const savedNativeControlsEnabled = localStorage.getItem(STORAGE_KEYS.nativeControlsEnabled);
+        const savedVolumeControlEnabled = localStorage.getItem(STORAGE_KEYS.volumeControlEnabled);
+        const savedMuteControlEnabled = localStorage.getItem(STORAGE_KEYS.muteControlEnabled);
+        const savedPlaybackRateControlEnabled = localStorage.getItem(STORAGE_KEYS.playbackRateControlEnabled);
+        const savedKeyboardShortcutsEnabled = localStorage.getItem(STORAGE_KEYS.keyboardShortcutsEnabled);
+        const savedSquareVideoContainerEnabled = localStorage.getItem(STORAGE_KEYS.squareVideoContainerEnabled);
+        const savedStandalonePostLayoutEnabled = localStorage.getItem(STORAGE_KEYS.standalonePostLayoutEnabled);
+        const savedHideInstagramVideoPlayerEnabled = localStorage.getItem(STORAGE_KEYS.hideInstagramVideoPlayerEnabled);
+        const savedAutoScanEnabled = localStorage.getItem(STORAGE_KEYS.autoScanEnabled);
         const savedSideBoxEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxEnabled);
+        const savedSideBoxInfoEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxInfoEnabled);
+        const savedSideBoxControlsEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxControlsEnabled);
+        const savedSideBoxRestoreButtonEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxRestoreButtonEnabled);
+        const savedSideBoxDonatePromptEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxDonatePromptEnabled);
+        const savedMoveInfoToSideBoxEnabled = localStorage.getItem(STORAGE_KEYS.moveInfoToSideBoxEnabled);
+        const savedHideMovedInfoOverlayEnabled = localStorage.getItem(STORAGE_KEYS.hideMovedInfoOverlayEnabled);
         const savedControllerVisible = localStorage.getItem(STORAGE_KEYS.controllerVisible);
         const savedSideBoxVisible = localStorage.getItem(STORAGE_KEYS.sideBoxVisible);
         const savedHideReelClickCover = localStorage.getItem(STORAGE_KEYS.hideReelClickCover);
@@ -134,9 +176,25 @@
             options.videoControllerV = options.nativeControlsEnabledV;
         }
 
+        if (savedVolumeControlEnabled !== null) options.volumeControlEnabledV = savedVolumeControlEnabled === 'true';
+        if (savedMuteControlEnabled !== null) options.muteControlEnabledV = savedMuteControlEnabled === 'true';
+        if (savedPlaybackRateControlEnabled !== null) options.playbackRateControlEnabledV = savedPlaybackRateControlEnabled === 'true';
+        if (savedKeyboardShortcutsEnabled !== null) options.keyboardShortcutsEnabledV = savedKeyboardShortcutsEnabled === 'true';
+        if (savedSquareVideoContainerEnabled !== null) options.squareVideoContainerEnabledV = savedSquareVideoContainerEnabled === 'true';
+        if (savedStandalonePostLayoutEnabled !== null) options.standalonePostLayoutEnabledV = savedStandalonePostLayoutEnabled === 'true';
+        if (savedHideInstagramVideoPlayerEnabled !== null) options.hideInstagramVideoPlayerEnabledV = savedHideInstagramVideoPlayerEnabled === 'true';
+        if (savedAutoScanEnabled !== null) options.autoScanEnabledV = savedAutoScanEnabled === 'true';
+
         if (savedSideBoxEnabled !== null) {
             options.sideBoxEnabledV = savedSideBoxEnabled === 'true';
         }
+
+        if (savedSideBoxInfoEnabled !== null) options.sideBoxInfoEnabledV = savedSideBoxInfoEnabled === 'true';
+        if (savedSideBoxControlsEnabled !== null) options.sideBoxControlsEnabledV = savedSideBoxControlsEnabled === 'true';
+        if (savedSideBoxRestoreButtonEnabled !== null) options.sideBoxRestoreButtonEnabledV = savedSideBoxRestoreButtonEnabled === 'true';
+        if (savedSideBoxDonatePromptEnabled !== null) options.sideBoxDonatePromptEnabledV = savedSideBoxDonatePromptEnabled === 'true';
+        if (savedMoveInfoToSideBoxEnabled !== null) options.moveInfoToSideBoxEnabledV = savedMoveInfoToSideBoxEnabled === 'true';
+        if (savedHideMovedInfoOverlayEnabled !== null) options.hideMovedInfoOverlayEnabledV = savedHideMovedInfoOverlayEnabled === 'true';
 
         if (savedControllerVisible !== null) {
             options.controllerVisibleV = savedControllerVisible === 'true';
@@ -205,7 +263,21 @@
                 [STORAGE_KEYS.backwardInterval]: options.backwardIntervalV,
                 [STORAGE_KEYS.forwardInterval]: options.forwardIntervalV,
                 [STORAGE_KEYS.nativeControlsEnabled]: options.nativeControlsEnabledV,
+                [STORAGE_KEYS.volumeControlEnabled]: options.volumeControlEnabledV,
+                [STORAGE_KEYS.muteControlEnabled]: options.muteControlEnabledV,
+                [STORAGE_KEYS.playbackRateControlEnabled]: options.playbackRateControlEnabledV,
+                [STORAGE_KEYS.keyboardShortcutsEnabled]: options.keyboardShortcutsEnabledV,
+                [STORAGE_KEYS.squareVideoContainerEnabled]: options.squareVideoContainerEnabledV,
+                [STORAGE_KEYS.standalonePostLayoutEnabled]: options.standalonePostLayoutEnabledV,
+                [STORAGE_KEYS.hideInstagramVideoPlayerEnabled]: options.hideInstagramVideoPlayerEnabledV,
+                [STORAGE_KEYS.autoScanEnabled]: options.autoScanEnabledV,
                 [STORAGE_KEYS.sideBoxEnabled]: options.sideBoxEnabledV,
+                [STORAGE_KEYS.sideBoxInfoEnabled]: options.sideBoxInfoEnabledV,
+                [STORAGE_KEYS.sideBoxControlsEnabled]: options.sideBoxControlsEnabledV,
+                [STORAGE_KEYS.sideBoxRestoreButtonEnabled]: options.sideBoxRestoreButtonEnabledV,
+                [STORAGE_KEYS.sideBoxDonatePromptEnabled]: options.sideBoxDonatePromptEnabledV,
+                [STORAGE_KEYS.moveInfoToSideBoxEnabled]: options.moveInfoToSideBoxEnabledV,
+                [STORAGE_KEYS.hideMovedInfoOverlayEnabled]: options.hideMovedInfoOverlayEnabledV,
                 [STORAGE_KEYS.sideBoxVisible]: options.sideBoxVisibleV,
                 [STORAGE_KEYS.hideReelClickCover]: options.hideReelClickCoverV,
                 [STORAGE_KEYS.sideBoxColor]: options.sideBoxColorV,
@@ -219,7 +291,21 @@
                 options.forwardIntervalV = clamp(parseInt(result[STORAGE_KEYS.forwardInterval], 10) || options.forwardIntervalV, 1, 60);
                 options.nativeControlsEnabledV = result[STORAGE_KEYS.nativeControlsEnabled] !== false;
                 options.videoControllerV = options.nativeControlsEnabledV;
+                options.volumeControlEnabledV = result[STORAGE_KEYS.volumeControlEnabled] !== false;
+                options.muteControlEnabledV = result[STORAGE_KEYS.muteControlEnabled] !== false;
+                options.playbackRateControlEnabledV = result[STORAGE_KEYS.playbackRateControlEnabled] !== false;
+                options.keyboardShortcutsEnabledV = result[STORAGE_KEYS.keyboardShortcutsEnabled] !== false;
+                options.squareVideoContainerEnabledV = result[STORAGE_KEYS.squareVideoContainerEnabled] !== false;
+                options.standalonePostLayoutEnabledV = result[STORAGE_KEYS.standalonePostLayoutEnabled] !== false;
+                options.hideInstagramVideoPlayerEnabledV = result[STORAGE_KEYS.hideInstagramVideoPlayerEnabled] !== false;
+                options.autoScanEnabledV = result[STORAGE_KEYS.autoScanEnabled] !== false;
                 options.sideBoxEnabledV = result[STORAGE_KEYS.sideBoxEnabled] !== false;
+                options.sideBoxInfoEnabledV = result[STORAGE_KEYS.sideBoxInfoEnabled] !== false;
+                options.sideBoxControlsEnabledV = result[STORAGE_KEYS.sideBoxControlsEnabled] !== false;
+                options.sideBoxRestoreButtonEnabledV = result[STORAGE_KEYS.sideBoxRestoreButtonEnabled] !== false;
+                options.sideBoxDonatePromptEnabledV = result[STORAGE_KEYS.sideBoxDonatePromptEnabled] !== false;
+                options.moveInfoToSideBoxEnabledV = result[STORAGE_KEYS.moveInfoToSideBoxEnabled] !== false;
+                options.hideMovedInfoOverlayEnabledV = result[STORAGE_KEYS.hideMovedInfoOverlayEnabled] !== false;
                 options.sideBoxVisibleV = result[STORAGE_KEYS.sideBoxVisible] !== false;
                 options.hideReelClickCoverV = result[STORAGE_KEYS.hideReelClickCover] !== false;
                 options.sideBoxColorV = result[STORAGE_KEYS.sideBoxColor] || options.sideBoxColorV;
@@ -231,7 +317,21 @@
                 localStorage.setItem(STORAGE_KEYS.backwardInterval, String(options.backwardIntervalV));
                 localStorage.setItem(STORAGE_KEYS.forwardInterval, String(options.forwardIntervalV));
                 localStorage.setItem(STORAGE_KEYS.nativeControlsEnabled, String(options.nativeControlsEnabledV));
+                localStorage.setItem(STORAGE_KEYS.volumeControlEnabled, String(options.volumeControlEnabledV));
+                localStorage.setItem(STORAGE_KEYS.muteControlEnabled, String(options.muteControlEnabledV));
+                localStorage.setItem(STORAGE_KEYS.playbackRateControlEnabled, String(options.playbackRateControlEnabledV));
+                localStorage.setItem(STORAGE_KEYS.keyboardShortcutsEnabled, String(options.keyboardShortcutsEnabledV));
+                localStorage.setItem(STORAGE_KEYS.squareVideoContainerEnabled, String(options.squareVideoContainerEnabledV));
+                localStorage.setItem(STORAGE_KEYS.standalonePostLayoutEnabled, String(options.standalonePostLayoutEnabledV));
+                localStorage.setItem(STORAGE_KEYS.hideInstagramVideoPlayerEnabled, String(options.hideInstagramVideoPlayerEnabledV));
+                localStorage.setItem(STORAGE_KEYS.autoScanEnabled, String(options.autoScanEnabledV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxEnabled, String(options.sideBoxEnabledV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxInfoEnabled, String(options.sideBoxInfoEnabledV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxControlsEnabled, String(options.sideBoxControlsEnabledV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxRestoreButtonEnabled, String(options.sideBoxRestoreButtonEnabledV));
+                localStorage.setItem(STORAGE_KEYS.sideBoxDonatePromptEnabled, String(options.sideBoxDonatePromptEnabledV));
+                localStorage.setItem(STORAGE_KEYS.moveInfoToSideBoxEnabled, String(options.moveInfoToSideBoxEnabledV));
+                localStorage.setItem(STORAGE_KEYS.hideMovedInfoOverlayEnabled, String(options.hideMovedInfoOverlayEnabledV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxVisible, String(options.sideBoxVisibleV));
                 localStorage.setItem(STORAGE_KEYS.hideReelClickCover, String(options.hideReelClickCoverV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxColor, options.sideBoxColorV);
@@ -371,6 +471,7 @@
     }
 
     function applyVideoContainerStyle(video) {
+        if (!options.squareVideoContainerEnabledV) return;
         const container = getAncestor(video, 5);
         if (!container) return;
 
@@ -379,7 +480,7 @@
     }
 
     function applyStandalonePostLayoutStyle(video) {
-        if (!video || !isStandalonePostPageLayout()) return;
+        if (!options.standalonePostLayoutEnabledV || !video || !isStandalonePostPageLayout()) return;
 
         const container = getAncestor(video, 18);
         const outerContainer = getAncestor(video, 19);
@@ -400,13 +501,19 @@
 
         video.controls = options.videoControllerV;
 
-        video.volume = options.volumeSliderV;
-        applyingMute = true;
-        video.muted = options.volumeMute;
-        window.setTimeout(() => {
-            applyingMute = false;
-        }, 0);
-        video.playbackRate = options.playbackRateV;
+        if (options.volumeControlEnabledV) {
+            video.volume = options.volumeSliderV;
+        }
+        if (options.muteControlEnabledV) {
+            applyingMute = true;
+            video.muted = options.volumeMute;
+            window.setTimeout(() => {
+                applyingMute = false;
+            }, 0);
+        }
+        if (options.playbackRateControlEnabledV) {
+            video.playbackRate = options.playbackRateV;
+        }
         applyVideoContainerStyle(video);
         applyStandalonePostLayoutStyle(video);
         hideReelPageVideoNextSibling(video);
@@ -421,7 +528,7 @@
         });
 
         video.addEventListener('volumechange', () => {
-            if (applyingVolume || applyingMute) return;
+            if (!options.volumeControlEnabledV || applyingVolume || applyingMute) return;
             options.volumeSliderV = video.volume;
             localStorage.setItem(STORAGE_KEYS.volume, String(options.volumeSliderV));
             updatePanel();
@@ -800,6 +907,11 @@
     }
 
     function updateSideBoxRestoreButton(video) {
+        if (!options.sideBoxRestoreButtonEnabledV) {
+            hideSideBoxRestoreButton();
+            return;
+        }
+
         if (!video || !document.contains(video) || !isVisibleVideo(video)) {
             hideSideBoxRestoreButton();
             return;
@@ -893,32 +1005,39 @@
             color: #fff;
         `;
 
-        sideBoxInfo = document.createElement('div');
-        sideBoxInfo.id = 'instagram-video-controller-side-info';
-        sideBoxInfo.style.cssText = `
-            box-sizing: border-box;
-            width: 100%;
-            min-height: 0;
-            overflow: auto;
-            padding: 12px;
-            color: #fff;
-            background: ${options.sideBoxColorV || '#121212'};
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            line-height: 1.35;
-        `;
+        if (options.sideBoxInfoEnabledV) {
+            sideBoxInfo = document.createElement('div');
+            sideBoxInfo.id = 'instagram-video-controller-side-info';
+            sideBoxInfo.style.cssText = `
+                box-sizing: border-box;
+                width: 100%;
+                min-height: 0;
+                overflow: auto;
+                padding: 12px;
+                color: #fff;
+                background: ${options.sideBoxColorV || '#121212'};
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                line-height: 1.35;
+            `;
+            sideBox.appendChild(sideBoxInfo);
+        } else {
+            sideBoxInfo = null;
+        }
 
-        sideBoxControls = document.createElement('div');
-        sideBoxControls.id = 'instagram-video-controller-side-controls';
-        sideBoxControls.style.cssText = `
-            box-sizing: border-box;
-            width: 100%;
-            flex: 0 0 auto;
-        `;
-
-        sideBox.appendChild(sideBoxInfo);
-        sideBox.appendChild(sideBoxControls);
-        sideBoxControls.appendChild(createPanel());
+        if (options.sideBoxControlsEnabledV) {
+            sideBoxControls = document.createElement('div');
+            sideBoxControls.id = 'instagram-video-controller-side-controls';
+            sideBoxControls.style.cssText = `
+                box-sizing: border-box;
+                width: 100%;
+                flex: 0 0 auto;
+            `;
+            sideBox.appendChild(sideBoxControls);
+            sideBoxControls.appendChild(createPanel());
+        } else {
+            sideBoxControls = null;
+        }
         sideBoxVideo = video;
         return sideBox;
     }
@@ -1001,7 +1120,9 @@
     }
 
     function shouldShowDonatePrompt() {
-        return !donatePromptDismissed && donatePromptSeenCount >= donatePromptNextAt;
+        return options.sideBoxDonatePromptEnabledV &&
+            !donatePromptDismissed &&
+            donatePromptSeenCount >= donatePromptNextAt;
     }
 
     function updateDonatePromptVisibility() {
@@ -1432,7 +1553,9 @@
             return;
         }
 
-        hideAllVideoPlayerElements();
+        if (options.hideInstagramVideoPlayerEnabledV) {
+            hideAllVideoPlayerElements();
+        }
 
         const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
         if (options.hideReelClickCoverV) {
@@ -1474,15 +1597,19 @@
         sizeSideBoxToVideo(activeVideo);
         updateDonatePromptVisibility();
         const overlay = getVideoOverlay(activeVideo);
-        const movedInfo = moveVideoOverlayInfoToSideBox(activeVideo);
+        const movedInfo = options.sideBoxInfoEnabledV && options.moveInfoToSideBoxEnabledV
+            ? moveVideoOverlayInfoToSideBox(activeVideo)
+            : false;
         if (movedInfo) {
-            if (!isReelStyleLayout()) {
+            if (options.hideMovedInfoOverlayEnabledV && !isReelStyleLayout()) {
                 hideVideoClickOverlay(overlay);
             }
-            if (!hiddenReelSibling && !isReelStyleLayout()) {
+            if (options.hideMovedInfoOverlayEnabledV && !hiddenReelSibling && !isReelStyleLayout()) {
                 hideVideoNextOverlay(activeVideo);
             }
-            hideAllVideoPlayerElements();
+            if (options.hideInstagramVideoPlayerEnabledV) {
+                hideAllVideoPlayerElements();
+            }
         }
     }
 
@@ -1510,6 +1637,7 @@
     }
 
     function toggleMute() {
+        if (!options.muteControlEnabledV) return;
         options.volumeMute = !options.volumeMute;
         localStorage.setItem(STORAGE_KEYS.muted, String(options.volumeMute));
         localStorage.setItem(STORAGE_KEYS.mutedExplicit, 'true');
@@ -1587,6 +1715,7 @@
     }
 
     function setPlaybackRate(rate) {
+        if (!options.playbackRateControlEnabledV) return;
         options.playbackRateV = clamp(rate, 0.25, 4);
         localStorage.setItem(STORAGE_KEYS.playbackRate, String(options.playbackRateV));
         getVideos().forEach(video => {
@@ -1595,6 +1724,7 @@
     }
 
     function setVolume(volume) {
+        if (!options.volumeControlEnabledV) return;
         options.volumeSliderV = clamp(volume, 0, 1);
         localStorage.setItem(STORAGE_KEYS.volume, String(options.volumeSliderV));
 
@@ -1630,6 +1760,7 @@
 
     function installKeyboardShortcuts() {
         document.addEventListener('keydown', event => {
+            if (!options.keyboardShortcutsEnabledV) return;
             if (event.target && (
                 event.target.tagName === 'INPUT' ||
                 event.target.tagName === 'TEXTAREA' ||
@@ -2088,6 +2219,13 @@
 
     function startScanning() {
         processVideos();
+        if (!options.autoScanEnabledV) {
+            if (scanTimer) {
+                clearInterval(scanTimer);
+                scanTimer = null;
+            }
+            return;
+        }
         if (options.debugRemoteVisibleV) return;
         if (scanTimer) clearInterval(scanTimer);
         scanTimer = setInterval(processVideos, 1500);
@@ -2121,6 +2259,12 @@
     }
 
     function applyFeatureOptions(values) {
+        const shouldRebuildSideBox = [
+            STORAGE_KEYS.sideBoxInfoEnabled,
+            STORAGE_KEYS.sideBoxControlsEnabled,
+            STORAGE_KEYS.sideBoxRestoreButtonEnabled
+        ].some(key => Object.prototype.hasOwnProperty.call(values, key));
+
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.nativeControlsEnabled)) {
             options.nativeControlsEnabledV = values[STORAGE_KEYS.nativeControlsEnabled] !== false;
             options.videoControllerV = options.nativeControlsEnabledV;
@@ -2129,6 +2273,28 @@
                 video.controls = options.videoControllerV;
             });
         }
+
+        [
+            STORAGE_KEYS.volumeControlEnabled,
+            STORAGE_KEYS.muteControlEnabled,
+            STORAGE_KEYS.playbackRateControlEnabled,
+            STORAGE_KEYS.keyboardShortcutsEnabled,
+            STORAGE_KEYS.squareVideoContainerEnabled,
+            STORAGE_KEYS.standalonePostLayoutEnabled,
+            STORAGE_KEYS.hideInstagramVideoPlayerEnabled,
+            STORAGE_KEYS.autoScanEnabled,
+            STORAGE_KEYS.sideBoxInfoEnabled,
+            STORAGE_KEYS.sideBoxControlsEnabled,
+            STORAGE_KEYS.sideBoxRestoreButtonEnabled,
+            STORAGE_KEYS.sideBoxDonatePromptEnabled,
+            STORAGE_KEYS.moveInfoToSideBoxEnabled,
+            STORAGE_KEYS.hideMovedInfoOverlayEnabled
+        ].forEach(key => {
+            if (!Object.prototype.hasOwnProperty.call(values, key)) return;
+            const optionName = `${key.replace(/V$/, '')}V`;
+            options[optionName] = values[key] !== false;
+            localStorage.setItem(key, String(options[optionName]));
+        });
 
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxEnabled)) {
             options.sideBoxEnabledV = values[STORAGE_KEYS.sideBoxEnabled] !== false;
@@ -2151,8 +2317,18 @@
             applySideBoxColor();
         }
 
+        if (shouldRebuildSideBox) {
+            cleanupSideBox();
+            hideSideBoxRestoreButton();
+        }
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxDonatePromptEnabled) &&
+            !options.sideBoxDonatePromptEnabledV) {
+            hideDonatePrompt();
+        }
+
         updateSideBox();
         updatePanel();
+        startScanning();
     }
 
     function installOptionListeners() {
@@ -2183,7 +2359,21 @@
 
                 const featureKeys = [
                     STORAGE_KEYS.nativeControlsEnabled,
+                    STORAGE_KEYS.volumeControlEnabled,
+                    STORAGE_KEYS.muteControlEnabled,
+                    STORAGE_KEYS.playbackRateControlEnabled,
+                    STORAGE_KEYS.keyboardShortcutsEnabled,
+                    STORAGE_KEYS.squareVideoContainerEnabled,
+                    STORAGE_KEYS.standalonePostLayoutEnabled,
+                    STORAGE_KEYS.hideInstagramVideoPlayerEnabled,
+                    STORAGE_KEYS.autoScanEnabled,
                     STORAGE_KEYS.sideBoxEnabled,
+                    STORAGE_KEYS.sideBoxInfoEnabled,
+                    STORAGE_KEYS.sideBoxControlsEnabled,
+                    STORAGE_KEYS.sideBoxRestoreButtonEnabled,
+                    STORAGE_KEYS.sideBoxDonatePromptEnabled,
+                    STORAGE_KEYS.moveInfoToSideBoxEnabled,
+                    STORAGE_KEYS.hideMovedInfoOverlayEnabled,
                     STORAGE_KEYS.sideBoxVisible,
                     STORAGE_KEYS.hideReelClickCover,
                     STORAGE_KEYS.sideBoxColor
