@@ -88,6 +88,7 @@
     let sideBoxRestoreButton = null;
     let donatePrompt = null;
     let movedInfoByVideo = new WeakMap();
+    let expandedInfoByVideo = new WeakMap();
     let debugPanel = null;
     let debugOutput = null;
     let debugAnchor = null;
@@ -1346,12 +1347,11 @@
         infoElement.style.height = 'auto';
         infoElement.style.overflow = 'visible';
         infoElement.style.pointerEvents = 'auto';
-        infoElement.style.color = '#fff';
 
         Array.from(infoElement.querySelectorAll('*')).forEach(child => {
             child.style.pointerEvents = 'auto';
-            child.style.color = 'inherit';
         });
+        applyWhiteTextToInfoElement(infoElement);
     }
 
     function applyWhiteTextToInfoElement(infoElement) {
@@ -1361,6 +1361,31 @@
         Array.from(infoElement.querySelectorAll('*')).forEach(child => {
             child.style.setProperty('color', 'inherit', 'important');
         });
+    }
+
+    function refreshWhiteTextForInfoElement(infoElement) {
+        applyWhiteTextToInfoElement(infoElement);
+        window.requestAnimationFrame(() => applyWhiteTextToInfoElement(infoElement));
+        window.setTimeout(() => applyWhiteTextToInfoElement(infoElement), 150);
+        window.setTimeout(() => applyWhiteTextToInfoElement(infoElement), 500);
+    }
+
+    function getVideoInfoSignature(video) {
+        if (!(video instanceof HTMLVideoElement)) return '';
+        return video.currentSrc || video.src || video.dataset.instagramVideoControllerActive || location.href;
+    }
+
+    function expandInfoForVideoOnce(video) {
+        if (!video) return false;
+
+        const signature = getVideoInfoSignature(video);
+        if (expandedInfoByVideo.get(video) === signature) return false;
+
+        const clicked = clickMoreButtonForVideo(video);
+        if (clicked) {
+            expandedInfoByVideo.set(video, signature);
+        }
+        return clicked;
     }
 
     function hasMovedInfoForVideo(video) {
@@ -1378,6 +1403,7 @@
             sideBoxInfo.replaceChildren();
             sideBoxInfo.appendChild(infoElement);
         }
+        refreshWhiteTextForInfoElement(infoElement);
         return true;
     }
 
@@ -1387,20 +1413,19 @@
         if (isReelStyleLayout()) {
             sideBoxInfo.replaceChildren();
             delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
-            clickMoreButtonForVideo(video);
+            expandInfoForVideoOnce(video);
             const infoElement = findInfoElementByMoreButton(video);
-            applyWhiteTextToInfoElement(infoElement);
+            refreshWhiteTextForInfoElement(infoElement);
             return false;
         }
 
         if (attachMovedInfoToSideBox(video)) {
-            clickMoreButton(movedInfoByVideo.get(video));
             return true;
         }
 
         const overlay = getVideoOverlay(video);
         restoreVideoClickOverlayForInfoSearch(overlay);
-        clickMoreButtonForVideo(video);
+        expandInfoForVideoOnce(video);
 
         let infoElement = findInfoElementByMoreButton(video);
         if (!infoElement) {
@@ -1417,10 +1442,11 @@
             sideBoxInfo.replaceChildren();
             prepareMovedInfoElement(infoElement);
             sideBoxInfo.appendChild(infoElement);
+        } else {
+            refreshWhiteTextForInfoElement(infoElement);
         }
         movedInfoByVideo.set(video, infoElement);
 
-        clickMoreButton(infoElement);
         return true;
     }
 
@@ -2159,13 +2185,12 @@
         }
         if (attachMovedInfoToSideBox(video)) {
             debugInfoElement = movedInfoByVideo.get(video);
-            clickMoreButton(debugInfoElement);
             debugLog('restored moved info element', debugInfoElement);
             return;
         }
         if (!debugOverlay) debugOverlay = getVideoOverlay(video);
         restoreVideoClickOverlayForInfoSearch(debugOverlay);
-        clickMoreButton(debugOverlay);
+        expandInfoForVideoOnce(video);
         debugInfoElement = findInfoElementByMoreButton(video);
         if (!debugInfoElement) {
             debugLog('info element not found');
@@ -2175,7 +2200,6 @@
         prepareMovedInfoElement(debugInfoElement);
         sideBoxInfo.appendChild(debugInfoElement);
         movedInfoByVideo.set(video, debugInfoElement);
-        clickMoreButton(debugInfoElement);
         debugLog('moved info element', debugInfoElement);
     }
 
