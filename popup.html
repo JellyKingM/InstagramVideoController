@@ -215,92 +215,6 @@
     </section>
 
     <section class="section">
-        <h2 class="section-title">Video Behavior</h2>
-        <div class="tree">
-            <div class="option-row">
-                <div class="label">
-                    <strong>Volume control</strong>
-                    <span>Apply the extension volume value to detected videos.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="volumeControlEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Mute control</strong>
-                    <span>Apply mute and unmute state from the extension.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="muteControlEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Playback speed control</strong>
-                    <span>Apply the extension playback speed to videos.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="playbackRateControlEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Keyboard shortcuts</strong>
-                    <span>Enable M, comma, period, and B shortcuts.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="keyboardShortcutsEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Square video container</strong>
-                    <span>Remove rounded corners from the video container.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="squareVideoContainerEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Standalone post layout</strong>
-                    <span>Widen standalone post layout for the side box.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="standalonePostLayoutEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Hide Instagram video player layer</strong>
-                    <span>Hide Instagram's own Video player overlay elements.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="hideInstagramVideoPlayerEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row">
-                <div class="label">
-                    <strong>Automatic rescanning</strong>
-                    <span>Keep scanning the page as Instagram changes videos.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="autoScanEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
         <h2 class="section-title">Side Box</h2>
         <div class="tree" id="sideBoxTree">
             <div class="option-row">
@@ -310,6 +224,86 @@
                 </div>
                 <label class="switch">
                     <input type="checkbox" id="sideBoxEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Volume control</strong>
+                    <span>Apply the extension volume value to detected videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="volumeControlEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Mute control</strong>
+                    <span>Apply mute and unmute state from the extension.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="muteControlEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Playback speed control</strong>
+                    <span>Apply the extension playback speed to videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="playbackRateControlEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Keyboard shortcuts</strong>
+                    <span>Enable M, comma, period, and B shortcuts.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="keyboardShortcutsEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Square video container</strong>
+                    <span>Remove rounded corners from the video container.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="squareVideoContainerEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Standalone post layout</strong>
+                    <span>Widen standalone post layout for the side box.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="standalonePostLayoutEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Hide Instagram video player layer</strong>
+                    <span>Hide Instagram's own Video player overlay elements.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="hideInstagramVideoPlayerEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Automatic rescanning</strong>
+                    <span>Keep scanning the page as Instagram changes videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="autoScanEnabled">
                     <span class="slider"></span>
                 </label>
             </div>

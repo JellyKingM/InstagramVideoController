@@ -472,7 +472,7 @@
     }
 
     function applyVideoContainerStyle(video) {
-        if (!options.squareVideoContainerEnabledV) return;
+        if (!options.sideBoxEnabledV || !options.squareVideoContainerEnabledV) return;
         const container = getAncestor(video, 5);
         if (!container) return;
 
@@ -488,7 +488,7 @@
     }
 
     function applyStandalonePostLayoutStyle(video) {
-        if (!options.standalonePostLayoutEnabledV || !video || !isStandalonePostPageLayout()) return;
+        if (!options.sideBoxEnabledV || !options.standalonePostLayoutEnabledV || !video || !isStandalonePostPageLayout()) return;
 
         const container = getAncestor(video, 18);
         const outerContainer = getAncestor(video, 19);
@@ -522,17 +522,17 @@
 
         video.controls = options.videoControllerV;
 
-        if (options.volumeControlEnabledV) {
+        if (options.sideBoxEnabledV && options.volumeControlEnabledV) {
             video.volume = options.volumeSliderV;
         }
-        if (options.muteControlEnabledV) {
+        if (options.sideBoxEnabledV && options.muteControlEnabledV) {
             applyingMute = true;
             video.muted = options.volumeMute;
             window.setTimeout(() => {
                 applyingMute = false;
             }, 0);
         }
-        if (options.playbackRateControlEnabledV) {
+        if (options.sideBoxEnabledV && options.playbackRateControlEnabledV) {
             video.playbackRate = options.playbackRateV;
         }
         applyVideoContainerStyle(video);
@@ -1652,12 +1652,12 @@
             return;
         }
 
-        if (options.hideInstagramVideoPlayerEnabledV) {
+        if (options.sideBoxEnabledV && options.hideInstagramVideoPlayerEnabledV) {
             hideAllVideoPlayerElements();
         }
 
         const hiddenReelSibling = hideReelPageVideoNextSibling(activeVideo);
-        if (options.hideReelClickCoverV) {
+        if (options.sideBoxEnabledV && options.hideReelClickCoverV) {
             hideReelPageClickCover(activeVideo);
         } else {
             restoreReelPageClickCovers();
@@ -1706,7 +1706,7 @@
             if (options.hideMovedInfoOverlayEnabledV && !hiddenReelSibling && !isReelStyleLayout()) {
                 hideVideoNextOverlay(activeVideo);
             }
-            if (options.hideInstagramVideoPlayerEnabledV) {
+            if (options.sideBoxEnabledV && options.hideInstagramVideoPlayerEnabledV) {
                 hideAllVideoPlayerElements();
             }
         }
@@ -1736,7 +1736,7 @@
     }
 
     function toggleMute() {
-        if (!options.muteControlEnabledV) return;
+        if (!options.sideBoxEnabledV || !options.muteControlEnabledV) return;
         options.volumeMute = !options.volumeMute;
         localStorage.setItem(STORAGE_KEYS.muted, String(options.volumeMute));
         localStorage.setItem(STORAGE_KEYS.mutedExplicit, 'true');
@@ -1814,7 +1814,7 @@
     }
 
     function setPlaybackRate(rate) {
-        if (!options.playbackRateControlEnabledV) return;
+        if (!options.sideBoxEnabledV || !options.playbackRateControlEnabledV) return;
         options.playbackRateV = clamp(rate, 0.25, 4);
         localStorage.setItem(STORAGE_KEYS.playbackRate, String(options.playbackRateV));
         getVideos().forEach(video => {
@@ -1823,7 +1823,7 @@
     }
 
     function setVolume(volume) {
-        if (!options.volumeControlEnabledV) return;
+        if (!options.sideBoxEnabledV || !options.volumeControlEnabledV) return;
         options.volumeSliderV = clamp(volume, 0, 1);
         localStorage.setItem(STORAGE_KEYS.volume, String(options.volumeSliderV));
 
@@ -1859,7 +1859,7 @@
 
     function installKeyboardShortcuts() {
         document.addEventListener('keydown', event => {
-            if (!options.keyboardShortcutsEnabledV) return;
+            if (!options.sideBoxEnabledV || !options.keyboardShortcutsEnabledV) return;
             if (event.target && (
                 event.target.tagName === 'INPUT' ||
                 event.target.tagName === 'TEXTAREA' ||
@@ -2412,6 +2412,13 @@
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxEnabled)) {
             options.sideBoxEnabledV = values[STORAGE_KEYS.sideBoxEnabled] !== false;
             localStorage.setItem(STORAGE_KEYS.sideBoxEnabled, String(options.sideBoxEnabledV));
+            if (!options.sideBoxEnabledV) {
+                restoreVideoContainerStyles();
+                restoreStandalonePostLayoutStyles();
+                restoreHiddenVideoPlayerElements();
+                restoreHiddenInfoOverlays();
+                restoreReelPageClickCovers();
+            }
         }
 
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxVisible)) {

@@ -115,7 +115,6 @@ function bindLabels() {
     const sectionTitles = document.querySelectorAll('.section-title');
     [
         ['sectionBasic', 'Basic'],
-        ['sectionVideoBehavior', 'Video Behavior'],
         ['sectionSideBox', 'Side Box'],
         ['sectionDebugLog', 'Debug Log']
     ].forEach(([key, fallback], index) => {
