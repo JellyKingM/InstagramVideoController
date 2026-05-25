@@ -619,6 +619,20 @@
         }
     }
 
+    function resetPanel() {
+        if (panel) {
+            panel.remove();
+            panel = null;
+            statusEl = null;
+        }
+    }
+
+    function appendRowIfNotEmpty(parent, row) {
+        if (row.children.length > 0) {
+            parent.appendChild(row);
+        }
+    }
+
     function createPanel() {
         if (panel) return panel;
 
@@ -661,8 +675,12 @@
         const row1 = document.createElement('div');
         row1.style.cssText = 'display: flex; gap: 6px; margin-bottom: 8px;';
         row1.appendChild(createButton(t('buttonPlay', 'Play'), t('tooltipPlay', 'Play or pause active video'), togglePlay));
-        row1.appendChild(createButton(t('buttonMute', 'Mute'), t('tooltipMute', 'Mute or unmute all videos'), toggleMute));
-        row1.appendChild(createButton(t('buttonControls', 'Controls'), t('tooltipControls', 'Toggle native video controls'), toggleNativeControls));
+        if (options.muteControlEnabledV) {
+            row1.appendChild(createButton(t('buttonMute', 'Mute'), t('tooltipMute', 'Mute or unmute all videos'), toggleMute));
+        }
+        if (options.nativeControlsEnabledV) {
+            row1.appendChild(createButton(t('buttonControls', 'Controls'), t('tooltipControls', 'Toggle native video controls'), toggleNativeControls));
+        }
         row1.appendChild(createButton(t('buttonFind', 'Find'), t('tooltipFind', 'Rescan videos'), processVideos));
 
         const row2 = document.createElement('div');
@@ -673,13 +691,19 @@
         const forwardButton = createButton(`+${options.forwardIntervalV}s`, t('tooltipForward', 'Forward selected seconds'), () => seekActive(options.forwardIntervalV));
         forwardButton.id = 'instagram-video-controller-forward';
         row2.appendChild(forwardButton);
-        row2.appendChild(createButton('-0.25x', t('tooltipSlowDown', 'Slow down'), () => setPlaybackRate(options.playbackRateV - 0.25)));
-        row2.appendChild(createButton('+0.25x', t('tooltipSpeedUp', 'Speed up'), () => setPlaybackRate(options.playbackRateV + 0.25)));
+        if (options.playbackRateControlEnabledV) {
+            row2.appendChild(createButton('-0.25x', t('tooltipSlowDown', 'Slow down'), () => setPlaybackRate(options.playbackRateV - 0.25)));
+            row2.appendChild(createButton('+0.25x', t('tooltipSpeedUp', 'Speed up'), () => setPlaybackRate(options.playbackRateV + 0.25)));
+        }
 
         const row3 = document.createElement('div');
         row3.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px;';
-        row3.appendChild(createButton(t('buttonHideBox', 'Hide box'), t('tooltipHideBox', 'Hide the side box'), hideSideBox));
-        row3.appendChild(createButton(t('donate', 'Donate'), t('tooltipDonate', 'Support the developer'), handleDonateButton));
+        if (options.sideBoxRestoreButtonEnabledV) {
+            row3.appendChild(createButton(t('buttonHideBox', 'Hide box'), t('tooltipHideBox', 'Hide the side box'), hideSideBox));
+        }
+        if (options.sideBoxDonatePromptEnabledV) {
+            row3.appendChild(createButton(t('donate', 'Donate'), t('tooltipDonate', 'Support the developer'), handleDonateButton));
+        }
 
         const volumeLabel = document.createElement('label');
         volumeLabel.textContent = t('volumeLabel', 'Volume');
@@ -698,11 +722,13 @@
 
         panel.appendChild(header);
         panel.appendChild(statusEl);
-        panel.appendChild(row1);
-        panel.appendChild(row2);
-        panel.appendChild(row3);
-        panel.appendChild(volumeLabel);
-        panel.appendChild(volumeSlider);
+        appendRowIfNotEmpty(panel, row1);
+        appendRowIfNotEmpty(panel, row2);
+        appendRowIfNotEmpty(panel, row3);
+        if (options.volumeControlEnabledV) {
+            panel.appendChild(volumeLabel);
+            panel.appendChild(volumeSlider);
+        }
         applySideBoxColor();
 
         return panel;
@@ -2335,6 +2361,14 @@
             STORAGE_KEYS.sideBoxControlsEnabled,
             STORAGE_KEYS.sideBoxRestoreButtonEnabled
         ].some(key => Object.prototype.hasOwnProperty.call(values, key));
+        const shouldRebuildPanel = [
+            STORAGE_KEYS.nativeControlsEnabled,
+            STORAGE_KEYS.volumeControlEnabled,
+            STORAGE_KEYS.muteControlEnabled,
+            STORAGE_KEYS.playbackRateControlEnabled,
+            STORAGE_KEYS.sideBoxRestoreButtonEnabled,
+            STORAGE_KEYS.sideBoxDonatePromptEnabled
+        ].some(key => Object.prototype.hasOwnProperty.call(values, key));
         const shouldRescanVideos = [
             STORAGE_KEYS.nativeControlsEnabled,
             STORAGE_KEYS.volumeControlEnabled,
@@ -2427,9 +2461,12 @@
             restoreHiddenInfoOverlays();
         }
 
-        if (shouldRebuildSideBox) {
+        if (shouldRebuildSideBox || shouldRebuildPanel) {
             cleanupSideBox();
             hideSideBoxRestoreButton();
+        }
+        if (shouldRebuildPanel) {
+            resetPanel();
         }
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxDonatePromptEnabled) &&
             !options.sideBoxDonatePromptEnabledV) {
