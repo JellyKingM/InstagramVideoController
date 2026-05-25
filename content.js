@@ -480,6 +480,13 @@
         container.style.setProperty('border-radius', '0', 'important');
     }
 
+    function restoreVideoContainerStyles() {
+        document.querySelectorAll('[data-instagram-video-controller-square-container="true"]').forEach(container => {
+            container.style.removeProperty('border-radius');
+            delete container.dataset.instagramVideoControllerSquareContainer;
+        });
+    }
+
     function applyStandalonePostLayoutStyle(video) {
         if (!options.standalonePostLayoutEnabledV || !video || !isStandalonePostPageLayout()) return;
 
@@ -495,6 +502,19 @@
             outerContainer.dataset.instagramVideoControllerStandalonePostOuterLayout = 'true';
             outerContainer.style.setProperty('max-width', 'none', 'important');
         }
+    }
+
+    function restoreStandalonePostLayoutStyles() {
+        document.querySelectorAll('[data-instagram-video-controller-standalone-post-layout="true"]').forEach(container => {
+            container.style.removeProperty('display');
+            container.style.removeProperty('flex-wrap');
+            delete container.dataset.instagramVideoControllerStandalonePostLayout;
+        });
+
+        document.querySelectorAll('[data-instagram-video-controller-standalone-post-outer-layout="true"]').forEach(container => {
+            container.style.removeProperty('max-width');
+            delete container.dataset.instagramVideoControllerStandalonePostOuterLayout;
+        });
     }
 
     function applySettingsToVideo(video) {
@@ -1511,6 +1531,13 @@
         return players.length;
     }
 
+    function restoreHiddenVideoPlayerElements() {
+        document.querySelectorAll('[data-instagram-video-controller-hidden-video-player="true"]').forEach(player => {
+            player.style.removeProperty('display');
+            delete player.dataset.instagramVideoControllerHiddenVideoPlayer;
+        });
+    }
+
     function hideVideoNextOverlay(video) {
         const overlay = getVideoOverlay(video);
         if (!overlay) return false;
@@ -1519,6 +1546,20 @@
         overlay.style.setProperty('display', 'none', 'important');
         overlay.style.setProperty('pointer-events', 'none', 'important');
         return true;
+    }
+
+    function restoreHiddenInfoOverlays() {
+        document.querySelectorAll('[data-instagram-video-controller-hidden-click-overlay="true"]').forEach(overlay => {
+            overlay.style.removeProperty('display');
+            overlay.style.removeProperty('pointer-events');
+            delete overlay.dataset.instagramVideoControllerHiddenClickOverlay;
+        });
+
+        document.querySelectorAll('[data-instagram-video-controller-hidden-overlay="true"]').forEach(overlay => {
+            overlay.style.removeProperty('display');
+            overlay.style.removeProperty('pointer-events');
+            delete overlay.dataset.instagramVideoControllerHiddenOverlay;
+        });
     }
 
     function hideReelPageVideoNextSibling(video) {
@@ -1551,6 +1592,12 @@
             element.style.removeProperty('display');
             delete element.dataset.instagramVideoControllerHiddenReelClickCover;
         });
+    }
+
+    function clearSideBoxInfoArea() {
+        if (!sideBoxInfo) return;
+        sideBoxInfo.replaceChildren();
+        delete sideBoxInfo.dataset.instagramVideoControllerEmptyInfo;
     }
 
     function updateSideBox() {
@@ -2288,6 +2335,14 @@
             STORAGE_KEYS.sideBoxControlsEnabled,
             STORAGE_KEYS.sideBoxRestoreButtonEnabled
         ].some(key => Object.prototype.hasOwnProperty.call(values, key));
+        const shouldRescanVideos = [
+            STORAGE_KEYS.nativeControlsEnabled,
+            STORAGE_KEYS.volumeControlEnabled,
+            STORAGE_KEYS.muteControlEnabled,
+            STORAGE_KEYS.playbackRateControlEnabled,
+            STORAGE_KEYS.squareVideoContainerEnabled,
+            STORAGE_KEYS.standalonePostLayoutEnabled
+        ].some(key => Object.prototype.hasOwnProperty.call(values, key));
 
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.nativeControlsEnabled)) {
             options.nativeControlsEnabledV = values[STORAGE_KEYS.nativeControlsEnabled] !== false;
@@ -2341,6 +2396,37 @@
             applySideBoxColor();
         }
 
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.squareVideoContainerEnabled) &&
+            !options.squareVideoContainerEnabledV) {
+            restoreVideoContainerStyles();
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.standalonePostLayoutEnabled) &&
+            !options.standalonePostLayoutEnabledV) {
+            restoreStandalonePostLayoutStyles();
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.hideInstagramVideoPlayerEnabled) &&
+            !options.hideInstagramVideoPlayerEnabledV) {
+            restoreHiddenVideoPlayerElements();
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.hideMovedInfoOverlayEnabled) &&
+            !options.hideMovedInfoOverlayEnabledV) {
+            restoreHiddenInfoOverlays();
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.hideReelClickCover) &&
+            !options.hideReelClickCoverV) {
+            restoreReelPageClickCovers();
+        }
+
+        if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.moveInfoToSideBoxEnabled) &&
+            !options.moveInfoToSideBoxEnabledV) {
+            clearSideBoxInfoArea();
+            restoreHiddenInfoOverlays();
+        }
+
         if (shouldRebuildSideBox) {
             cleanupSideBox();
             hideSideBoxRestoreButton();
@@ -2348,6 +2434,10 @@
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxDonatePromptEnabled) &&
             !options.sideBoxDonatePromptEnabledV) {
             hideDonatePrompt();
+        }
+
+        if (shouldRescanVideos) {
+            getVideos().forEach(applySettingsToVideo);
         }
 
         updateSideBox();
