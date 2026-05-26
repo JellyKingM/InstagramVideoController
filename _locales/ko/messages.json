@@ -295,5 +295,47 @@
   },
   "debugLogTitle": {
     "message": "IVC 디버그 로그"
+  },
+  "sideBoxDisplayCategory": {
+    "message": "사이드박스 표시"
+  },
+  "sideBoxVideoControlsCategory": {
+    "message": "비디오 컨트롤"
+  },
+  "sideBoxLayoutCategory": {
+    "message": "레이아웃 / 오버레이"
+  },
+  "sideBoxInfoCategory": {
+    "message": "정보 영역"
+  },
+  "sideBoxScanningCategory": {
+    "message": "탐색"
+  },
+  "sideBoxTargetPagesCategory": {
+    "message": "대상 페이지"
+  },
+  "targetPostPageLabel": {
+    "message": "게시물 (/p)"
+  },
+  "targetPostPageHint": {
+    "message": "일반 게시물 페이지에서 사이드박스를 실행합니다."
+  },
+  "targetSingleReelPageLabel": {
+    "message": "단일 릴스 (/reel)"
+  },
+  "targetSingleReelPageHint": {
+    "message": "개별 릴스 페이지에서 사이드박스를 실행합니다."
+  },
+  "targetReelsFeedPageLabel": {
+    "message": "릴스 피드 (/reels)"
+  },
+  "targetReelsFeedPageHint": {
+    "message": "릴스 피드 페이지에서 사이드박스를 실행합니다."
+  },
+  "targetStoriesPageLabel": {
+    "message": "스토리 (/stories)"
+  },
+  "targetStoriesPageHint": {
+    "message": "스토리 페이지에서 사이드박스를 실행합니다."
   }
 }

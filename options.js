@@ -11,6 +11,10 @@ const STORAGE_KEYS = {
     hideInstagramVideoPlayerEnabled: 'hideInstagramVideoPlayerEnabledV',
     autoScanEnabled: 'autoScanEnabledV',
     sideBoxEnabled: 'sideBoxEnabledV',
+    targetPostPageEnabled: 'targetPostPageEnabledV',
+    targetSingleReelPageEnabled: 'targetSingleReelPageEnabledV',
+    targetReelsFeedPageEnabled: 'targetReelsFeedPageEnabledV',
+    targetStoriesPageEnabled: 'targetStoriesPageEnabledV',
     sideBoxInfoEnabled: 'sideBoxInfoEnabledV',
     sideBoxControlsEnabled: 'sideBoxControlsEnabledV',
     sideBoxRestoreButtonEnabled: 'sideBoxRestoreButtonEnabledV',
@@ -40,6 +44,10 @@ const DEFAULTS = {
     [STORAGE_KEYS.hideInstagramVideoPlayerEnabled]: true,
     [STORAGE_KEYS.autoScanEnabled]: true,
     [STORAGE_KEYS.sideBoxEnabled]: true,
+    [STORAGE_KEYS.targetPostPageEnabled]: true,
+    [STORAGE_KEYS.targetSingleReelPageEnabled]: true,
+    [STORAGE_KEYS.targetReelsFeedPageEnabled]: true,
+    [STORAGE_KEYS.targetStoriesPageEnabled]: true,
     [STORAGE_KEYS.sideBoxInfoEnabled]: true,
     [STORAGE_KEYS.sideBoxControlsEnabled]: true,
     [STORAGE_KEYS.sideBoxRestoreButtonEnabled]: true,
@@ -68,6 +76,10 @@ const standalonePostLayoutCheckbox = document.getElementById('standalonePostLayo
 const hideInstagramVideoPlayerCheckbox = document.getElementById('hideInstagramVideoPlayerEnabled');
 const autoScanCheckbox = document.getElementById('autoScanEnabled');
 const sideBoxEnabledCheckbox = document.getElementById('sideBoxEnabled');
+const targetPostPageCheckbox = document.getElementById('targetPostPageEnabled');
+const targetSingleReelPageCheckbox = document.getElementById('targetSingleReelPageEnabled');
+const targetReelsFeedPageCheckbox = document.getElementById('targetReelsFeedPageEnabled');
+const targetStoriesPageCheckbox = document.getElementById('targetStoriesPageEnabled');
 const sideBoxInfoCheckbox = document.getElementById('sideBoxInfoEnabled');
 const sideBoxControlsCheckbox = document.getElementById('sideBoxControlsEnabled');
 const sideBoxRestoreButtonCheckbox = document.getElementById('sideBoxRestoreButtonEnabled');
@@ -122,6 +134,19 @@ function bindLabels() {
     });
 
     [
+        ['sideBoxDisplayCategory', 'Side box display'],
+        ['sideBoxTargetPagesCategory', 'Target pages'],
+        ['sideBoxVideoControlsCategory', 'Video controls'],
+        ['sideBoxLayoutCategory', 'Layout / overlay'],
+        ['sideBoxInfoCategory', 'Info area'],
+        ['sideBoxScanningCategory', 'Scanning']
+    ].forEach(([key, fallback]) => {
+        document.querySelectorAll(`[data-category-key="${key}"] strong`).forEach(element => {
+            element.textContent = t(key, fallback);
+        });
+    });
+
+    [
         ['nativeControlsEnabled', 'nativeControlsLabel', 'Native video controls', 'nativeControlsHint', 'Show Instagram video controls on the video itself.'],
         ['backwardInterval', 'backwardIntervalLabel', 'Back seconds', 'backwardIntervalHint', 'Step size for the back button.'],
         ['forwardInterval', 'forwardIntervalLabel', 'Forward seconds', 'forwardIntervalHint', 'Step size for the forward button.'],
@@ -134,6 +159,10 @@ function bindLabels() {
         ['hideInstagramVideoPlayerEnabled', 'hideInstagramVideoPlayerLabel', 'Hide Instagram video player layer', 'hideInstagramVideoPlayerHint', "Hide Instagram's own Video player overlay elements."],
         ['autoScanEnabled', 'autoScanLabel', 'Automatic rescanning', 'autoScanHint', 'Keep scanning the page as Instagram changes videos.'],
         ['sideBoxEnabled', 'sideBoxEnabledLabel', 'Create side box', 'sideBoxEnabledHint', 'Turns off every side-box feature below when disabled.'],
+        ['targetPostPageEnabled', 'targetPostPageLabel', 'Posts (/p)', 'targetPostPageHint', 'Run the side box on regular post pages.'],
+        ['targetSingleReelPageEnabled', 'targetSingleReelPageLabel', 'Single Reels (/reel)', 'targetSingleReelPageHint', 'Run the side box on individual Reel pages.'],
+        ['targetReelsFeedPageEnabled', 'targetReelsFeedPageLabel', 'Reels feed (/reels)', 'targetReelsFeedPageHint', 'Run the side box on the Reels feed page.'],
+        ['targetStoriesPageEnabled', 'targetStoriesPageLabel', 'Stories (/stories)', 'targetStoriesPageHint', 'Run the side box on Stories pages.'],
         ['sideBoxInfoEnabled', 'sideBoxInfoLabel', 'Create info area', 'sideBoxInfoHint', 'Add the upper area that receives Instagram post data.'],
         ['moveInfoToSideBoxEnabled', 'moveInfoToSideBoxLabel', 'Move post info into side box', 'moveInfoToSideBoxHint', 'Move captions and related info from Instagram overlays.'],
         ['hideMovedInfoOverlayEnabled', 'hideMovedInfoOverlayLabel', 'Hide moved-info overlays', 'hideMovedInfoOverlayHint', 'Hide original overlays after moving info into the box.'],
@@ -210,6 +239,10 @@ function loadValues(result) {
     hideInstagramVideoPlayerCheckbox.checked = result[STORAGE_KEYS.hideInstagramVideoPlayerEnabled] !== false;
     autoScanCheckbox.checked = result[STORAGE_KEYS.autoScanEnabled] !== false;
     sideBoxEnabledCheckbox.checked = result[STORAGE_KEYS.sideBoxEnabled] !== false;
+    targetPostPageCheckbox.checked = result[STORAGE_KEYS.targetPostPageEnabled] !== false;
+    targetSingleReelPageCheckbox.checked = result[STORAGE_KEYS.targetSingleReelPageEnabled] !== false;
+    targetReelsFeedPageCheckbox.checked = result[STORAGE_KEYS.targetReelsFeedPageEnabled] !== false;
+    targetStoriesPageCheckbox.checked = result[STORAGE_KEYS.targetStoriesPageEnabled] !== false;
     sideBoxInfoCheckbox.checked = result[STORAGE_KEYS.sideBoxInfoEnabled] !== false;
     sideBoxControlsCheckbox.checked = result[STORAGE_KEYS.sideBoxControlsEnabled] !== false;
     sideBoxRestoreButtonCheckbox.checked = result[STORAGE_KEYS.sideBoxRestoreButtonEnabled] !== false;
@@ -262,6 +295,17 @@ function bindControls() {
         save({
             [STORAGE_KEYS.sideBoxEnabled]: sideBoxEnabledCheckbox.checked,
             [STORAGE_KEYS.sideBoxVisible]: sideBoxEnabledCheckbox.checked
+        });
+    });
+
+    [
+        [targetPostPageCheckbox, STORAGE_KEYS.targetPostPageEnabled],
+        [targetSingleReelPageCheckbox, STORAGE_KEYS.targetSingleReelPageEnabled],
+        [targetReelsFeedPageCheckbox, STORAGE_KEYS.targetReelsFeedPageEnabled],
+        [targetStoriesPageCheckbox, STORAGE_KEYS.targetStoriesPageEnabled]
+    ].forEach(([checkbox, key]) => {
+        checkbox.addEventListener('change', () => {
+            save({ [key]: checkbox.checked });
         });
     });
 

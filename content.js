@@ -19,6 +19,10 @@
         hideInstagramVideoPlayerEnabled: 'hideInstagramVideoPlayerEnabledV',
         autoScanEnabled: 'autoScanEnabledV',
         sideBoxEnabled: 'sideBoxEnabledV',
+        targetPostPageEnabled: 'targetPostPageEnabledV',
+        targetSingleReelPageEnabled: 'targetSingleReelPageEnabledV',
+        targetReelsFeedPageEnabled: 'targetReelsFeedPageEnabledV',
+        targetStoriesPageEnabled: 'targetStoriesPageEnabledV',
         sideBoxInfoEnabled: 'sideBoxInfoEnabledV',
         sideBoxControlsEnabled: 'sideBoxControlsEnabledV',
         sideBoxRestoreButtonEnabled: 'sideBoxRestoreButtonEnabledV',
@@ -56,6 +60,10 @@
         hideInstagramVideoPlayerEnabledV: true,
         autoScanEnabledV: true,
         sideBoxEnabledV: true,
+        targetPostPageEnabledV: true,
+        targetSingleReelPageEnabledV: true,
+        targetReelsFeedPageEnabledV: true,
+        targetStoriesPageEnabledV: true,
         sideBoxInfoEnabledV: true,
         sideBoxControlsEnabledV: true,
         sideBoxRestoreButtonEnabledV: true,
@@ -136,6 +144,10 @@
         const savedHideInstagramVideoPlayerEnabled = localStorage.getItem(STORAGE_KEYS.hideInstagramVideoPlayerEnabled);
         const savedAutoScanEnabled = localStorage.getItem(STORAGE_KEYS.autoScanEnabled);
         const savedSideBoxEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxEnabled);
+        const savedTargetPostPageEnabled = localStorage.getItem(STORAGE_KEYS.targetPostPageEnabled);
+        const savedTargetSingleReelPageEnabled = localStorage.getItem(STORAGE_KEYS.targetSingleReelPageEnabled);
+        const savedTargetReelsFeedPageEnabled = localStorage.getItem(STORAGE_KEYS.targetReelsFeedPageEnabled);
+        const savedTargetStoriesPageEnabled = localStorage.getItem(STORAGE_KEYS.targetStoriesPageEnabled);
         const savedSideBoxInfoEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxInfoEnabled);
         const savedSideBoxControlsEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxControlsEnabled);
         const savedSideBoxRestoreButtonEnabled = localStorage.getItem(STORAGE_KEYS.sideBoxRestoreButtonEnabled);
@@ -189,6 +201,11 @@
         if (savedSideBoxEnabled !== null) {
             options.sideBoxEnabledV = savedSideBoxEnabled === 'true';
         }
+
+        if (savedTargetPostPageEnabled !== null) options.targetPostPageEnabledV = savedTargetPostPageEnabled === 'true';
+        if (savedTargetSingleReelPageEnabled !== null) options.targetSingleReelPageEnabledV = savedTargetSingleReelPageEnabled === 'true';
+        if (savedTargetReelsFeedPageEnabled !== null) options.targetReelsFeedPageEnabledV = savedTargetReelsFeedPageEnabled === 'true';
+        if (savedTargetStoriesPageEnabled !== null) options.targetStoriesPageEnabledV = savedTargetStoriesPageEnabled === 'true';
 
         if (savedSideBoxInfoEnabled !== null) options.sideBoxInfoEnabledV = savedSideBoxInfoEnabled === 'true';
         if (savedSideBoxControlsEnabled !== null) options.sideBoxControlsEnabledV = savedSideBoxControlsEnabled === 'true';
@@ -273,6 +290,10 @@
                 [STORAGE_KEYS.hideInstagramVideoPlayerEnabled]: options.hideInstagramVideoPlayerEnabledV,
                 [STORAGE_KEYS.autoScanEnabled]: options.autoScanEnabledV,
                 [STORAGE_KEYS.sideBoxEnabled]: options.sideBoxEnabledV,
+                [STORAGE_KEYS.targetPostPageEnabled]: options.targetPostPageEnabledV,
+                [STORAGE_KEYS.targetSingleReelPageEnabled]: options.targetSingleReelPageEnabledV,
+                [STORAGE_KEYS.targetReelsFeedPageEnabled]: options.targetReelsFeedPageEnabledV,
+                [STORAGE_KEYS.targetStoriesPageEnabled]: options.targetStoriesPageEnabledV,
                 [STORAGE_KEYS.sideBoxInfoEnabled]: options.sideBoxInfoEnabledV,
                 [STORAGE_KEYS.sideBoxControlsEnabled]: options.sideBoxControlsEnabledV,
                 [STORAGE_KEYS.sideBoxRestoreButtonEnabled]: options.sideBoxRestoreButtonEnabledV,
@@ -301,6 +322,10 @@
                 options.hideInstagramVideoPlayerEnabledV = result[STORAGE_KEYS.hideInstagramVideoPlayerEnabled] !== false;
                 options.autoScanEnabledV = result[STORAGE_KEYS.autoScanEnabled] !== false;
                 options.sideBoxEnabledV = result[STORAGE_KEYS.sideBoxEnabled] !== false;
+                options.targetPostPageEnabledV = result[STORAGE_KEYS.targetPostPageEnabled] !== false;
+                options.targetSingleReelPageEnabledV = result[STORAGE_KEYS.targetSingleReelPageEnabled] !== false;
+                options.targetReelsFeedPageEnabledV = result[STORAGE_KEYS.targetReelsFeedPageEnabled] !== false;
+                options.targetStoriesPageEnabledV = result[STORAGE_KEYS.targetStoriesPageEnabled] !== false;
                 options.sideBoxInfoEnabledV = result[STORAGE_KEYS.sideBoxInfoEnabled] !== false;
                 options.sideBoxControlsEnabledV = result[STORAGE_KEYS.sideBoxControlsEnabled] !== false;
                 options.sideBoxRestoreButtonEnabledV = result[STORAGE_KEYS.sideBoxRestoreButtonEnabled] !== false;
@@ -327,6 +352,10 @@
                 localStorage.setItem(STORAGE_KEYS.hideInstagramVideoPlayerEnabled, String(options.hideInstagramVideoPlayerEnabledV));
                 localStorage.setItem(STORAGE_KEYS.autoScanEnabled, String(options.autoScanEnabledV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxEnabled, String(options.sideBoxEnabledV));
+                localStorage.setItem(STORAGE_KEYS.targetPostPageEnabled, String(options.targetPostPageEnabledV));
+                localStorage.setItem(STORAGE_KEYS.targetSingleReelPageEnabled, String(options.targetSingleReelPageEnabledV));
+                localStorage.setItem(STORAGE_KEYS.targetReelsFeedPageEnabled, String(options.targetReelsFeedPageEnabledV));
+                localStorage.setItem(STORAGE_KEYS.targetStoriesPageEnabled, String(options.targetStoriesPageEnabledV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxInfoEnabled, String(options.sideBoxInfoEnabledV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxControlsEnabled, String(options.sideBoxControlsEnabledV));
                 localStorage.setItem(STORAGE_KEYS.sideBoxRestoreButtonEnabled, String(options.sideBoxRestoreButtonEnabledV));
@@ -849,7 +878,10 @@
     }
 
     function isSupportedPage() {
-        return isSingleReelPage() || isReelsPage() || isPostPage() || isStoriesPage();
+        return (options.targetSingleReelPageEnabledV && isSingleReelPage()) ||
+            (options.targetReelsFeedPageEnabledV && isReelsPage()) ||
+            (options.targetPostPageEnabledV && isPostPage()) ||
+            (options.targetStoriesPageEnabledV && isStoriesPage());
     }
 
     function getInsertAnchorFromParent(parent) {
@@ -2359,7 +2391,11 @@
         const shouldRebuildSideBox = [
             STORAGE_KEYS.sideBoxInfoEnabled,
             STORAGE_KEYS.sideBoxControlsEnabled,
-            STORAGE_KEYS.sideBoxRestoreButtonEnabled
+            STORAGE_KEYS.sideBoxRestoreButtonEnabled,
+            STORAGE_KEYS.targetPostPageEnabled,
+            STORAGE_KEYS.targetSingleReelPageEnabled,
+            STORAGE_KEYS.targetReelsFeedPageEnabled,
+            STORAGE_KEYS.targetStoriesPageEnabled
         ].some(key => Object.prototype.hasOwnProperty.call(values, key));
         const shouldRebuildPanel = [
             STORAGE_KEYS.nativeControlsEnabled,
@@ -2396,7 +2432,15 @@
             STORAGE_KEYS.standalonePostLayoutEnabled,
             STORAGE_KEYS.hideInstagramVideoPlayerEnabled,
             STORAGE_KEYS.autoScanEnabled,
+            STORAGE_KEYS.targetPostPageEnabled,
+            STORAGE_KEYS.targetSingleReelPageEnabled,
+            STORAGE_KEYS.targetReelsFeedPageEnabled,
+            STORAGE_KEYS.targetStoriesPageEnabled,
             STORAGE_KEYS.sideBoxInfoEnabled,
+            STORAGE_KEYS.targetPostPageEnabled,
+            STORAGE_KEYS.targetSingleReelPageEnabled,
+            STORAGE_KEYS.targetReelsFeedPageEnabled,
+            STORAGE_KEYS.targetStoriesPageEnabled,
             STORAGE_KEYS.sideBoxControlsEnabled,
             STORAGE_KEYS.sideBoxRestoreButtonEnabled,
             STORAGE_KEYS.sideBoxDonatePromptEnabled,
@@ -2419,6 +2463,14 @@
                 restoreHiddenInfoOverlays();
                 restoreReelPageClickCovers();
             }
+        }
+
+        if (!isSupportedPage()) {
+            restoreVideoContainerStyles();
+            restoreStandalonePostLayoutStyles();
+            restoreHiddenVideoPlayerElements();
+            restoreHiddenInfoOverlays();
+            restoreReelPageClickCovers();
         }
 
         if (Object.prototype.hasOwnProperty.call(values, STORAGE_KEYS.sideBoxVisible)) {
@@ -2526,6 +2578,10 @@
                     STORAGE_KEYS.hideInstagramVideoPlayerEnabled,
                     STORAGE_KEYS.autoScanEnabled,
                     STORAGE_KEYS.sideBoxEnabled,
+                    STORAGE_KEYS.targetPostPageEnabled,
+                    STORAGE_KEYS.targetSingleReelPageEnabled,
+                    STORAGE_KEYS.targetReelsFeedPageEnabled,
+                    STORAGE_KEYS.targetStoriesPageEnabled,
                     STORAGE_KEYS.sideBoxInfoEnabled,
                     STORAGE_KEYS.sideBoxControlsEnabled,
                     STORAGE_KEYS.sideBoxRestoreButtonEnabled,

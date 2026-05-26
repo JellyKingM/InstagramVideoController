@@ -295,5 +295,47 @@
   },
   "debugLogTitle": {
     "message": "IVC Debug Log"
+  },
+  "sideBoxDisplayCategory": {
+    "message": "Side box display"
+  },
+  "sideBoxVideoControlsCategory": {
+    "message": "Video controls"
+  },
+  "sideBoxLayoutCategory": {
+    "message": "Layout / overlay"
+  },
+  "sideBoxInfoCategory": {
+    "message": "Info area"
+  },
+  "sideBoxScanningCategory": {
+    "message": "Scanning"
+  },
+  "sideBoxTargetPagesCategory": {
+    "message": "Target pages"
+  },
+  "targetPostPageLabel": {
+    "message": "Posts (/p)"
+  },
+  "targetPostPageHint": {
+    "message": "Run the side box on regular post pages."
+  },
+  "targetSingleReelPageLabel": {
+    "message": "Single Reels (/reel)"
+  },
+  "targetSingleReelPageHint": {
+    "message": "Run the side box on individual Reel pages."
+  },
+  "targetReelsFeedPageLabel": {
+    "message": "Reels feed (/reels)"
+  },
+  "targetReelsFeedPageHint": {
+    "message": "Run the side box on the Reels feed page."
+  },
+  "targetStoriesPageLabel": {
+    "message": "Stories (/stories)"
+  },
+  "targetStoriesPageHint": {
+    "message": "Run the side box on Stories pages."
   }
 }

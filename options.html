@@ -68,6 +68,26 @@
             background: var(--panel);
         }
 
+        .option-row.category {
+            margin-left: 22px;
+            min-height: 28px;
+            padding: 6px 10px;
+            border: 0;
+            border-left: 3px solid #8fa3c2;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .option-row.category .label strong {
+            color: #374151;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .option-row.grandchild {
+            margin-left: 44px;
+        }
+
         .option-row.disabled {
             opacity: 0.48;
         }
@@ -227,127 +247,19 @@
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
+            <div class="option-row category" data-parent="sideBoxEnabled" data-category-key="sideBoxDisplayCategory">
                 <div class="label">
-                    <strong>Volume control</strong>
-                    <span>Apply the extension volume value to detected videos.</span>
+                    <strong>Side box display</strong>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="volumeControlEnabled">
-                    <span class="slider"></span>
-                </label>
             </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
+            <label class="option-row child grandchild" data-parent="sideBoxEnabled">
                 <div class="label">
-                    <strong>Mute control</strong>
-                    <span>Apply mute and unmute state from the extension.</span>
+                    <strong>Side box color</strong>
+                    <span>Background color for the controller box.</span>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="muteControlEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Playback speed control</strong>
-                    <span>Apply the extension playback speed to videos.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="playbackRateControlEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Keyboard shortcuts</strong>
-                    <span>Enable M, comma, period, and B shortcuts.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="keyboardShortcutsEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Square video container</strong>
-                    <span>Remove rounded corners from the video container.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="squareVideoContainerEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Standalone post layout</strong>
-                    <span>Widen standalone post layout for the side box.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="standalonePostLayoutEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Hide Instagram video player layer</strong>
-                    <span>Hide Instagram's own Video player overlay elements.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="hideInstagramVideoPlayerEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Automatic rescanning</strong>
-                    <span>Keep scanning the page as Instagram changes videos.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="autoScanEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled" data-side-info-child="true">
-                <div class="label">
-                    <strong>Create info area</strong>
-                    <span>Add the upper area that receives Instagram post data.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="sideBoxInfoEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled" data-side-info-child="true">
-                <div class="label">
-                    <strong>Move post info into side box</strong>
-                    <span>Move captions and related info from Instagram overlays.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="moveInfoToSideBoxEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Hide moved-info overlays</strong>
-                    <span>Hide original overlays after moving info into the box.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="hideMovedInfoOverlayEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
-                <div class="label">
-                    <strong>Create control buttons</strong>
-                    <span>Add play, mute, seek, speed, volume, and donate controls.</span>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="sideBoxControlsEnabled">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
+                <input class="control" type="color" id="sideBoxColor">
+            </label>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
                 <div class="label">
                     <strong>Create restore button</strong>
                     <span>Show a button to bring back the side box after hiding it.</span>
@@ -357,7 +269,7 @@
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
                 <div class="label">
                     <strong>Donation prompt</strong>
                     <span>Allow the side box to show the occasional support prompt.</span>
@@ -367,7 +279,142 @@
                     <span class="slider"></span>
                 </label>
             </div>
-            <div class="option-row child" data-parent="sideBoxEnabled">
+            <div class="option-row category" data-parent="sideBoxEnabled" data-category-key="sideBoxTargetPagesCategory">
+                <div class="label">
+                    <strong>Target pages</strong>
+                </div>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Posts (/p)</strong>
+                    <span>Run the side box on regular post pages.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="targetPostPageEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Single Reels (/reel)</strong>
+                    <span>Run the side box on individual Reel pages.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="targetSingleReelPageEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Reels feed (/reels)</strong>
+                    <span>Run the side box on the Reels feed page.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="targetReelsFeedPageEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Stories (/stories)</strong>
+                    <span>Run the side box on Stories pages.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="targetStoriesPageEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row category" data-parent="sideBoxEnabled" data-category-key="sideBoxVideoControlsCategory">
+                <div class="label">
+                    <strong>Video controls</strong>
+                </div>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Volume control</strong>
+                    <span>Apply the extension volume value to detected videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="volumeControlEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Mute control</strong>
+                    <span>Apply mute and unmute state from the extension.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="muteControlEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Playback speed control</strong>
+                    <span>Apply the extension playback speed to videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="playbackRateControlEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Keyboard shortcuts</strong>
+                    <span>Enable M, comma, period, and B shortcuts.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="keyboardShortcutsEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Create control buttons</strong>
+                    <span>Add play, mute, seek, speed, volume, and donate controls.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="sideBoxControlsEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row category" data-parent="sideBoxEnabled" data-category-key="sideBoxLayoutCategory">
+                <div class="label">
+                    <strong>Layout / overlay</strong>
+                </div>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Square video container</strong>
+                    <span>Remove rounded corners from the video container.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="squareVideoContainerEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Standalone post layout</strong>
+                    <span>Widen standalone post layout for the side box.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="standalonePostLayoutEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Hide Instagram video player layer</strong>
+                    <span>Hide Instagram's own Video player overlay elements.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="hideInstagramVideoPlayerEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
                 <div class="label">
                     <strong>Hide Reels click cover</strong>
                     <span>Hide the transparent click layer covering Reels videos.</span>
@@ -377,13 +424,56 @@
                     <span class="slider"></span>
                 </label>
             </div>
-            <label class="option-row child" data-parent="sideBoxEnabled">
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled" data-side-info-child="true">
                 <div class="label">
-                    <strong>Side box color</strong>
-                    <span>Background color for the controller box.</span>
+                    <strong>Hide moved-info overlays</strong>
+                    <span>Hide original overlays after moving info into the box.</span>
                 </div>
-                <input class="control" type="color" id="sideBoxColor">
-            </label>
+                <label class="switch">
+                    <input type="checkbox" id="hideMovedInfoOverlayEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row category" data-parent="sideBoxEnabled" data-category-key="sideBoxInfoCategory">
+                <div class="label">
+                    <strong>Info area</strong>
+                </div>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Create info area</strong>
+                    <span>Add the upper area that receives Instagram post data.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="sideBoxInfoEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled" data-side-info-child="true">
+                <div class="label">
+                    <strong>Move post info into side box</strong>
+                    <span>Move captions and related info from Instagram overlays.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="moveInfoToSideBoxEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="option-row category" data-parent="sideBoxEnabled" data-category-key="sideBoxScanningCategory">
+                <div class="label">
+                    <strong>Scanning</strong>
+                </div>
+            </div>
+            <div class="option-row child grandchild" data-parent="sideBoxEnabled">
+                <div class="label">
+                    <strong>Automatic rescanning</strong>
+                    <span>Keep scanning the page as Instagram changes videos.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="autoScanEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
     </section>
 
